@@ -19,6 +19,7 @@ export interface SubDepartment {
   name: string;
   departmentId: string;
   department?: Department;
+  departmentName?: string;
   createdBy?: string;
   createdAt: string;
   updatedAt: string;
@@ -27,8 +28,10 @@ export interface SubDepartment {
 // Department Actions
 export async function getDepartments(): Promise<{ status: boolean; data: Department[] }> {
   try {
+    const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/departments`, {
       cache: "no-store",
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
     return res.json();
   } catch (error) {
@@ -39,8 +42,10 @@ export async function getDepartments(): Promise<{ status: boolean; data: Departm
 
 export async function getDepartmentById(id: string): Promise<{ status: boolean; data: Department | null }> {
   try {
+    const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/departments/${id}`, {
       cache: "no-store",
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
     return res.json();
   } catch (error) {
@@ -214,8 +219,10 @@ export async function updateDepartments(
 // Sub-Department Actions
 export async function getSubDepartments(): Promise<{ status: boolean; data: SubDepartment[] }> {
   try {
+    const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/sub-departments`, {
       cache: "no-store",
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
     return res.json();
   } catch (error) {
@@ -226,8 +233,10 @@ export async function getSubDepartments(): Promise<{ status: boolean; data: SubD
 
 export async function getSubDepartmentsByDepartment(departmentId: string): Promise<{ status: boolean; data: SubDepartment[] }> {
   try {
+    const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/sub-departments/department/${departmentId}`, {
       cache: "no-store",
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
     return res.json();
   } catch (error) {

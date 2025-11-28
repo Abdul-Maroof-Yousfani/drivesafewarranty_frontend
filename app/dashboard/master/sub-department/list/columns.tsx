@@ -90,10 +90,9 @@ export const columns: ColumnDef<SubDepartmentRow>[] = [
   {
     header: "Department",
     accessorKey: "departmentName",
-    accessorFn: (row) => row.department?.name || "—",
     size: 200,
     enableSorting: true,
-    cell: ({ row }) => <HighlightText text={row.original.department?.name || "—"} />,
+    cell: ({ row }) => <HighlightText text={row.original.departmentName || row.original.department?.name || "—"} />,
   },
   {
     header: "Created By",

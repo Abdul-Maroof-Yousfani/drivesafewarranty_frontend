@@ -12,46 +12,50 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { createLoanTypes } from "@/lib/actions/loan-type";
+import { createEquipments } from "@/lib/actions/equipment";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
 
-export default function AddLoanTypePage() {
+export default function AddEquipmentPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [loanTypes, setLoanTypes] = useState([{ id: 1, name: "" }]);
+  const [equipments, setEquipments] = useState([{ id: 1, name: "" }]);
 
   const addRow = () => {
-    setLoanTypes([...loanTypes, { id: Date.now(), name: "" }]);
+    setEquipments([...equipments, { id: Date.now(), name: "" }]);
   };
 
   const removeRow = (id: number) => {
-    if (loanTypes.length > 1) {
-      setLoanTypes(loanTypes.filter((lt) => lt.id !== id));
+    if (equipments.length > 1) {
+      setEquipments(equipments.filter((e) => e.id !== id));
     }
   };
 
   const updateName = (id: number, name: string) => {
-    setLoanTypes(
-      loanTypes.map((lt) => (lt.id === id ? { ...lt, name } : lt))
+    setEquipments(
+      equipments.map((e) => (e.id === id ? { ...e, name } : e))
     );
+  };
+
+  const handleClear = () => {
+    setEquipments([{ id: 1, name: "" }]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const items = loanTypes.map((lt) => ({ name: lt.name.trim() })).filter((lt) => lt.name);
+    const items = equipments.map((e) => ({ name: e.name.trim() })).filter((e) => e.name);
 
     if (items.length === 0) {
-      toast.error("Please enter at least one loan type name");
+      toast.error("Please enter at least one equipment name");
       return;
     }
 
     startTransition(async () => {
-      const result = await createLoanTypes(items);
+      const result = await createEquipments(items);
       if (result.status) {
         toast.success(result.message);
-        router.push("/dashboard/master/loan-types/list");
+        router.push("/dashboard/master/equipment/list");
       } else {
         toast.error(result.message);
       }
@@ -61,7 +65,7 @@ export default function AddLoanTypePage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
-        <Link href="/dashboard/master/loan-types/list">
+        <Link href="/dashboard/master/equipment/list">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to List
@@ -71,29 +75,30 @@ export default function AddLoanTypePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Add Loan Types</CardTitle>
+          <CardTitle>Create Employee Equipments Form</CardTitle>
           <CardDescription>
-            Create one or more loan types for your organization
+            Add one or more equipment names for your organization
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-3">
-              <Label>Loan Type Names</Label>
-              {loanTypes.map((item, index) => (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <Label>Equipment Name *</Label>
+              {equipments.map((item, index) => (
                 <div key={item.id} className="flex gap-2">
                   <Input
-                    placeholder={`Loan Type ${index + 1}`}
+                    placeholder={`Equipment ${index + 1}`}
                     value={item.name}
                     onChange={(e) => updateName(item.id, e.target.value)}
                     disabled={isPending}
+                    required
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => removeRow(item.id)}
-                    disabled={loanTypes.length === 1 || isPending}
+                    disabled={equipments.length === 1 || isPending}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -106,27 +111,35 @@ export default function AddLoanTypePage() {
                   {isPending && (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   )}
-                  Create{" "}
-                  {loanTypes.length > 1
-                    ? `${loanTypes.length} Loan Types`
-                    : "Loan Type"}
+                  Submit
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClear}
+                  disabled={isPending}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => router.back()}
+                  disabled={isPending}
                 >
                   Cancel
                 </Button>
               </div>
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={addRow}
                 disabled={isPending}
-                className="text-sm text-primary hover:underline disabled:opacity-50"
               >
-                + Add more
-              </button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add More Equipment
+              </Button>
             </div>
           </form>
         </CardContent>
@@ -134,3 +147,4 @@ export default function AddLoanTypePage() {
     </div>
   );
 }
+

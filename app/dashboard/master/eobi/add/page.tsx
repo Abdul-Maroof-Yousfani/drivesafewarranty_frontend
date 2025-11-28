@@ -12,29 +12,38 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { createEOBIs } from "@/lib/actions/eobi";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface EOBIRow {
   id: number;
   name: string;
   amount: string;
   yearMonth: string;
+  selectedDate?: Date;
 }
 
 export default function AddEOBIPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [eobis, setEobis] = useState<EOBIRow[]>([
-    { id: 1, name: "", amount: "", yearMonth: "" },
+    { id: 1, name: "", amount: "", yearMonth: "", selectedDate: undefined },
   ]);
 
   const addRow = () => {
     setEobis([
       ...eobis,
-      { id: Date.now(), name: "", amount: "", yearMonth: "" },
+      { id: Date.now(), name: "", amount: "", yearMonth: "", selectedDate: undefined },
     ]);
   };
 
@@ -42,8 +51,19 @@ export default function AddEOBIPage() {
     if (eobis.length > 1) setEobis(eobis.filter((e) => e.id !== id));
   };
 
-  const updateField = (id: number, field: keyof EOBIRow, value: string) => {
-    setEobis(eobis.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
+  const updateField = (id: number, field: keyof EOBIRow, value: string | Date | undefined) => {
+    setEobis(eobis.map((e) => {
+      if (e.id === id) {
+        if (field === "selectedDate" && value instanceof Date) {
+          // Use the first day of the selected month for consistency
+          const firstDayOfMonth = new Date(value.getFullYear(), value.getMonth(), 1);
+          const formattedDate = format(firstDayOfMonth, "MMMM yyyy");
+          return { ...e, selectedDate: firstDayOfMonth, yearMonth: formattedDate };
+        }
+        return { ...e, [field]: value };
+      }
+      return e;
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -132,14 +152,36 @@ export default function AddEOBIPage() {
                   </div>
                   <div className="space-y-2 col-span-2">
                     <Label>Year & Month *</Label>
-                    <Input
-                      placeholder="January 2024"
-                      value={eobi.yearMonth}
-                      onChange={(e) =>
-                        updateField(eobi.id, "yearMonth", e.target.value)
-                      }
-                      disabled={isPending}
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !eobi.selectedDate && "text-muted-foreground"
+                          )}
+                          disabled={isPending}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {eobi.selectedDate ? (
+                            format(eobi.selectedDate, "MMMM yyyy")
+                          ) : (
+                            <span>Pick a month</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={eobi.selectedDate}
+                          onSelect={(date) => updateField(eobi.id, "selectedDate", date)}
+                          captionLayout="dropdown"
+                          fromYear={2020}
+                          toYear={2030}
+                          disabled={isPending}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               </div>
