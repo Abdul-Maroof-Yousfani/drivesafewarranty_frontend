@@ -10,7 +10,7 @@ const protectedRoutes = ["/dashboard"];
 // Admin-only routes
 const adminRoutes = ["/dashboard/admin"];
 
-export function middleware(request: NextRequest) {
+export default function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   
   // Get tokens from cookies
