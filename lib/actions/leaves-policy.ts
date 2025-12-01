@@ -8,9 +8,27 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/
 export interface LeavesPolicy {
   id: string;
   name: string;
-  details?: string;
+  dateFrom: string;
+  dateTill: string;
+  fullDayDeductionRate: number;
+  halfDayDeductionRate: number;
+  shortLeaveDeductionRate: number;
   status: string;
   createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  items?: LeavesPolicyItem[];
+}
+
+export interface LeavesPolicyItem {
+  id: string;
+  leavesPolicyId: string;
+  leaveTypeId: string;
+  leaveType?: {
+    id: string;
+    name: string;
+  };
+  quantity: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,11 +47,25 @@ export async function getLeavesPolicies(): Promise<{ status: boolean; data: Leav
   }
 }
 
-export async function createLeavesPolicy(formData: FormData): Promise<{ status: boolean; message: string; data?: LeavesPolicy }> {
-  const name = formData.get("name") as string;
-  const details = formData.get("details") as string;
-  if (!name?.trim()) {
+export async function createLeavesPolicy(
+  data: {
+    name: string;
+    dateFrom: Date;
+    dateTill: Date;
+    fullDayDeductionRate: number;
+    halfDayDeductionRate: number;
+    shortLeaveDeductionRate: number;
+    items: { leaveTypeId: string; quantity: number }[];
+  }
+): Promise<{ status: boolean; message: string; data?: LeavesPolicy }> {
+  if (!data.name?.trim()) {
     return { status: false, message: "Name is required" };
+  }
+  if (!data.dateFrom || !data.dateTill) {
+    return { status: false, message: "Date from and date till are required" };
+  }
+  if (!data.items || data.items.length === 0) {
+    return { status: false, message: "At least one leave type is required" };
   }
   try {
     const token = await getAccessToken();
@@ -43,11 +75,19 @@ export async function createLeavesPolicy(formData: FormData): Promise<{ status: 
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
-      body: JSON.stringify({ name, details }),
+      body: JSON.stringify({
+        name: data.name.trim(),
+        dateFrom: data.dateFrom.toISOString(),
+        dateTill: data.dateTill.toISOString(),
+        fullDayDeductionRate: data.fullDayDeductionRate,
+        halfDayDeductionRate: data.halfDayDeductionRate,
+        shortLeaveDeductionRate: data.shortLeaveDeductionRate,
+        items: data.items,
+      }),
     });
-    const data = await res.json();
-    if (data.status) revalidatePath("/dashboard/master/leaves-policy");
-    return data;
+    const result = await res.json();
+    if (result.status) revalidatePath("/dashboard/master/leaves-policy");
+    return result;
   } catch (error) {
     return { status: false, message: "Failed to create leave policy" };
   }
