@@ -35,11 +35,11 @@ import { EllipsisIcon, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Institute, updateInstitute, deleteInstitute } from "@/lib/actions/institute";
+import { ProvidentFund, updateProvidentFund, deleteProvidentFund } from "@/lib/actions/provident-fund";
 
-export type InstituteRow = Institute & { id: string };
+export type ProvidentFundRow = ProvidentFund & { id: string; sno?: number };
 
-export const columns: ColumnDef<InstituteRow>[] = [
+export const columns: ColumnDef<ProvidentFundRow>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -64,11 +64,38 @@ export const columns: ColumnDef<InstituteRow>[] = [
     size: 28,
   },
   {
-    header: "Name",
+    header: "SNO",
+    accessorKey: "sno",
+    size: 60,
+    cell: ({ row, table }) => {
+      const pageIndex = table.getState().pagination.pageIndex;
+      const pageSize = table.getState().pagination.pageSize;
+      return pageIndex * pageSize + row.index + 1;
+    },
+    enableSorting: false,
+  },
+  {
+    header: "Provident Fund Name",
     accessorKey: "name",
     size: 250,
     enableSorting: true,
     cell: ({ row }) => <HighlightText text={row.original.name} />,
+  },
+  {
+    header: "Percentage",
+    accessorKey: "percentage",
+    size: 120,
+    enableSorting: true,
+    cell: ({ row }) => `${row.original.percentage}%`,
+  },
+  {
+    header: "Created By",
+    accessorKey: "createdBy",
+    size: 150,
+    enableSorting: true,
+    cell: ({ row }) => (
+      <HighlightText text={row.original.createdBy || "N/A"} />
+    ),
   },
   {
     header: "Status",
@@ -84,14 +111,6 @@ export const columns: ColumnDef<InstituteRow>[] = [
     ),
   },
   {
-    header: "Created At",
-    accessorKey: "createdAt",
-    size: 150,
-    cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString(),
-    enableSorting: true,
-  },
-  {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => <RowActions row={row} />,
@@ -101,47 +120,58 @@ export const columns: ColumnDef<InstituteRow>[] = [
 ];
 
 type RowActionsProps = {
-  row: Row<InstituteRow>;
+  row: Row<ProvidentFundRow>;
 };
 
 function RowActions({ row }: RowActionsProps) {
-  const inst = row.original;
+  const fund = row.original;
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editDialog, setEditDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [editData, setEditData] = useState({
-    name: inst.name,
-    status: inst.status,
+    name: fund.name,
+    percentage: fund.percentage.toString(),
+    status: fund.status,
   });
 
   const handleEditSubmit = async () => {
     if (!editData.name.trim()) {
-      toast.error("Name is required");
+      toast.error("Provident fund name is required");
+      return;
+    }
+
+    const percentageValue = parseFloat(editData.percentage);
+    if (isNaN(percentageValue) || percentageValue < 0 || percentageValue > 100) {
+      toast.error("Please enter a valid percentage (0-100)");
       return;
     }
 
     startTransition(async () => {
-      const result = await updateInstitute(inst.id, editData);
+      const result = await updateProvidentFund(fund.id, {
+        name: editData.name,
+        percentage: percentageValue,
+        status: editData.status,
+      });
       if (result.status) {
-        toast.success(result.message);
+        toast.success(result.message || "Provident fund updated successfully");
         setEditDialog(false);
         router.refresh();
       } else {
-        toast.error(result.message);
+        toast.error(result.message || "Failed to update provident fund");
       }
     });
   };
 
   const handleDeleteConfirm = async () => {
     startTransition(async () => {
-      const result = await deleteInstitute(inst.id);
+      const result = await deleteProvidentFund(fund.id);
       if (result.status) {
-        toast.success(result.message);
+        toast.success(result.message || "Provident fund deleted successfully");
         setDeleteDialog(false);
         router.refresh();
       } else {
-        toast.error(result.message);
+        toast.error(result.message || "Failed to delete provident fund");
       }
     });
   };
@@ -180,19 +210,36 @@ function RowActions({ row }: RowActionsProps) {
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Institute</DialogTitle>
-            <DialogDescription>Update the institute name</DialogDescription>
+            <DialogTitle>Edit Provident Fund</DialogTitle>
+            <DialogDescription>Update the provident fund details</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2 ">
-              <Label>Institute Name</Label>
+            <div className="space-y-2">
+              <Label>Provident Fund Name *</Label>
               <Input
                 value={editData.name}
                 onChange={(e) =>
                   setEditData({ ...editData, name: e.target.value })
                 }
                 disabled={isPending}
-                placeholder="Institute name"
+                placeholder="Provident fund name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Percentage *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={editData.percentage}
+                onChange={(e) =>
+                  setEditData({ ...editData, percentage: e.target.value })
+                }
+                disabled={isPending}
+                placeholder="Percentage (0-100)"
+                required
               />
             </div>
           </div>
@@ -216,9 +263,9 @@ function RowActions({ row }: RowActionsProps) {
       <AlertDialog open={deleteDialog} onOpenChange={setDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Institute</AlertDialogTitle>
+            <AlertDialogTitle>Delete Provident Fund</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{inst.name}&quot;? This action cannot be undone.
+              Are you sure you want to delete &quot;{fund.name}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

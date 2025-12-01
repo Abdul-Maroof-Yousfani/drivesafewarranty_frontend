@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getAccessToken } from "@/lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 
 export interface LeavesPolicyLeaveType {
   leaveTypeId: string;
@@ -27,7 +28,10 @@ export interface LeavesPolicy {
   leaveTypes?: LeavesPolicyLeaveType[];
 }
 
-export async function getLeavesPolicies(): Promise<{ status: boolean; data: LeavesPolicy[] }> {
+export async function getLeavesPolicies(): Promise<{
+  status: boolean;
+  data: LeavesPolicy[];
+}> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/leaves-policies`, {
@@ -41,7 +45,9 @@ export async function getLeavesPolicies(): Promise<{ status: boolean; data: Leav
   }
 }
 
-export async function getLeavesPolicyById(id: string): Promise<{ status: boolean; data: LeavesPolicy | null }> {
+export async function getLeavesPolicyById(
+  id: string
+): Promise<{ status: boolean; data: LeavesPolicy | null }> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/leaves-policies/${id}`, {
@@ -68,10 +74,13 @@ export async function createLeavesPolicy(data: {
   if (!data.name?.trim()) {
     return { status: false, message: "Name is required" };
   }
-  if (!data.dateFrom || !data.dateTill) {
-    return { status: false, message: "Date from and date till are required" };
+  if (!data.policyDateFrom || !data.policyDateTill) {
+    return {
+      status: false,
+      message: "Policy date from and date till are required",
+    };
   }
-  if (!data.items || data.items.length === 0) {
+  if (!data.leaveTypes || data.leaveTypes.length === 0) {
     return { status: false, message: "At least one leave type is required" };
   }
   try {
@@ -95,7 +104,8 @@ export async function createLeavesPolicy(data: {
 export async function createLeavesPolicies(
   items: { name: string; details?: string }[]
 ): Promise<{ status: boolean; message: string }> {
-  if (!items.length) return { status: false, message: "At least one leave policy is required" };
+  if (!items.length)
+    return { status: false, message: "At least one leave policy is required" };
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/leaves-policies/bulk`, {
@@ -114,16 +124,19 @@ export async function createLeavesPolicies(
   }
 }
 
-export async function updateLeavesPolicy(id: string, data: {
-  name: string;
-  details?: string;
-  policyDateFrom?: string;
-  policyDateTill?: string;
-  fullDayDeductionRate?: number;
-  halfDayDeductionRate?: number;
-  shortLeaveDeductionRate?: number;
-  leaveTypes?: { leaveTypeId: string; numberOfLeaves: number }[];
-}): Promise<{ status: boolean; message: string; data?: LeavesPolicy }> {
+export async function updateLeavesPolicy(
+  id: string,
+  data: {
+    name: string;
+    details?: string;
+    policyDateFrom?: string;
+    policyDateTill?: string;
+    fullDayDeductionRate?: number;
+    halfDayDeductionRate?: number;
+    shortLeaveDeductionRate?: number;
+    leaveTypes?: { leaveTypeId: string; numberOfLeaves: number }[];
+  }
+): Promise<{ status: boolean; message: string; data?: LeavesPolicy }> {
   if (!data.name?.trim()) return { status: false, message: "Name is required" };
   try {
     const token = await getAccessToken();
@@ -143,7 +156,9 @@ export async function updateLeavesPolicy(id: string, data: {
   }
 }
 
-export async function deleteLeavesPolicy(id: string): Promise<{ status: boolean; message: string }> {
+export async function deleteLeavesPolicy(
+  id: string
+): Promise<{ status: boolean; message: string }> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/leaves-policies/${id}`, {
@@ -158,7 +173,9 @@ export async function deleteLeavesPolicy(id: string): Promise<{ status: boolean;
   }
 }
 
-export async function deleteLeavesPolicies(ids: string[]): Promise<{ status: boolean; message: string }> {
+export async function deleteLeavesPolicies(
+  ids: string[]
+): Promise<{ status: boolean; message: string }> {
   if (!ids.length) return { status: false, message: "No items to delete" };
   try {
     const token = await getAccessToken();
@@ -199,4 +216,3 @@ export async function updateLeavesPolicies(
     return { status: false, message: "Failed to update leave policies" };
   }
 }
-

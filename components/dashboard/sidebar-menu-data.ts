@@ -67,7 +67,20 @@ export const masterMenuData: MenuItem[] = [
       { title: "View", href: "/dashboard/master/marital-status/list" },
     ],
   },
-
+  {
+    title: "Employee Grade",
+    children: [
+      { title: "Add", href: "/dashboard/master/employee-grade/add" },
+      { title: "View", href: "/dashboard/master/employee-grade/list" },
+    ],
+  },
+  {
+    title: "Employement Status",
+    children: [
+      { title: "Add", href: "/dashboard/master/employee-status/add" },
+      { title: "View", href: "/dashboard/master/employee-status/list" },
+    ],
+  },
   {
     title: "Qualification",
     children: [
@@ -154,6 +167,13 @@ export const masterMenuData: MenuItem[] = [
     children: [
       { title: "Add", href: "/dashboard/master/tax-slabs/add" },
       { title: "View", href: "/dashboard/master/tax-slabs/list" },
+    ],
+  },
+  {
+    title: "Provident Fund",
+    children: [
+      { title: "Add", href: "/dashboard/master/provident-fund/add" },
+      { title: "View", href: "/dashboard/master/provident-fund/list" },
     ],
   },
   {

@@ -35,11 +35,11 @@ import { EllipsisIcon, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Institute, updateInstitute, deleteInstitute } from "@/lib/actions/institute";
+import { EmployeeStatus, updateEmployeeStatus, deleteEmployeeStatus } from "@/lib/actions/employee-status";
 
-export type InstituteRow = Institute & { id: string };
+export type EmployeeStatusRow = EmployeeStatus & { id: string; sno?: number };
 
-export const columns: ColumnDef<InstituteRow>[] = [
+export const columns: ColumnDef<EmployeeStatusRow>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -64,32 +64,44 @@ export const columns: ColumnDef<InstituteRow>[] = [
     size: 28,
   },
   {
-    header: "Name",
-    accessorKey: "name",
-    size: 250,
-    enableSorting: true,
-    cell: ({ row }) => <HighlightText text={row.original.name} />,
+    header: "SNO",
+    accessorKey: "sno",
+    size: 60,
+    cell: ({ row, table }) => {
+      const pageIndex = table.getState().pagination.pageIndex;
+      const pageSize = table.getState().pagination.pageSize;
+      return pageIndex * pageSize + row.index + 1;
+    },
+    enableSorting: false,
   },
   {
     header: "Status",
     accessorKey: "status",
+    size: 200,
+    enableSorting: true,
+    cell: ({ row }) => <HighlightText text={row.original.status} />,
+  },
+  {
+    header: "Created By",
+    accessorKey: "createdBy",
+    size: 150,
+    enableSorting: true,
+    cell: ({ row }) => (
+      <HighlightText text={row.original.createdBy || "N/A"} />
+    ),
+  },
+  {
+    header: "Status",
+    accessorKey: "statusType",
     size: 100,
     enableSorting: true,
     cell: ({ row }) => (
       <Badge
-        variant={row.original.status === "inactive" ? "secondary" : "default"}
+        variant={row.original.statusType === "inactive" ? "secondary" : "default"}
       >
-        {row.original.status || "active"}
+        {row.original.statusType || "active"}
       </Badge>
     ),
-  },
-  {
-    header: "Created At",
-    accessorKey: "createdAt",
-    size: 150,
-    cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString(),
-    enableSorting: true,
   },
   {
     id: "actions",
@@ -101,47 +113,47 @@ export const columns: ColumnDef<InstituteRow>[] = [
 ];
 
 type RowActionsProps = {
-  row: Row<InstituteRow>;
+  row: Row<EmployeeStatusRow>;
 };
 
 function RowActions({ row }: RowActionsProps) {
-  const inst = row.original;
+  const empStatus = row.original;
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editDialog, setEditDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [editData, setEditData] = useState({
-    name: inst.name,
-    status: inst.status,
+    status: empStatus.status,
+    statusType: empStatus.statusType,
   });
 
   const handleEditSubmit = async () => {
-    if (!editData.name.trim()) {
-      toast.error("Name is required");
+    if (!editData.status.trim()) {
+      toast.error("Status is required");
       return;
     }
 
     startTransition(async () => {
-      const result = await updateInstitute(inst.id, editData);
+      const result = await updateEmployeeStatus(empStatus.id, editData);
       if (result.status) {
-        toast.success(result.message);
+        toast.success(result.message || "Employee status updated successfully");
         setEditDialog(false);
         router.refresh();
       } else {
-        toast.error(result.message);
+        toast.error(result.message || "Failed to update employee status");
       }
     });
   };
 
   const handleDeleteConfirm = async () => {
     startTransition(async () => {
-      const result = await deleteInstitute(inst.id);
+      const result = await deleteEmployeeStatus(empStatus.id);
       if (result.status) {
-        toast.success(result.message);
+        toast.success(result.message || "Employee status deleted successfully");
         setDeleteDialog(false);
         router.refresh();
       } else {
-        toast.error(result.message);
+        toast.error(result.message || "Failed to delete employee status");
       }
     });
   };
@@ -180,19 +192,20 @@ function RowActions({ row }: RowActionsProps) {
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Institute</DialogTitle>
-            <DialogDescription>Update the institute name</DialogDescription>
+            <DialogTitle>Edit Employee Status</DialogTitle>
+            <DialogDescription>Update the employee status details</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2 ">
-              <Label>Institute Name</Label>
+            <div className="space-y-2">
+              <Label>Employement Status *</Label>
               <Input
-                value={editData.name}
+                value={editData.status}
                 onChange={(e) =>
-                  setEditData({ ...editData, name: e.target.value })
+                  setEditData({ ...editData, status: e.target.value })
                 }
                 disabled={isPending}
-                placeholder="Institute name"
+                placeholder="Employement status"
+                required
               />
             </div>
           </div>
@@ -216,9 +229,9 @@ function RowActions({ row }: RowActionsProps) {
       <AlertDialog open={deleteDialog} onOpenChange={setDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Institute</AlertDialogTitle>
+            <AlertDialogTitle>Delete Employee Status</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{inst.name}&quot;? This action cannot be undone.
+              Are you sure you want to delete &quot;{empStatus.status}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -176,7 +176,7 @@ export default function CreateEmployeePage() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto pb-10">
+    <div className=" max-w-[90%] mx-auto pb-10">
       <div className="mb-6">
         <Link href="/dashboard/employee/list">
           <Button variant="ghost" size="sm">
@@ -185,12 +185,12 @@ export default function CreateEmployeePage() {
           </Button>
         </Link>
       </div>
-
+<div className="border rounded-xl p-4 "> 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
+            <CardTitle className="text-lg font-semibold">Basic Information</CardTitle>
             <CardDescription>Enter employee's basic details</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -516,7 +516,7 @@ export default function CreateEmployeePage() {
         </Card>
 
         {/* Submit Buttons */}
-        <div className="flex gap-2 sticky bottom-4 bg-background p-4 border rounded-lg shadow-lg">
+        <div className="flex gap-2 justify-center bottom-4 bg-background p-4  rounded-lg shadow-lg">
           <Button type="submit" disabled={isPending} className="flex-1">
             {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Create Employee
@@ -526,6 +526,7 @@ export default function CreateEmployeePage() {
           </Button>
         </div>
       </form>
+      </div>
     </div>
   );
 }

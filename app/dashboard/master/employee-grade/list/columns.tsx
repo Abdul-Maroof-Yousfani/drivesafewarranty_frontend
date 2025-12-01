@@ -35,11 +35,11 @@ import { EllipsisIcon, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Institute, updateInstitute, deleteInstitute } from "@/lib/actions/institute";
+import { EmployeeGrade, updateEmployeeGrade, deleteEmployeeGrade } from "@/lib/actions/employee-grade";
 
-export type InstituteRow = Institute & { id: string };
+export type EmployeeGradeRow = EmployeeGrade & { id: string; sno?: number };
 
-export const columns: ColumnDef<InstituteRow>[] = [
+export const columns: ColumnDef<EmployeeGradeRow>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -64,11 +64,31 @@ export const columns: ColumnDef<InstituteRow>[] = [
     size: 28,
   },
   {
-    header: "Name",
-    accessorKey: "name",
-    size: 250,
+    header: "SNO",
+    accessorKey: "sno",
+    size: 60,
+    cell: ({ row, table }) => {
+      const pageIndex = table.getState().pagination.pageIndex;
+      const pageSize = table.getState().pagination.pageSize;
+      return pageIndex * pageSize + row.index + 1;
+    },
+    enableSorting: false,
+  },
+  {
+    header: "Grade",
+    accessorKey: "grade",
+    size: 200,
     enableSorting: true,
-    cell: ({ row }) => <HighlightText text={row.original.name} />,
+    cell: ({ row }) => <HighlightText text={row.original.grade} />,
+  },
+  {
+    header: "Created By",
+    accessorKey: "createdBy",
+    size: 150,
+    enableSorting: true,
+    cell: ({ row }) => (
+      <HighlightText text={row.original.createdBy || "N/A"} />
+    ),
   },
   {
     header: "Status",
@@ -84,14 +104,6 @@ export const columns: ColumnDef<InstituteRow>[] = [
     ),
   },
   {
-    header: "Created At",
-    accessorKey: "createdAt",
-    size: 150,
-    cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString(),
-    enableSorting: true,
-  },
-  {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => <RowActions row={row} />,
@@ -101,47 +113,47 @@ export const columns: ColumnDef<InstituteRow>[] = [
 ];
 
 type RowActionsProps = {
-  row: Row<InstituteRow>;
+  row: Row<EmployeeGradeRow>;
 };
 
 function RowActions({ row }: RowActionsProps) {
-  const inst = row.original;
+  const grade = row.original;
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editDialog, setEditDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [editData, setEditData] = useState({
-    name: inst.name,
-    status: inst.status,
+    grade: grade.grade,
+    status: grade.status,
   });
 
   const handleEditSubmit = async () => {
-    if (!editData.name.trim()) {
-      toast.error("Name is required");
+    if (!editData.grade.trim()) {
+      toast.error("Grade is required");
       return;
     }
 
     startTransition(async () => {
-      const result = await updateInstitute(inst.id, editData);
+      const result = await updateEmployeeGrade(grade.id, editData);
       if (result.status) {
-        toast.success(result.message);
+        toast.success(result.message || "Employee grade updated successfully");
         setEditDialog(false);
         router.refresh();
       } else {
-        toast.error(result.message);
+        toast.error(result.message || "Failed to update employee grade");
       }
     });
   };
 
   const handleDeleteConfirm = async () => {
     startTransition(async () => {
-      const result = await deleteInstitute(inst.id);
+      const result = await deleteEmployeeGrade(grade.id);
       if (result.status) {
-        toast.success(result.message);
+        toast.success(result.message || "Employee grade deleted successfully");
         setDeleteDialog(false);
         router.refresh();
       } else {
-        toast.error(result.message);
+        toast.error(result.message || "Failed to delete employee grade");
       }
     });
   };
@@ -180,19 +192,20 @@ function RowActions({ row }: RowActionsProps) {
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Institute</DialogTitle>
-            <DialogDescription>Update the institute name</DialogDescription>
+            <DialogTitle>Edit Employee Grade</DialogTitle>
+            <DialogDescription>Update the employee grade details</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2 ">
-              <Label>Institute Name</Label>
+            <div className="space-y-2">
+              <Label>Grade *</Label>
               <Input
-                value={editData.name}
+                value={editData.grade}
                 onChange={(e) =>
-                  setEditData({ ...editData, name: e.target.value })
+                  setEditData({ ...editData, grade: e.target.value })
                 }
                 disabled={isPending}
-                placeholder="Institute name"
+                placeholder="Employee grade"
+                required
               />
             </div>
           </div>
@@ -216,9 +229,9 @@ function RowActions({ row }: RowActionsProps) {
       <AlertDialog open={deleteDialog} onOpenChange={setDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Institute</AlertDialogTitle>
+            <AlertDialogTitle>Delete Employee Grade</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{inst.name}&quot;? This action cannot be undone.
+              Are you sure you want to delete &quot;{grade.grade}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

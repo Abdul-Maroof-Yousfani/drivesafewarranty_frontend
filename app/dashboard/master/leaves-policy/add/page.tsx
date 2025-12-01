@@ -373,7 +373,7 @@ export default function AddLeavesPolicyPage() {
                         required
                       />
                     </div>
-                    <div className="col-span-2 flex justify-center items-start pt-8">
+                    <div className=" flex pt-5">
                       <Button
                         type="button"
                         variant="ghost"

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getAccessToken } from "@/lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api";
 
 export interface Country {
   id: string;
@@ -42,34 +43,48 @@ export interface City {
 }
 
 // Country Actions
-export async function getCountries(): Promise<{ status: boolean; data?: Country[]; message?: string }> {
+export async function getCountries(): Promise<{
+  status: boolean;
+  data?: Country[];
+  message?: string;
+}> {
   try {
     const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/countries`, { 
+    const res = await fetch(`${API_BASE}/countries`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
     });
-    
+
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch countries' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch countries" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
-    
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch countries:", error);
-    return { 
-      status: false, 
+    return {
+      status: false,
       data: [],
-      message: error instanceof Error ? error.message : 'Failed to fetch countries. Please check your connection.'
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch countries. Please check your connection.",
     };
   }
 }
 
-export async function createCountry(formData: FormData): Promise<{ status: boolean; message: string; data?: Country }> {
+export async function createCountry(
+  formData: FormData
+): Promise<{ status: boolean; message: string; data?: Country }> {
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;
 
@@ -81,7 +96,7 @@ export async function createCountry(formData: FormData): Promise<{ status: boole
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/countries`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -95,7 +110,9 @@ export async function createCountry(formData: FormData): Promise<{ status: boole
   }
 }
 
-export async function createCountries(items: { name: string; code?: string }[]): Promise<{ status: boolean; message: string }> {
+export async function createCountries(
+  items: { name: string; code?: string }[]
+): Promise<{ status: boolean; message: string }> {
   if (!items.length) {
     return { status: false, message: "At least one country is required" };
   }
@@ -104,7 +121,7 @@ export async function createCountries(items: { name: string; code?: string }[]):
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/countries/bulk`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -118,7 +135,10 @@ export async function createCountries(items: { name: string; code?: string }[]):
   }
 }
 
-export async function updateCountry(id: string, formData: FormData): Promise<{ status: boolean; message: string }> {
+export async function updateCountry(
+  id: string,
+  formData: FormData
+): Promise<{ status: boolean; message: string }> {
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;
 
@@ -130,7 +150,7 @@ export async function updateCountry(id: string, formData: FormData): Promise<{ s
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/countries/${id}`, {
       method: "PUT",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -144,7 +164,9 @@ export async function updateCountry(id: string, formData: FormData): Promise<{ s
   }
 }
 
-export async function updateCountries(items: { id: string; name: string; code?: string }[]): Promise<{ status: boolean; message: string }> {
+export async function updateCountries(
+  items: { id: string; name: string; code?: string }[]
+): Promise<{ status: boolean; message: string }> {
   if (!items.length) {
     return { status: false, message: "No items to update" };
   }
@@ -153,7 +175,7 @@ export async function updateCountries(items: { id: string; name: string; code?: 
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/countries/bulk`, {
       method: "PUT",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -167,10 +189,12 @@ export async function updateCountries(items: { id: string; name: string; code?: 
   }
 }
 
-export async function deleteCountry(id: string): Promise<{ status: boolean; message: string }> {
+export async function deleteCountry(
+  id: string
+): Promise<{ status: boolean; message: string }> {
   try {
     const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/countries/${id}`, { 
+    const res = await fetch(`${API_BASE}/countries/${id}`, {
       method: "DELETE",
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
@@ -184,7 +208,9 @@ export async function deleteCountry(id: string): Promise<{ status: boolean; mess
   }
 }
 
-export async function deleteCountries(ids: string[]): Promise<{ status: boolean; message: string }> {
+export async function deleteCountries(
+  ids: string[]
+): Promise<{ status: boolean; message: string }> {
   if (!ids.length) {
     return { status: false, message: "No items to delete" };
   }
@@ -193,7 +219,7 @@ export async function deleteCountries(ids: string[]): Promise<{ status: boolean;
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/countries/bulk`, {
       method: "DELETE",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -208,36 +234,52 @@ export async function deleteCountries(ids: string[]): Promise<{ status: boolean;
 }
 
 // City Actions
-export async function getCities(): Promise<{ status: boolean; data?: City[]; message?: string }> {
+export async function getCities(): Promise<{
+  status: boolean;
+  data?: City[];
+  message?: string;
+}> {
   try {
     const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/cities`, { 
+    const res = await fetch(`${API_BASE}/cities`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
-     });
-    
+    });
+
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch cities' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch cities" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
-    
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch cities:", error);
-    return { 
-      status: false, 
+    return {
+      status: false,
       data: [],
-      message: error instanceof Error ? error.message : 'Failed to fetch cities. Please check your connection.'
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch cities. Please check your connection.",
     };
   }
 }
 
-export async function getCitiesByCountry(countryId: string): Promise<{ status: boolean; data: City[] }> {
+export async function getCitiesByCountry(
+  countryId: string
+): Promise<{ status: boolean; data: City[] }> {
   try {
-    const res = await fetch(`${API_BASE}/cities/country/${countryId}`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE}/cities/country/${countryId}`, {
+      cache: "no-store",
+    });
     return res.json();
   } catch (error) {
     console.error("Failed to fetch cities:", error);
@@ -246,116 +288,164 @@ export async function getCitiesByCountry(countryId: string): Promise<{ status: b
 }
 
 // State Actions
-export async function getStates(): Promise<{ status: boolean; data?: State[]; message?: string }> {
+export async function getStates(): Promise<{
+  status: boolean;
+  data?: State[];
+  message?: string;
+}> {
   try {
     const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/states`, { 
+    const res = await fetch(`${API_BASE}/states`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
     });
-    
+
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch states' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch states" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
-    
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch states:", error);
-    return { 
-      status: false, 
+    return {
+      status: false,
       data: [],
-      message: error instanceof Error ? error.message : 'Failed to fetch states. Please check your connection.'
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch states. Please check your connection.",
     };
   }
 }
 
-export async function getStatesByCountry(countryId: string): Promise<{ status: boolean; data?: State[]; message?: string }> {
+export async function getStatesByCountry(
+  countryId: string
+): Promise<{ status: boolean; data?: State[]; message?: string }> {
   try {
     const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/states/country/${countryId}`, { 
+    const res = await fetch(`${API_BASE}/states/country/${countryId}`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
     });
-    
+
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch states' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch states" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
-    
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch states:", error);
-    return { 
-      status: false, 
+    return {
+      status: false,
       data: [],
-      message: error instanceof Error ? error.message : 'Failed to fetch states. Please check your connection.'
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch states. Please check your connection.",
     };
   }
 }
 
-export async function getCitiesByState(stateId: string): Promise<{ status: boolean; data?: City[]; message?: string }> {
+export async function getCitiesByState(
+  stateId: string
+): Promise<{ status: boolean; data?: City[]; message?: string }> {
   try {
-    const res = await fetch(`${API_BASE}/cities/state/${stateId}`, { 
+    const token = await getAccessToken();
+    const res = await fetch(`${API_BASE}/cities/state/${stateId}`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
     });
-    
+
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch cities' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch cities" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
-    
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch cities:", error);
-    return { 
-      status: false, 
+    return {
+      status: false,
       data: [],
-      message: error instanceof Error ? error.message : 'Failed to fetch cities. Please check your connection.'
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch cities. Please check your connection.",
     };
   }
 }
 
 // State CRUD Actions
-export async function getStateById(id: string): Promise<{ status: boolean; data?: State; message?: string }> {
+export async function getStateById(
+  id: string
+): Promise<{ status: boolean; data?: State; message?: string }> {
   try {
-    const res = await fetch(`${API_BASE}/states/${id}`, { 
+    const res = await fetch(`${API_BASE}/states/${id}`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
       },
     });
-    
+
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch state' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch state" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
-    
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch state:", error);
-    return { 
-      status: false, 
-      message: error instanceof Error ? error.message : 'Failed to fetch state. Please check your connection.'
+    return {
+      status: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch state. Please check your connection.",
     };
   }
 }
 
-export async function createState(data: { name: string; countryId: string; status?: string }): Promise<{ status: boolean; data?: State; message?: string }> {
+export async function createState(data: {
+  name: string;
+  countryId: string;
+  status?: string;
+}): Promise<{ status: boolean; data?: State; message?: string }> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/states`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -369,7 +459,9 @@ export async function createState(data: { name: string; countryId: string; statu
   }
 }
 
-export async function createStates(items: { name: string; countryId: string; status?: string }[]): Promise<{ status: boolean; message?: string }> {
+export async function createStates(
+  items: { name: string; countryId: string; status?: string }[]
+): Promise<{ status: boolean; message?: string }> {
   if (!items.length) {
     return { status: false, message: "At least one state is required" };
   }
@@ -378,7 +470,7 @@ export async function createStates(items: { name: string; countryId: string; sta
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/states/bulk`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -392,12 +484,15 @@ export async function createStates(items: { name: string; countryId: string; sta
   }
 }
 
-export async function updateState(id: string, data: { name: string; countryId?: string; status?: string }): Promise<{ status: boolean; data?: State; message?: string }> {
+export async function updateState(
+  id: string,
+  data: { name: string; countryId?: string; status?: string }
+): Promise<{ status: boolean; data?: State; message?: string }> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/states/${id}`, {
       method: "PUT",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -411,12 +506,14 @@ export async function updateState(id: string, data: { name: string; countryId?: 
   }
 }
 
-export async function updateStates(items: { id: string; name: string; countryId?: string; status?: string }[]): Promise<{ status: boolean; message?: string }> {
+export async function updateStates(
+  items: { id: string; name: string; countryId?: string; status?: string }[]
+): Promise<{ status: boolean; message?: string }> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/states/bulk`, {
       method: "PUT",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -430,12 +527,14 @@ export async function updateStates(items: { id: string; name: string; countryId?
   }
 }
 
-export async function deleteState(id: string): Promise<{ status: boolean; message?: string }> {
+export async function deleteState(
+  id: string
+): Promise<{ status: boolean; message?: string }> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/states/${id}`, {
       method: "DELETE",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -448,12 +547,14 @@ export async function deleteState(id: string): Promise<{ status: boolean; messag
   }
 }
 
-export async function deleteStates(ids: string[]): Promise<{ status: boolean; message?: string }> {
+export async function deleteStates(
+  ids: string[]
+): Promise<{ status: boolean; message?: string }> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/states/bulk`, {
       method: "DELETE",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -467,7 +568,9 @@ export async function deleteStates(ids: string[]): Promise<{ status: boolean; me
   }
 }
 
-export async function createCity(formData: FormData): Promise<{ status: boolean; message: string; data?: City }> {
+export async function createCity(
+  formData: FormData
+): Promise<{ status: boolean; message: string; data?: City }> {
   const name = formData.get("name") as string;
   const countryId = formData.get("countryId") as string;
   const stateId = formData.get("stateId") as string;
@@ -486,7 +589,7 @@ export async function createCity(formData: FormData): Promise<{ status: boolean;
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/cities`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -500,7 +603,9 @@ export async function createCity(formData: FormData): Promise<{ status: boolean;
   }
 }
 
-export async function createCities(items: { name: string; countryId: string; stateId: string }[]): Promise<{ status: boolean; message: string }> {
+export async function createCities(
+  items: { name: string; countryId: string; stateId: string }[]
+): Promise<{ status: boolean; message: string }> {
   if (!items.length) {
     return { status: false, message: "At least one city is required" };
   }
@@ -509,7 +614,7 @@ export async function createCities(items: { name: string; countryId: string; sta
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/cities/bulk`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -523,7 +628,10 @@ export async function createCities(items: { name: string; countryId: string; sta
   }
 }
 
-export async function updateCity(id: string, formData: FormData): Promise<{ status: boolean; message: string }> {
+export async function updateCity(
+  id: string,
+  formData: FormData
+): Promise<{ status: boolean; message: string }> {
   const name = formData.get("name") as string;
   const countryId = formData.get("countryId") as string;
   const stateId = formData.get("stateId") as string;
@@ -539,11 +647,15 @@ export async function updateCity(id: string, formData: FormData): Promise<{ stat
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/cities/${id}`, {
       method: "PUT",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
-      body: JSON.stringify({ name, countryId: countryId || undefined, stateId }),
+      body: JSON.stringify({
+        name,
+        countryId: countryId || undefined,
+        stateId,
+      }),
     });
     const data = await res.json();
     if (data.status) revalidatePath("/dashboard/master/city");
@@ -553,7 +665,9 @@ export async function updateCity(id: string, formData: FormData): Promise<{ stat
   }
 }
 
-export async function updateCities(items: { id: string; name: string; countryId: string; stateId: string }[]): Promise<{ status: boolean; message: string }> {
+export async function updateCities(
+  items: { id: string; name: string; countryId: string; stateId: string }[]
+): Promise<{ status: boolean; message: string }> {
   if (!items.length) {
     return { status: false, message: "No items to update" };
   }
@@ -562,7 +676,7 @@ export async function updateCities(items: { id: string; name: string; countryId:
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/cities/bulk`, {
       method: "PUT",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -576,10 +690,12 @@ export async function updateCities(items: { id: string; name: string; countryId:
   }
 }
 
-export async function deleteCity(id: string): Promise<{ status: boolean; message: string }> {
+export async function deleteCity(
+  id: string
+): Promise<{ status: boolean; message: string }> {
   try {
     const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/cities/${id}`, { 
+    const res = await fetch(`${API_BASE}/cities/${id}`, {
       method: "DELETE",
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
@@ -593,7 +709,9 @@ export async function deleteCity(id: string): Promise<{ status: boolean; message
   }
 }
 
-export async function deleteCities(ids: string[]): Promise<{ status: boolean; message: string }> {
+export async function deleteCities(
+  ids: string[]
+): Promise<{ status: boolean; message: string }> {
   if (!ids.length) {
     return { status: false, message: "No items to delete" };
   }
@@ -602,7 +720,7 @@ export async function deleteCities(ids: string[]): Promise<{ status: boolean; me
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/cities/bulk`, {
       method: "DELETE",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
@@ -615,4 +733,3 @@ export async function deleteCities(ids: string[]): Promise<{ status: boolean; me
     return { status: false, message: "Failed to delete cities" };
   }
 }
-
