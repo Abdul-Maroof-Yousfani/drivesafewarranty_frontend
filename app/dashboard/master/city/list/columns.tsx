@@ -32,7 +32,7 @@ import { Autocomplete } from "@/components/ui/autocomplete";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EllipsisIcon, Loader2, Pencil, Trash2 } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { City, Country, State, updateCity, deleteCity, getStatesByCountry } from "@/lib/actions/city";

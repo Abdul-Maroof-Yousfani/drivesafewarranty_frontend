@@ -70,7 +70,7 @@ async function tryRefresh(refreshToken: string | undefined, cookieStore: any): P
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 60 * 60, // 1 hour
+        maxAge: 2 * 60 * 60, // 2 hours (matches backend access token expiry)
         path: "/",
       });
 
