@@ -105,33 +105,38 @@ export default function ViewEmployeePage() {
 
       <div className="border rounded-xl p-4 space-y-6">
         {/* Profile Header */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                  <User className="w-16 h-16 text-muted-foreground" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <CardTitle className="text-2xl">{employee.employeeName}</CardTitle>
-                <CardDescription className="text-base mt-1">
-                  {employee.employeeId}
-                </CardDescription>
-                <div className="mt-2">
-                  <Badge variant={employee.status === "active" ? "default" : "secondary"}>
-                    {employee.status}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+  {/* Profile Header */}
+<Card>
+  <CardHeader>
+    <div className="flex flex-col items-center text-center gap-4">
+
+      {/* Centered Profile Image */}
+      <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+        <User className="w-16 h-16 text-muted-foreground" />
+      </div>
+
+      {/* Name, ID, Status */}
+      <div>
+        <CardTitle className="text-2xl">{employee.employeeName}</CardTitle>
+        <CardDescription className="text-base mt-1">
+          {employee.employeeId}
+        </CardDescription>
+
+        <div className="mt-2">
+          <Badge variant={employee.status === "active" ? "default" : "secondary"}>
+            {employee.status}
+          </Badge>
+        </div>
+      </div>
+
+    </div>
+  </CardHeader>
+</Card>
 
         {/* Basic Information */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Basic Information</CardTitle>
+            <CardTitle className="text-lg font-semibold">Basic</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>

@@ -36,7 +36,8 @@ const FileUploadComponent = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (newFiles: File[]) => {
-    setFiles((prevFiles) => [...prevFiles, ...newFiles]);
+   setFiles(newFiles.slice(0, 1));
+
     onChange && onChange(newFiles);
   };
 

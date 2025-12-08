@@ -62,6 +62,10 @@ export async function getCountries(): Promise<{
       const errorData = await res
         .json()
         .catch(() => ({ message: "Failed to fetch countries" }));
+
+            const data = await res.json();
+
+    console.log("////////////Backend se countries data:", data); // <-- Add this
       return {
         status: false,
         message: errorData.message || `HTTP error! status: ${res.status}`,

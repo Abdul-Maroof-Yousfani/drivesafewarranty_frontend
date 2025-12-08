@@ -717,6 +717,7 @@ export default function CreateEmployeePage() {
   };
 
   const onSubmit = async (data: EmployeeFormData) => {
+    console.log("Submitting Employee Data:", data); // <-- add this line to check
     // Zod validation has already been done by the form resolver
     startTransition(async () => {
       try {
@@ -1166,101 +1167,121 @@ export default function CreateEmployeePage() {
               </Card>
 
               {/* Document Uploads */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Employee Document Uploads</CardTitle>
-                  <CardDescription>Upload required documents</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Upload CV</Label>
-                    <FileUpload
-                      id="cv"
-                      onChange={(files) => handleFileChange("cv", files?.[0] || null)}
-                    />
-                  </div>
+          <Card>
+  <CardHeader>
+    <CardTitle>Employee Document Uploads</CardTitle>
+    <CardDescription>Upload required documents</CardDescription>
+  </CardHeader>
 
-                  <div>
-                    <Label>Upload Education Degrees</Label>
-                    <FileUpload
-                      id="educationDegrees"
-                      onChange={(files) => handleFileChange("educationDegrees", files?.[0] || null)}
-                    />
-                  </div>
+  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                  <div>
-                    <Label>Upload Passport Size Photos (2)</Label>
-                    <FileUpload
-                      id="passportPhotos"
-                      onChange={(files) => handleFileChange("passportPhotos", files?.[0] || null)}
-                    />
-                  </div>
+    <div className="flex flex-col items-center">
+      <Label className="text-center">Upload CV</Label>
+      <FileUpload
+        id="cv"
+        onChange={(files) => handleFileChange("cv", files?.[0] || null)}
+      />
+    </div>
 
-                  <div>
-                    <Label>Upload CNIC</Label>
-                    <FileUpload
-                      id="cnic"
-                      onChange={(files) => handleFileChange("cnic", files?.[0] || null)}
-                    />
-                  </div>
+    <div className="flex flex-col items-center">
+      <Label className="text-center">Upload Education Degrees</Label>
+      <FileUpload
+        id="educationDegrees"
+        onChange={(files) =>
+          handleFileChange("educationDegrees", files?.[0] || null)
+        }
+      />
+    </div>
 
-                  <div>
-                    <Label>Clearance Letter (if any)</Label>
-                    <FileUpload
-                      id="clearanceLetter"
-                      onChange={(files) => handleFileChange("clearanceLetter", files?.[0] || null)}
-                    />
-                  </div>
+    <div className="flex flex-col items-center">
+      <Label className="text-center">Upload Passport Size Photos (2)</Label>
+      <FileUpload
+        id="passportPhotos"
+        onChange={(files) =>
+          handleFileChange("passportPhotos", files?.[0] || null)
+        }
+      />
+    </div>
 
-                  <div>
-                    <Label>Fit & Proper Criteria Form</Label>
-                    <FileUpload
-                      id="fitProperCriteria"
-                      onChange={(files) => handleFileChange("fitProperCriteria", files?.[0] || null)}
-                    />
-                  </div>
+    <div className="flex flex-col items-center">
+      <Label className="text-center">Upload CNIC</Label>
+      <FileUpload
+        id="cnic"
+        onChange={(files) => handleFileChange("cnic", files?.[0] || null)}
+      />
+    </div>
 
-                  <div>
-                    <Label>Affirmation – Company Service Rules</Label>
-                    <FileUpload
-                      id="serviceRulesAffirmation"
-                      onChange={(files) => handleFileChange("serviceRulesAffirmation", files?.[0] || null)}
-                    />
-                  </div>
+    <div className="flex flex-col items-center">
+      <Label className="text-center">Clearance Letter (if any)</Label>
+      <FileUpload
+        id="clearanceLetter"
+        onChange={(files) =>
+          handleFileChange("clearanceLetter", files?.[0] || null)
+        }
+      />
+    </div>
 
-                  <div>
-                    <Label>Affirmation – VIS Code of Conduct 2019</Label>
-                    <FileUpload
-                      id="codeOfConduct"
-                      onChange={(files) => handleFileChange("codeOfConduct", files?.[0] || null)}
-                    />
-                  </div>
+    <div className="flex flex-col items-center">
+      <Label className="text-center">Fit & Proper Criteria Form</Label>
+      <FileUpload
+        id="fitProperCriteria"
+        onChange={(files) =>
+          handleFileChange("fitProperCriteria", files?.[0] || null)
+        }
+      />
+    </div>
 
-                  <div>
-                    <Label>Upload Non-Disclosure Agreement (NDA)</Label>
-                    <FileUpload
-                      id="nda"
-                      onChange={(files) => handleFileChange("nda", files?.[0] || null)}
-                    />
-                  </div>
+    <div className="flex flex-col items-center">
+      <Label className="text-center">Affirmation – Company Service Rules</Label>
+      <FileUpload
+        id="serviceRulesAffirmation"
+        onChange={(files) =>
+          handleFileChange("serviceRulesAffirmation", files?.[0] || null)
+        }
+      />
+    </div>
 
-                  <div>
-                    <Label>Information Secrecy / Confidentiality Form</Label>
-                    <FileUpload
-                      id="secrecyForm"
-                      onChange={(files) => handleFileChange("secrecyForm", files?.[0] || null)}
-                    />
-                  </div>
+    <div className="flex flex-col items-center">
+      <Label className="text-center">Affirmation – VIS Code of Conduct 2019</Label>
+      <FileUpload
+        id="codeOfConduct"
+        onChange={(files) =>
+          handleFileChange("codeOfConduct", files?.[0] || null)
+        }
+      />
+    </div>
 
-                  <div>
-                    <Label>Investment Disclosure Form</Label>
-                    <FileUpload
-                      id="investmentDisclosure"
-                      onChange={(files) => handleFileChange("investmentDisclosure", files?.[0] || null)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+    <div className="flex flex-col items-center">
+      <Label className="text-center">Upload Non-Disclosure Agreement (NDA)</Label>
+      <FileUpload
+        id="nda"
+        onChange={(files) => handleFileChange("nda", files?.[0] || null)}
+      />
+    </div>
+
+    <div className="flex flex-col items-center">
+      <Label className="text-center">Information Secrecy / Confidentiality Form</Label>
+      <FileUpload
+        id="secrecyForm"
+        onChange={(files) =>
+          handleFileChange("secrecyForm", files?.[0] || null)
+        }
+      />
+    </div>
+
+    <div className="flex flex-col items-center">
+      <Label className="text-center">Investment Disclosure Form</Label>
+      <FileUpload
+        id="investmentDisclosure"
+        onChange={(files) =>
+          handleFileChange("investmentDisclosure", files?.[0] || null)
+        }
+      />
+    </div>
+
+  </CardContent>
+</Card>
+
             </>
           )}
 
