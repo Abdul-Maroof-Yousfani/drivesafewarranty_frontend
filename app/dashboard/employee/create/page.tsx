@@ -717,7 +717,6 @@ export default function CreateEmployeePage() {
   };
 
   const onSubmit = async (data: EmployeeFormData) => {
-    console.log("Submitting Employee Data:", data); // <-- add this line to check
     // Zod validation has already been done by the form resolver
     startTransition(async () => {
       try {
