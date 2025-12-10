@@ -87,7 +87,7 @@ export const columns: ColumnDef<EmployeeStatusRow>[] = [
     size: 150,
     enableSorting: true,
     cell: ({ row }) => (
-      <HighlightText text={row.original.createdBy || "N/A"} />
+      <HighlightText text={row.original.createdBy || "—"} />
     ),
   },
   {
