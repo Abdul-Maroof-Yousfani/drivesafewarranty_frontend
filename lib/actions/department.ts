@@ -54,35 +54,6 @@ export async function getDepartmentById(id: string): Promise<{ status: boolean; 
   }
 }
 
-export async function createDepartment(formData: FormData): Promise<{ status: boolean; message: string; data?: Department }> {
-  const name = formData.get("name") as string;
-  
-  if (!name?.trim()) {
-    return { status: false, message: "Name is required" };
-  }
-
-  try {
-    const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/departments`, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      body: JSON.stringify({ name }),
-    });
-    const data = await res.json();
-    
-    if (data.status) {
-      revalidatePath("/dashboard/master/department");
-    }
-    
-    return data;
-  } catch (error) {
-    return { status: false, message: "Failed to create department" };
-  }
-}
-
 export async function createDepartments(names: string[]): Promise<{ status: boolean; message: string; data?: Department[] }> {
   if (!names.length) {
     return { status: false, message: "At least one name is required" };
@@ -90,7 +61,7 @@ export async function createDepartments(names: string[]): Promise<{ status: bool
 
   try {
     const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/departments/bulk`, {
+    const res = await fetch(`${API_BASE}/departments`, {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
