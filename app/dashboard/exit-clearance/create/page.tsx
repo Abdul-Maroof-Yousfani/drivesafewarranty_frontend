@@ -21,7 +21,7 @@ import Link from "next/link";
 import { getAllEmployeesForClearance, createExitClearance } from "@/lib/actions/exit-clearance";
 import type { Employee } from "@/lib/actions/exit-clearance";
 
-const locations = ["Head Office", "Branch A", "Branch B", "Remote"];
+// const locations = ["Head Office", "Branch A", "Branch B", "Remote"];
 const leavingReasons = ["Resignation", "Termination", "Contract End", "Retirement", "Other"];
 
 export default function CreateExitClearancePage() {
@@ -35,7 +35,7 @@ export default function CreateExitClearancePage() {
     designation: "",
     department: "",
     subDepartment: "",
-    location: "",
+    // location: "",
     leavingReason: "",
     contractEnd: "",
     lastWorkingDate: "",
@@ -122,7 +122,7 @@ export default function CreateExitClearancePage() {
           designation: formData.designation || null,
           department: formData.department || null,
           subDepartment: formData.subDepartment || null,
-          location: formData.location || null,
+          // location: formData.location || null,
           leavingReason: formData.leavingReason || null,
           contractEnd: formData.contractEnd || null,
           lastWorkingDate: formData.lastWorkingDate,
@@ -220,13 +220,13 @@ export default function CreateExitClearancePage() {
               <Label>Sub Department</Label>
               <Input value={formData.subDepartment} disabled className="bg-muted" />
             </div>
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label>Location</Label>
               <Select value={formData.location} onValueChange={(v) => updateField("location", v)} disabled={isPending}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>{locations.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
               </Select>
-            </div>
+            </div> */}
             <div className="space-y-2">
               <Label>Leaving Reason</Label>
               <Select value={formData.leavingReason} onValueChange={(v) => updateField("leavingReason", v)} disabled={isPending}>

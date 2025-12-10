@@ -104,9 +104,9 @@ export default function ViewEmployeePage() {
       </div>
 
       <div className="border rounded-xl p-4 space-y-6">
-        {/* Profile Header */}
+      
   {/* Profile Header */}
-<Card>
+<Card className="border-none shadow-none">
   <CardHeader>
     <div className="flex flex-col items-center text-center gap-4">
 
@@ -133,219 +133,166 @@ export default function ViewEmployeePage() {
   </CardHeader>
 </Card>
 
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Basic</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <Label className="text-sm text-muted-foreground">Employee ID</Label>
-              <p className="font-medium">{employee.employeeId}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Employee Name</Label>
-              <p className="font-medium">{employee.employeeName}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Father / Husband Name</Label>
-              <p className="font-medium">{employee.fatherHusbandName || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Department</Label>
-              <p className="font-medium">{(employee as any).departmentName || employee.department || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Sub Department</Label>
-              <p className="font-medium">{(employee as any).subDepartmentName || employee.subDepartment || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Employee Grade</Label>
-              <p className="font-medium">{(employee as any).employeeGradeName || employee.employeeGrade || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Attendance ID</Label>
-              <p className="font-medium">{employee.attendanceId || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Designation</Label>
-              <p className="font-medium">{(employee as any).designationName || employee.designation || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Marital Status</Label>
-              <p className="font-medium">{(employee as any).maritalStatusName || employee.maritalStatus || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Employment Status</Label>
-              <p className="font-medium">{(employee as any).employmentStatusName || employee.employmentStatus || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Probation Expiry Date</Label>
-              <p className="font-medium">{formatDate(employee.probationExpiryDate)}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">CNIC Number</Label>
-              <p className="font-medium">{formatCNIC(employee.cnicNumber)}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">CNIC Expiry Date</Label>
-              <p className="font-medium">
-                {employee.lifetimeCnic ? "Lifetime" : formatDate(employee.cnicExpiryDate)}
-              </p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Joining Date</Label>
-              <p className="font-medium">{formatDate(employee.joiningDate)}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Date of Birth</Label>
-              <p className="font-medium">{formatDate(employee.dateOfBirth)}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Nationality</Label>
-              <p className="font-medium">{employee.nationality || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Gender</Label>
-              <p className="font-medium">{employee.gender || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Contact Number</Label>
-              <p className="font-medium">{employee.contactNumber || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Emergency Contact Number</Label>
-              <p className="font-medium">{employee.emergencyContactNumber || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Emergency Contact Person</Label>
-              <p className="font-medium">{employee.emergencyContactPerson || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Personal Email</Label>
-              <p className="font-medium">{employee.personalEmail || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Official Email</Label>
-              <p className="font-medium">{employee.officialEmail || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Country</Label>
-              <p className="font-medium">{employee.country || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">State / Province</Label>
-              <p className="font-medium">{(employee as any).provinceName || employee.province || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">City</Label>
-              <p className="font-medium">{(employee as any).cityName || employee.city || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Employee Salary</Label>
-              <p className="font-medium">PKR {Number(employee.employeeSalary).toLocaleString()}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">EOBI</Label>
-              <p className="font-medium">{employee.eobi ? "Yes" : "No"}</p>
-            </div>
-            {employee.eobi && (
-              <div>
-                <Label className="text-sm text-muted-foreground">EOBI Number</Label>
-                <p className="font-medium">{employee.eobiNumber || "N/A"}</p>
-              </div>
-            )}
-            <div>
-              <Label className="text-sm text-muted-foreground">Provident Fund</Label>
-              <p className="font-medium">{employee.providentFund ? "Yes" : "No"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Overtime Applicable</Label>
-              <p className="font-medium">{employee.overtimeApplicable ? "Yes" : "No"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Days Off</Label>
-              <p className="font-medium">{employee.daysOff || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Reporting Manager</Label>
-              <p className="font-medium">{employee.reportingManager || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Working Hours Policy</Label>
-              <p className="font-medium">{(employee as any).workingHoursPolicyName || employee.workingHoursPolicy || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Branch</Label>
-              <p className="font-medium">{(employee as any).branchName || employee.branch || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Leaves Policy</Label>
-              <p className="font-medium">{(employee as any).leavesPolicyName || employee.leavesPolicy || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Allow Remote Attendance</Label>
-              <p className="font-medium">{employee.allowRemoteAttendance ? "Yes" : "No"}</p>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Address Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Address Information</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm text-muted-foreground">Current Address</Label>
-              <p className="font-medium mt-1">{employee.currentAddress || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Permanent Address</Label>
-              <p className="font-medium mt-1">{employee.permanentAddress || "N/A"}</p>
-            </div>
-          </CardContent>
-        </Card>
+{/* Basic Information */}
+<Card className="border-none shadow-none">
+  <CardHeader>
+    <CardTitle className="text-lg font-semibold">Basic Information</CardTitle>
+    <CardDescription>Employee personal & job-related details</CardDescription>
+  </CardHeader>
 
-        {/* Bank Account Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Bank Account Details</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label className="text-sm text-muted-foreground">Bank Name</Label>
-              <p className="font-medium">{employee.bankName || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Account Number</Label>
-              <p className="font-medium">{employee.accountNumber || "N/A"}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Account Title</Label>
-              <p className="font-medium">{employee.accountTitle || "N/A"}</p>
-            </div>
-          </CardContent>
-        </Card>
+  <CardContent>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-        {/* Equipment Issued */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Equipment Issued</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              {employee.laptop && <Badge variant="outline">Laptop</Badge>}
-              {employee.card && <Badge variant="outline">Card</Badge>}
-              {employee.mobileSim && <Badge variant="outline">Mobile SIM</Badge>}
-              {employee.key && <Badge variant="outline">Key</Badge>}
-              {employee.tools && <Badge variant="outline">Tools</Badge>}
-              {!employee.laptop && !employee.card && !employee.mobileSim && !employee.key && !employee.tools && (
-                <p className="text-muted-foreground">No equipment issued</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      {/** REUSABLE INFO BLOCK */}
+ {[
+  { label: "Employee ID", value: employee.employeeId },
+  { label: "Employee Name", value: employee.employeeName },
+  { label: "Father / Husband Name", value: employee.fatherHusbandName || "N/A" },
+  { label: "Department", value: (employee as any).departmentName || employee.department || "N/A" },
+  { label: "Sub Department", value: (employee as any).subDepartmentName || employee.subDepartment || "N/A" },
+  { label: "Employee Grade", value: (employee as any).employeeGradeName || employee.employeeGrade || "N/A" },
+  { label: "Attendance ID", value: employee.attendanceId || "N/A" },
+  { label: "Designation", value: (employee as any).designationName || employee.designation || "N/A" },
+  { label: "Marital Status", value: (employee as any).maritalStatusName || employee.maritalStatus || "N/A" },
+  { label: "Employment Status", value: (employee as any).employmentStatusName || employee.employmentStatus || "N/A" },
+  { label: "Probation Expiry Date", value: formatDate(employee.probationExpiryDate) },
+  { label: "CNIC Number", value: formatCNIC(employee.cnicNumber) },
+  { label: "CNIC Expiry Date", value: employee.lifetimeCnic ? "Lifetime" : formatDate(employee.cnicExpiryDate) },
+  { label: "Joining Date", value: formatDate(employee.joiningDate) },
+  { label: "Date of Birth", value: formatDate(employee.dateOfBirth) },
+  { label: "Nationality", value: employee.nationality || "N/A" },
+  { label: "Gender", value: employee.gender || "N/A" },
+  { label: "Contact Number", value: employee.contactNumber || "N/A" },
+  { label: "Emergency Contact Number", value: employee.emergencyContactNumber || "N/A" },
+  { label: "Emergency Contact Person", value: employee.emergencyContactPerson || "N/A" },
+  { label: "Personal Email", value: employee.personalEmail || "N/A" },
+  { label: "Official Email", value: employee.officialEmail || "N/A" },
+  { label: "Country", value: employee.country || "N/A" },
+  { label: "State / Province", value: (employee as any).provinceName || employee.province || "N/A" },
+  { label: "City", value: (employee as any).cityName || employee.city || "N/A" },
+  { label: "Employee Salary", value: `PKR ${Number(employee.employeeSalary).toLocaleString()}` },
+  { label: "EOBI", value: employee.eobi ? "Yes" : "No" },
+  ...(employee.eobi ? [{ label: "EOBI Number", value: employee.eobiNumber || "N/A" }] : []),
+  { label: "Provident Fund", value: employee.providentFund ? "Yes" : "No" },
+  { label: "Overtime Applicable", value: employee.overtimeApplicable ? "Yes" : "No" },
+  { label: "Days Off", value: employee.daysOff || "N/A" },
+  { label: "Reporting Manager", value: employee.reportingManager || "N/A" },
+  { label: "Working Hours Policy", value: (employee as any).workingHoursPolicyName || employee.workingHoursPolicy || "N/A" },
+  { label: "Branch", value: (employee as any).branchName || employee.branch || "N/A" },
+  { label: "Leaves Policy", value: (employee as any).leavesPolicyName || employee.leavesPolicy || "N/A" },
+  { label: "Allow Remote Attendance", value: employee.allowRemoteAttendance ? "Yes" : "No" },
+].map((item, index) => (
+  <div
+    key={index}
+    className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
+  >
+    <p className="text-xs text-muted-foreground">{item.label}</p>
+    <p className="text-gray-900 font-semibold text-1xl mt-1">
+      {item.value}
+    </p>
+  </div>
+))}
+
+
+    </div>
+  </CardContent>
+</Card>
+
+
+
+
+
+
+
+
+
+
+{/* Address Information */}
+<Card className="border-none shadow-none">
+  <CardHeader>
+    <CardTitle>Address Information</CardTitle>
+  </CardHeader>
+
+  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {[
+      { label: "Current Address", value: employee.currentAddress },
+      { label: "Permanent Address", value: employee.permanentAddress },
+    ].map((item, index) => (
+      <div
+        key={index}
+        className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
+      >
+        <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
+        <p className="text-gray-900 font-semibold text-1xl mt-1">
+          {item.value || "N/A"}
+        </p>
+      </div>
+    ))}
+  </CardContent>
+</Card>
+
+
+
+{/* Bank Account Details */}
+<Card className="border-none shadow-none">
+  <CardHeader>
+    <CardTitle>Bank Account Details</CardTitle>
+  </CardHeader>
+
+  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {[
+      { label: "Bank Name", value: employee.bankName },
+      { label: "Account Number", value: employee.accountNumber },
+      { label: "Account Title", value: employee.accountTitle },
+    ].map((item, index) => (
+      <div
+        key={index}
+        className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
+      >
+        <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
+        <p className="text-gray-900 font-semibold text-1xl mt-1">
+          {item.value || "N/A"}
+        </p>
+      </div>
+    ))}
+  </CardContent>
+</Card>
+
+
+{/* Equipment Issued */}
+<Card className="border-none shadow-none">
+  <CardHeader>
+    <CardTitle>Equipment Issued</CardTitle>
+  </CardHeader>
+
+  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {[
+      { label: "Mouse", value: employee.mouse },
+    ].map((item, index) => {
+      const valStr = item.value ? "Issued" : "Not Issued";
+
+      return (
+        <div
+          key={index}
+          className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
+        >
+          <p className="text-xs font-medium text-muted-foreground">
+            {item.label}
+          </p>
+
+          <p className="text-gray-900 font-semibold text-1xl mt-1">
+            {valStr}
+          </p>
+        </div>
+      );
+    })}
+  </CardContent>
+</Card>
+
+
+
+
 
         {/* Login Credentials */}
         {(employee.accountType || employee.roles) && (
@@ -356,13 +303,13 @@ export default function ViewEmployeePage() {
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {employee.accountType && (
                 <div>
-                  <Label className="text-sm text-muted-foreground">Account Type</Label>
+                  <Label className="text-xs text-muted-foreground">Account Type</Label>
                   <p className="font-medium">{employee.accountType}</p>
                 </div>
               )}
               {employee.roles && (
                 <div>
-                  <Label className="text-sm text-muted-foreground">Roles</Label>
+                  <Label className="text-xs text-muted-foreground">Roles</Label>
                   <p className="font-medium">{employee.roles}</p>
                 </div>
               )}
@@ -373,4 +320,5 @@ export default function ViewEmployeePage() {
     </div>
   );
 }
+
 

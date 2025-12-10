@@ -260,12 +260,6 @@ export default function EmployeeListPage() {
             <Upload className="h-4 w-4 mr-2" />
             Upload Employees CSV
           </Button>
-          <Button asChild variant="outline">
-            <a href="/employee_sample.csv" download>
-              <Download className="h-4 w-4 mr-2" />
-              Download Sample CSV
-            </a>
-          </Button>
         </div>
       </div>
 
@@ -459,7 +453,7 @@ export default function EmployeeListPage() {
       </AlertDialog>
 
       <Dialog open={uploadDialog} onOpenChange={setUploadDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Upload Employees CSV</DialogTitle>
             <DialogDescription>
@@ -481,6 +475,15 @@ export default function EmployeeListPage() {
                 Allowed: CSV up to 5 MB
               </p>
             )}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-900 mb-2">Need a template?</p>
+              <Button asChild variant="outline" size="sm">
+                <a href="/employee_samples.xlsx" download>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Sample Template
+                </a>
+              </Button>
+            </div>
           </div>
           <DialogFooter>
             <Button
