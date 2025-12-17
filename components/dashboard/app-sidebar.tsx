@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronRight, Building2 } from "lucide-react";
-import { MenuItem, menuData } from "./sidebar-menu-data";
+import { MenuItem, menuData, warrantyPortalMenuData } from "./sidebar-menu-data";
+import { useAuth } from "@/hooks/use-auth";
 
 function SubMenuItem({ item, pathname }: { item: MenuItem; pathname: string }) {
   const isActive = item.href === pathname;
@@ -100,25 +101,48 @@ function MenuItemComponent({ item, pathname }: { item: MenuItem; pathname: strin
   );
 }
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  erpMode?: boolean;
+}
+
+export function AppSidebar({ erpMode = false }: AppSidebarProps) {
   const pathname = usePathname();
+  const { user, isAdmin } = useAuth();
+  const isSuperAdmin = isAdmin();
+  const isDealer = user?.role === "dealer";
+
+  // Determine which menu to show based on role + ERP mode
+  let currentMenuData: MenuItem[];
+  if ((isSuperAdmin || isDealer) && erpMode) {
+    // Super Admin or Dealer in ERP mode -> full HR/ERP menu
+    currentMenuData = menuData;
+  } else if (isDealer && !erpMode) {
+    // Dealer in Warranty Portal -> hide Dealer Management section
+    currentMenuData = warrantyPortalMenuData.filter(
+      (item) => item.title !== "Dealer Management"
+    );
+  } else {
+    // Super Admin warranty portal or other roles -> full warranty portal menu
+    currentMenuData = warrantyPortalMenuData;
+  }
+  const portalTitle =  "Drive Safe Warranty";
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-2 justify-center">
           <span className="font-semibold text-lg group-data-[collapsible=icon]:hidden">
-            Speed Pvt. Ltd
+            {portalTitle}
           </span>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <ScrollArea className="h-[calc(100vh-80px)]">
           <SidebarGroup>
-            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupLabel>{erpMode ? "ERP Navigation" : "Warranty Portal"}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {menuData.map((item) => (
+                {currentMenuData.map((item) => (
                   <MenuItemComponent key={item.title} item={item} pathname={pathname} />
                 ))}
               </SidebarMenu>

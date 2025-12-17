@@ -4,40 +4,80 @@ import type { NextRequest } from "next/server";
 // Public routes that don't require authentication
 const publicRoutes = ["/login"];
 
-// Routes that require authentication
-const protectedRoutes = ["/dashboard"];
+// Routes that require authentication (any role)
+const protectedRoutes = ["/super-admin", "/dealer", "/customer", "/dashboard"];
 
-// Admin-only routes
-const adminRoutes = ["/dashboard/admin"];
+// Helper: get role-specific default dashboard
+function getDashboardPath(role: string | undefined | null): string {
+  switch (role) {
+    case "super_admin":
+    case "admin":
+      return "/super-admin/dashboard";
+    case "dealer":
+      return "/dealer/dashboard";
+    case "customer":
+      return "/customer/dashboard";
+    default:
+      return "/login";
+  }
+}
 
 export default function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
-  
-  // Get tokens from cookies
+
+  // Get tokens and role from cookies
   const accessToken = request.cookies.get("accessToken")?.value;
-  const refreshToken = request.cookies.get("refreshToken")?.value;
   const userRole = request.cookies.get("userRole")?.value;
 
   const isAuthenticated = !!accessToken;
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
-  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
 
-  // Redirect authenticated users away from public routes
+  // Redirect authenticated users away from public routes (e.g. /login)
   if (isAuthenticated && isPublicRoute) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    const target = getDashboardPath(userRole);
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
-  // Redirect unauthenticated users to login
+  // Redirect unauthenticated users trying to access protected routes
   if (!isAuthenticated && isProtectedRoute) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Check admin access
-  if (isAdminRoute && userRole !== "admin" && userRole !== "super_admin") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // Role-based route protection for authenticated users
+  if (isAuthenticated) {
+    const role = userRole;
+
+    // Super Admin / Admin only areas
+    const isSuperAdminRoute =
+      pathname.startsWith("/super-admin") ||
+      pathname.startsWith("/dashboard/admin");
+    if (
+      isSuperAdminRoute &&
+      role !== "super_admin" &&
+      role !== "admin"
+    ) {
+      const target = getDashboardPath(role);
+      return NextResponse.redirect(new URL(target, request.url));
+    }
+
+    // Dealer-only routes
+    const isDealerRoute = pathname.startsWith("/dealer");
+    if (isDealerRoute && role !== "dealer") {
+      const target = getDashboardPath(role);
+      return NextResponse.redirect(new URL(target, request.url));
+    }
+
+    // Customer-only routes
+    const isCustomerRoute = pathname.startsWith("/customer");
+    if (isCustomerRoute && role !== "customer") {
+      const target = getDashboardPath(role);
+      return NextResponse.redirect(new URL(target, request.url));
+    }
   }
 
   // Add security headers

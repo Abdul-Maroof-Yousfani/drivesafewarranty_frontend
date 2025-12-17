@@ -3,13 +3,15 @@
 ## Files Created/Modified
 
 ### 1. **New File: `validation.ts`**
+
 Located at: `app/dashboard/employee/create/validation.ts`
 
 Created a comprehensive Zod schema with the following validations:
 
 #### Basic Information Fields:
+
 - **employeeId**: Min 5, Max 20 characters
-- **employeeName**: Min 3, Max 100 characters  
+- **employeeName**: Min 3, Max 100 characters
 - **fatherHusbandName**: Min 3, Max 100 characters
 - **cnicNumber**: Format validation (00000-0000000-0)
 - **joiningDate**: Cannot be in the future
@@ -20,10 +22,12 @@ Created a comprehensive Zod schema with the following validations:
 - **personalEmail**: Optional email validation
 
 #### Address & Location Fields:
+
 - **country**, **state**, **city**: Required validation
 - **currentAddress**, **permanentAddress**: Optional text validation
 
 #### Financial Fields:
+
 - **employeeSalary**: Must be positive number
 - **employeeSalary**: Must be positive number
 - **eobiNumber**: 7-10 digits if provided
@@ -32,6 +36,7 @@ Created a comprehensive Zod schema with the following validations:
 - **accountTitle**: Min 3, Max 100 characters
 
 #### Other Fields:
+
 - **password**: Minimum 6 characters if provided
 - **selectedEquipments**: Array of equipment IDs
 - All select fields (department, designation, etc.): Required validation
@@ -39,20 +44,24 @@ Created a comprehensive Zod schema with the following validations:
 ---
 
 ### 2. **Modified: `page.tsx`**
+
 Located at: `app/dashboard/employee/create/page.tsx`
 
 #### Changes Made:
 
 1. **Added Imports:**
+
    ```tsx
    import { zodResolver } from "@hookform/resolvers/zod";
    import { employeeFormSchema, type EmployeeFormData } from "./validation";
    ```
 
 2. **Removed Duplicate Interface:**
+
    - Removed the manual `EmployeeFormData` interface as it's now derived from the Zod schema
 
 3. **Updated useForm Hook:**
+
    ```tsx
    const {
      register,
@@ -70,11 +79,13 @@ Located at: `app/dashboard/employee/create/page.tsx`
    ```
 
 4. **Updated Error Messages:**
+
    - Changed from generic error messages to Zod's detailed validation messages
    - Example: Before `"Employee ID is required"` → After `{errors.employeeId.message}`
    - This displays actual validation errors like "Employee ID must be at least 5 characters"
 
 5. **Updated register() calls:**
+
    - Removed `required: true` rules from individual fields
    - All validation is now handled by the Zod schema
    - Cleaner register calls: `{...register("fieldName")}`
@@ -88,6 +99,7 @@ Located at: `app/dashboard/employee/create/page.tsx`
 ## Validation Features
 
 ### Real-time Error Messages:
+
 - **Min/Max Length**: "Employee ID must be at least 5 characters"
 - **Format Validation**: "CNIC must be in format: 00000-0000000-0"
 - **Email Validation**: "Official Email must be a valid email address"
@@ -96,6 +108,7 @@ Located at: `app/dashboard/employee/create/page.tsx`
 - **Future Date Check**: "Joining Date cannot be in the future"
 
 ### Validation Modes:
+
 - Set to `onBlur` mode for better user experience (validates when field loses focus)
 - Can be changed to `onChange` for instant validation if needed
 
@@ -124,16 +137,15 @@ Located at: `app/dashboard/employee/create/page.tsx`
 
 ## Validation Rules Summary
 
-| Field | Type | Rules |
-|-------|------|-------|
-| employeeId | string | min:5, max:20 |
-| employeeName | string | min:3, max:100 |
-| cnicNumber | string | format: 00000-0000000-0 |
-| contactNumber | string | Pakistani phone format |
-| officialEmail | string | valid email |
-| dateOfBirth | date | age >= 18 |
-| joiningDate | date | <= today |
-| employeeSalary | number | > 0 |
-| accountNumber | string | 7-26 digits |
-| password | string | min:6 (if provided) |
-
+| Field          | Type   | Rules                   |
+| -------------- | ------ | ----------------------- |
+| employeeId     | string | min:5, max:20           |
+| employeeName   | string | min:3, max:100          |
+| cnicNumber     | string | format: 00000-0000000-0 |
+| contactNumber  | string | Pakistani phone format  |
+| officialEmail  | string | valid email             |
+| dateOfBirth    | date   | age >= 18               |
+| joiningDate    | date   | <= today                |
+| employeeSalary | number | > 0                     |
+| accountNumber  | string | 7-26 digits             |
+| password       | string | min:6 (if provided)     |

@@ -13,6 +13,9 @@ import type { State, City } from "@/lib/actions/city";
 import type { Equipment } from "@/lib/actions/equipment";
 import type { WorkingHoursPolicy } from "@/lib/actions/working-hours-policy";
 import type { LeavesPolicy } from "@/lib/actions/leaves-policy";
+import type { Qualification } from "@/lib/actions/qualification";
+import type { Institute } from "@/lib/actions/institute";
+import type { Employee } from "@/lib/actions/employee";
 
 export default function CreateEmployeePage() {
   // Dropdown data
@@ -28,6 +31,9 @@ export default function CreateEmployeePage() {
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [workingHoursPolicies, setWorkingHoursPolicies] = useState<WorkingHoursPolicy[]>([]);
   const [leavesPolicies, setLeavesPolicies] = useState<LeavesPolicy[]>([]);
+  const [qualifications, setQualifications] = useState<Qualification[]>([]);
+  const [institutes, setInstitutes] = useState<Institute[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   // Fetch dropdown data
@@ -49,6 +55,9 @@ export default function CreateEmployeePage() {
           setEquipments(d.equipments || []);
           setWorkingHoursPolicies(d.workingHoursPolicies || []);
           setLeavesPolicies(d.leavesPolicies || []);
+          setQualifications(d.qualifications || []);
+          setInstitutes(d.institutes || []);
+          setEmployees(d.employees || []);
         } else {
           toast.error(json.message || "Failed to load form data");
         }
@@ -62,6 +71,14 @@ export default function CreateEmployeePage() {
 
     fetchData();
   }, []);
+
+  const handleQualificationAdded = (qualification: { id: string; name: string }) => {
+    setQualifications((prev) => [...prev, { ...qualification, status: 'active', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as Qualification]);
+  };
+
+  const handleInstituteAdded = (institute: { id: string; name: string }) => {
+    setInstitutes((prev) => [...prev, { ...institute, status: 'active', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as Institute]);
+  };
 
   return (
     <EmployeeForm
@@ -78,7 +95,11 @@ export default function CreateEmployeePage() {
       equipments={equipments}
       workingHoursPolicies={workingHoursPolicies}
       leavesPolicies={leavesPolicies}
+      qualifications={qualifications}
+      institutes={institutes}
       loadingData={loadingData}
+      onQualificationAdded={handleQualificationAdded}
+      onInstituteAdded={handleInstituteAdded}
     />
   );
 }

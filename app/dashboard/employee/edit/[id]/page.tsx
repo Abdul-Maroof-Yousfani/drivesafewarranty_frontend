@@ -41,6 +41,8 @@ import {
   getLeavesPolicies,
   type LeavesPolicy,
 } from "@/lib/actions/leaves-policy";
+import { getQualifications, type Qualification } from "@/lib/actions/qualification";
+import { getInstitutes, type Institute } from "@/lib/actions/institute";
 import type { Employee } from "@/lib/actions/employee";
 
 export default function EditEmployeePage() {
@@ -63,6 +65,8 @@ export default function EditEmployeePage() {
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [workingHoursPolicies, setWorkingHoursPolicies] = useState<WorkingHoursPolicy[]>([]);
   const [leavesPolicies, setLeavesPolicies] = useState<LeavesPolicy[]>([]);
+  const [qualifications, setQualifications] = useState<Qualification[]>([]);
+  const [institutes, setInstitutes] = useState<Institute[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   // Load employee data
   useEffect(() => {
@@ -106,6 +110,8 @@ export default function EditEmployeePage() {
           equipmentsRes,
           workingHoursRes,
           leavesRes,
+          qualificationsRes,
+          institutesRes,
         ] = await Promise.all([
           getDepartments(),
           getEmployeeGrades(),
@@ -117,6 +123,8 @@ export default function EditEmployeePage() {
           getEquipments(),
           getWorkingHoursPolicies(),
           getLeavesPolicies(),
+          getQualifications(),
+          getInstitutes(),
         ]);
 
         if (deptsRes.status) setDepartments(deptsRes.data || []);
@@ -129,6 +137,8 @@ export default function EditEmployeePage() {
         if (equipmentsRes.status) setEquipments(equipmentsRes.data || []);
         if (workingHoursRes.status) setWorkingHoursPolicies(workingHoursRes.data || []);
         if (leavesRes.status) setLeavesPolicies(leavesRes.data || []);
+        if (qualificationsRes.status) setQualifications(qualificationsRes.data || []);
+        if (institutesRes.status) setInstitutes(institutesRes.data || []);
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Failed to load form data");
@@ -139,6 +149,28 @@ export default function EditEmployeePage() {
 
     fetchData();
   }, []);
+
+  // Fetch sub-departments when employee department is available
+  // Note: employee.department should now be an ID string from the backend
+  useEffect(() => {
+    if (!employee?.department) return;
+    const departmentId = typeof employee.department === 'string' 
+      ? employee.department 
+      : (employee.department as any)?.id;
+    if (!departmentId) return;
+    
+    const fetchSubDepartments = async () => {
+      try {
+        const res = await getSubDepartmentsByDepartment(departmentId);
+        if (res.status) {
+          setSubDepartments(res.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching sub-departments:", error);
+      }
+    };
+    fetchSubDepartments();
+  }, [employee?.department]);
 
   // Fetch cities when employee province is available
   useEffect(() => {
@@ -156,7 +188,7 @@ export default function EditEmployeePage() {
     fetchCities();
   }, [employee?.province]);
 
-  if (loadingEmployee) {
+  if (loadingEmployee || loadingData) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -184,6 +216,8 @@ export default function EditEmployeePage() {
       equipments={equipments}
       workingHoursPolicies={workingHoursPolicies}
       leavesPolicies={leavesPolicies}
+      qualifications={qualifications}
+      institutes={institutes}
       loadingData={loadingData}
     />
   );

@@ -12,14 +12,19 @@ import { SessionChecker } from "@/components/auth/session-checker";
 import { Button } from "@/components/ui/button";
 import { Search, X, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [erpMode, setErpMode] = useState(false);
+  const { isAdmin, user } = useAuth();
 
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("erp-mode") : null;
@@ -39,12 +44,35 @@ export default function DashboardLayout({
     if (typeof document !== "undefined") {
       document.documentElement.dataset.erpMode = next ? "on" : "off";
     }
+
+    // Navigate to appropriate dashboard based on mode
+    if (isSuperAdmin) {
+      if (next) {
+        // Super admin: ERP Mode ON -> ERP dashboard
+        router.push("/dashboard");
+      } else {
+        // Super admin: Warranty portal -> super-admin dashboard
+        router.push("/super-admin/dashboard");
+      }
+    } else if (isDealer) {
+      if (next) {
+        // Dealer: ERP Mode ON -> HR/ERP dashboard
+        router.push("/dashboard");
+      } else {
+        // Dealer: Warranty portal -> dealer dashboard
+        router.push("/dealer/dashboard");
+      }
+    }
   };
+
+  const isSuperAdmin = isAdmin();
+  const isDealer = user?.role === "dealer";
 
   return (
     <SidebarProvider>
       <SessionChecker />
-      <AppSidebar />
+      {/* For super admin: erpMode controls menu; for dealer: ERP mode ON shows HR/ERP menu */}
+      <AppSidebar erpMode={(isSuperAdmin || isDealer) && erpMode} />
       <SidebarInset>
         <header className="flex h-[3.95rem] items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-6 sticky top-0 z-40 w-full justify-between">
           <div className="flex items-center gap-2">
@@ -67,27 +95,29 @@ export default function DashboardLayout({
           <div className="flex-1 sm:flex-none" />
           <div className="flex items-center gap-1 sm:gap-2">
             <HeaderMasterMenu />
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
-              <Button
-                variant={erpMode ? "default" : "outline"}
-                size="sm"
-                className={`relative overflow-hidden ${erpMode ? "animate-pulse" : ""}`}
-                onClick={toggleErpMode}
-             >
-                <Sparkles className="h-4 w-4 mr-2" />
-                {erpMode ? "ERP Mode On" : "Switch to ERP mode"}
-                <motion.span
-                  className="absolute inset-0"
-                  initial={false}
-                  animate={erpMode ? { opacity: [0.2, 0.5, 0.2] } : { opacity: 0 }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  style={{
-                    background:
-                      "radial-gradient(120% 120% at 50% 50%, rgba(99,102,241,0.15) 0%, rgba(147,51,234,0.15) 50%, transparent 100%)",
-                  }}
-                />
-              </Button>
-            </motion.div>
+            {(isSuperAdmin || isDealer) && (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  variant={erpMode ? "default" : "outline"}
+                  size="sm"
+                  className={`relative overflow-hidden ${erpMode ? "animate-pulse" : ""}`}
+                  onClick={toggleErpMode}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {erpMode ? "ERP Mode On" : "Switch to ERP Mode"}
+                  <motion.span
+                    className="absolute inset-0"
+                    initial={false}
+                    animate={erpMode ? { opacity: [0.2, 0.5, 0.2] } : { opacity: 0 }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    style={{
+                      background:
+                        "radial-gradient(120% 120% at 50% 50%, rgba(99,102,241,0.15) 0%, rgba(147,51,234,0.15) 50%, transparent 100%)",
+                    }}
+                  />
+                </Button>
+              </motion.div>
+            )}
             <ThemeToggle />
             <HeaderNotifications />
             <HeaderUserMenu />

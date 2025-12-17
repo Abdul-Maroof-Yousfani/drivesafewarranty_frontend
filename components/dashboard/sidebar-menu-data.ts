@@ -15,6 +15,18 @@ import {
   Shield,
   Menu,
   Database,
+  Store,
+  FileBarChart,
+  UserCheck,
+  Package,
+  FileCheck,
+  ShieldCheck,
+  DollarSign,
+  TrendingUp,
+  Building2,
+  Car,
+  CreditCard,
+  Upload,
 } from "lucide-react";
 
 export type MenuItem = {
@@ -437,6 +449,154 @@ export const menuData: MenuItem[] = [
         icon: Menu,
         children: [
           { title: "Add and View", href: "/dashboard/submenu/manage" },
+        ],
+      },
+    ],
+  },
+];
+
+// Warranty Portal Menu (for Super Admin when ERP mode is off)
+export const warrantyPortalMenuData: MenuItem[] = [
+  {
+    title: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/super-admin/dashboard",
+  },
+  {
+    title: "Dealer Management",
+    icon: Store,
+    children: [
+      {
+        title: "Dealers",
+        children: [
+          { title: "Create", href: "/super-admin/dealers/create" },
+          { title: "List", href: "/super-admin/dealers/list" },
+          { title: "View Details", href: "/super-admin/dealers/view" },
+        ],
+      },
+      {
+        title: "Warranty Packages",
+        icon: Package,
+        children: [
+          {
+            title: "Create Package",
+            href: "/super-admin/warranty-packages/create",
+          },
+          {
+            title: "Package List",
+            href: "/super-admin/warranty-packages/list",
+          },
+        ],
+      },
+      {
+        title: "Dealer Pricing",
+        icon: DollarSign,
+        children: [
+          {
+            title: "Assign Pricing",
+            href: "/super-admin/dealer-pricing/assign",
+          },
+          { title: "View Pricing", href: "/super-admin/dealer-pricing/view" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Customer Management",
+    icon: UserCheck,
+    children: [
+      {
+        title: "Customers",
+        children: [
+          { title: "Create Customer", href: "/super-admin/customers/create" },
+          { title: "Customer List", href: "/super-admin/customers/list" },
+          { title: "View Customer", href: "/super-admin/customers/view" },
+        ],
+      },
+      {
+        title: "Warranty Sales",
+        icon: ShieldCheck,
+        children: [
+          {
+            title: "Create Warranty Sale",
+            href: "/super-admin/warranty-sales/create",
+          },
+          {
+            title: "Warranty Sales List",
+            href: "/super-admin/warranty-sales/list",
+          },
+          { title: "View Warranty", href: "/super-admin/warranty-sales/view" },
+        ],
+      },
+      {
+        title: "Documents",
+        icon: FileCheck,
+        children: [
+          { title: "Upload Documents", href: "/super-admin/documents/upload" },
+          { title: "View Documents", href: "/super-admin/documents/view" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Reports",
+    icon: FileBarChart,
+    children: [
+      {
+        title: "Sales Reports",
+        icon: TrendingUp,
+        children: [
+          { title: "Total Sales", href: "/super-admin/reports/sales" },
+          {
+            title: "Sales by Dealer",
+            href: "/super-admin/reports/sales-by-dealer",
+          },
+          {
+            title: "Sales by Package",
+            href: "/super-admin/reports/sales-by-package",
+          },
+        ],
+      },
+      {
+        title: "Financial Reports",
+        icon: DollarSign,
+        children: [
+          { title: "Earnings Report", href: "/super-admin/reports/earnings" },
+          { title: "Invoice Report", href: "/super-admin/reports/invoices" },
+          { title: "Payment Status", href: "/super-admin/reports/payments" },
+        ],
+      },
+      {
+        title: "Customer Reports",
+        icon: Users,
+        children: [
+          { title: "Customer List", href: "/super-admin/reports/customers" },
+          {
+            title: "Warranty Status",
+            href: "/super-admin/reports/warranty-status",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Invoices",
+    icon: Receipt,
+    children: [
+      { title: "Generate Invoice", href: "/super-admin/invoices/generate" },
+      { title: "Invoice List", href: "/super-admin/invoices/list" },
+      { title: "Invoice History", href: "/super-admin/invoices/history" },
+    ],
+  },
+  {
+    title: "Settings",
+    icon: Settings,
+    children: [
+      {
+        title: "Account Settings",
+        children: [
+          { title: "Change Password", href: "/super-admin/settings/password" },
+          { title: "Edit Profile", href: "/super-admin/settings/profile" },
         ],
       },
     ],

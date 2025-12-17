@@ -1,7 +1,4 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,67 +7,86 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { ArrowLeft, Loader2, User, Edit } from "lucide-react";
+import { ArrowLeft, User, Edit } from "lucide-react";
 import Link from "next/link";
-import { getEmployeeById, type Employee } from "@/lib/actions/employee";
+import { getEmployeeById, getEmployees } from "@/lib/actions/employee";
 
-export default function ViewEmployeePage() {
-  const params = useParams();
-  const router = useRouter();
-  const employeeId = params.id as string;
-  const [employee, setEmployee] = useState<Employee | null>(null);
-  const [loading, setLoading] = useState(true);
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
 
-  useEffect(() => {
-    const fetchEmployee = async () => {
-      try {
-        setLoading(true);
-        const result = await getEmployeeById(employeeId);
-        if (result.status && result.data) {
-          setEmployee(result.data as any);
-        } else {
-          toast.error(result.message || "Failed to fetch employee");
-          router.push("/dashboard/employee/list");
-        }
-      } catch (error) {
-        console.error("Error fetching employee:", error);
-        toast.error("Failed to fetch employee");
-        router.push("/dashboard/employee/list");
-      } finally {
-        setLoading(false);
-      }
-    };
+export default async function ViewEmployeePage({ params }: PageProps) {
+  const { id: employeeId } = await params;
 
-    if (employeeId) {
-      fetchEmployee();
-    }
-  }, [employeeId, router]);
+  // Fetch employee with all relations and employees list for reporting manager
+  const [employeeRes, employeesRes] = await Promise.all([
+    getEmployeeById(employeeId),
+    getEmployees(), // Only needed for reporting manager name lookup
+  ]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+  if (!employeeRes.status || !employeeRes.data) {
+    notFound();
   }
 
-  if (!employee) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">Employee not found</p>
-        <Link href="/dashboard/employee/list">
-          <Button variant="outline" className="mt-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to List
-          </Button>
-        </Link>
-      </div>
-    );
-  }
+  const employee = employeeRes.data as any;
+  const employees = employeesRes.status ? employeesRes.data || [] : [];
+
+  // Helper functions to get names from relations
+  const getDepartmentName = () => {
+    return employee.department?.name || "N/A";
+  };
+
+  const getSubDepartmentName = () => {
+    return employee.subDepartment?.name || "N/A";
+  };
+
+  const getEmployeeGradeName = () => {
+    return employee.employeeGrade?.grade || "N/A";
+  };
+
+  const getDesignationName = () => {
+    return employee.designation?.name || "N/A";
+  };
+
+  const getMaritalStatusName = () => {
+    return employee.maritalStatus?.name || "N/A";
+  };
+
+  const getEmploymentStatusName = () => {
+    return employee.employmentStatus?.status || "N/A";
+  };
+
+  const getBranchName = () => {
+    return employee.branch?.name || "N/A";
+  };
+
+  const getWorkingHoursPolicyName = () => {
+    return employee.workingHoursPolicy?.name || "N/A";
+  };
+
+  const getLeavesPolicyName = () => {
+    return employee.leavesPolicy?.name || "N/A";
+  };
+
+  const getReportingManagerName = () => {
+    if (!employee.reportingManager) return "N/A";
+    const manager = employees.find(e => e.id === employee.reportingManager);
+    return manager ? `${manager.employeeName} (${manager.employeeId})` : employee.reportingManager;
+  };
+
+  const getStateName = () => {
+    return employee.state?.name || "N/A";
+  };
+
+  const getCityName = () => {
+    return employee.city?.name || "N/A";
+  };
+
+  const getCountryName = () => {
+    return employee.country?.name || "N/A";
+  };
 
   const formatDate = (date: string | null | undefined) => {
     if (!date) return "N/A";
@@ -85,6 +101,22 @@ export default function ViewEmployeePage() {
     }
     return cnic;
   };
+
+  // Qualification data - use first qualification if available
+  const qualificationData = employee.qualifications && Array.isArray(employee.qualifications) && employee.qualifications.length > 0
+    ? (() => {
+        const qual = employee.qualifications[0];
+        return {
+          qualification: qual.qualification || "N/A",
+          institute: qual.institute?.name || "N/A",
+          year: qual.year || "N/A",
+          grade: qual.grade || "N/A",
+          country: qual.country?.name || "N/A",
+          state: qual.state?.name || "N/A",
+          city: qual.city?.name || "N/A",
+        };
+        })()
+      : null;
 
   return (
     <div className="max-w-[90%] mx-auto pb-10">
@@ -104,215 +136,194 @@ export default function ViewEmployeePage() {
       </div>
 
       <div className="border rounded-xl p-4 space-y-6">
-      
-  {/* Profile Header */}
-<Card className="border-none shadow-none">
-  <CardHeader>
-    <div className="flex flex-col items-center text-center gap-4">
+        {/* Profile Header */}
+        <Card className="border-none shadow-none">
+          <CardHeader>
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                <User className="w-16 h-16 text-muted-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl">{employee.employeeName}</CardTitle>
+                <CardDescription className="text-base mt-1">
+                  {employee.employeeId}
+                </CardDescription>
+                <div className="mt-2">
+                  <Badge variant={employee.status === "active" ? "default" : "secondary"}>
+                    {employee.status}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
 
-      {/* Centered Profile Image */}
-      <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center border-2 border-border">
-        <User className="w-16 h-16 text-muted-foreground" />
-      </div>
+        {/* Basic Information */}
+        <Card className="border-none shadow-none">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Basic Information</CardTitle>
+            <CardDescription>Employee personal & job-related details</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                { label: "Employee ID", value: employee.employeeId },
+                { label: "Employee Name", value: employee.employeeName },
+                { label: "Father / Husband Name", value: employee.fatherHusbandName || "N/A" },
+                { label: "Department", value: getDepartmentName() },
+                { label: "Sub Department", value: getSubDepartmentName() },
+                { label: "Employee Grade", value: getEmployeeGradeName() },
+                { label: "Attendance ID", value: employee.attendanceId || "N/A" },
+                { label: "Designation", value: getDesignationName() },
+                { label: "Marital Status", value: getMaritalStatusName() },
+                { label: "Employment Status", value: getEmploymentStatusName() },
+                { label: "Probation Expiry Date", value: formatDate(employee.probationExpiryDate) },
+                { label: "CNIC Number", value: formatCNIC(employee.cnicNumber) },
+                { label: "CNIC Expiry Date", value: employee.lifetimeCnic ? "Lifetime" : formatDate(employee.cnicExpiryDate) },
+                { label: "Joining Date", value: formatDate(employee.joiningDate) },
+                { label: "Date of Birth", value: formatDate(employee.dateOfBirth) },
+                { label: "Nationality", value: employee.nationality || "N/A" },
+                { label: "Gender", value: employee.gender || "N/A" },
+                { label: "Contact Number", value: employee.contactNumber || "N/A" },
+                { label: "Emergency Contact Number", value: employee.emergencyContactNumber || "N/A" },
+                { label: "Emergency Contact Person", value: employee.emergencyContactPerson || "N/A" },
+                { label: "Personal Email", value: employee.personalEmail || "N/A" },
+                { label: "Official Email", value: employee.officialEmail || "N/A" },
+                { label: "Country", value: getCountryName() },
+                { label: "State / Province", value: getStateName() },
+                { label: "City", value: getCityName() },
+                { label: "Employee Salary", value: `PKR ${Number(employee.employeeSalary).toLocaleString()}` },
+                { label: "EOBI", value: employee.eobi ? "Yes" : "No" },
+                ...(employee.eobi ? [{ label: "EOBI Number", value: employee.eobiNumber || "N/A" }] : []),
+                { label: "Provident Fund", value: employee.providentFund ? "Yes" : "No" },
+                { label: "Overtime Applicable", value: employee.overtimeApplicable ? "Yes" : "No" },
+                { label: "Days Off", value: employee.daysOff || "N/A" },
+                { label: "Reporting Manager", value: getReportingManagerName() },
+                { label: "Working Hours Policy", value: getWorkingHoursPolicyName() },
+                { label: "Branch", value: getBranchName() },
+                { label: "Leaves Policy", value: getLeavesPolicyName() },
+                { label: "Allow Remote Attendance", value: employee.allowRemoteAttendance ? "Yes" : "No" },
+              ].map((item, index) => (
+                <div
+                  key={index}
+                  className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
+                >
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                  <p className="text-foreground font-semibold text-1xl mt-1">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Name, ID, Status */}
-      <div>
-        <CardTitle className="text-2xl">{employee.employeeName}</CardTitle>
-        <CardDescription className="text-base mt-1">
-          {employee.employeeId}
-        </CardDescription>
-
-        <div className="mt-2">
-          <Badge variant={employee.status === "active" ? "default" : "secondary"}>
-            {employee.status}
-          </Badge>
-        </div>
-      </div>
-
-    </div>
-  </CardHeader>
-</Card>
-
-
-{/* Basic Information */}
-<Card className="border-none shadow-none">
-  <CardHeader>
-    <CardTitle className="text-lg font-semibold">Basic Information</CardTitle>
-    <CardDescription>Employee personal & job-related details</CardDescription>
-  </CardHeader>
-
-  <CardContent>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-      {/** REUSABLE INFO BLOCK */}
- {[
-  { label: "Employee ID", value: employee.employeeId },
-  { label: "Employee Name", value: employee.employeeName },
-  { label: "Father / Husband Name", value: employee.fatherHusbandName || "N/A" },
-  { label: "Department", value: (employee as any).departmentName || employee.department || "N/A" },
-  { label: "Sub Department", value: (employee as any).subDepartmentName || employee.subDepartment || "N/A" },
-  { label: "Employee Grade", value: (employee as any).employeeGradeName || employee.employeeGrade || "N/A" },
-  { label: "Attendance ID", value: employee.attendanceId || "N/A" },
-  { label: "Designation", value: (employee as any).designationName || employee.designation || "N/A" },
-  { label: "Marital Status", value: (employee as any).maritalStatusName || employee.maritalStatus || "N/A" },
-  { label: "Employment Status", value: (employee as any).employmentStatusName || employee.employmentStatus || "N/A" },
-  { label: "Probation Expiry Date", value: formatDate(employee.probationExpiryDate) },
-  { label: "CNIC Number", value: formatCNIC(employee.cnicNumber) },
-  { label: "CNIC Expiry Date", value: employee.lifetimeCnic ? "Lifetime" : formatDate(employee.cnicExpiryDate) },
-  { label: "Joining Date", value: formatDate(employee.joiningDate) },
-  { label: "Date of Birth", value: formatDate(employee.dateOfBirth) },
-  { label: "Nationality", value: employee.nationality || "N/A" },
-  { label: "Gender", value: employee.gender || "N/A" },
-  { label: "Contact Number", value: employee.contactNumber || "N/A" },
-  { label: "Emergency Contact Number", value: employee.emergencyContactNumber || "N/A" },
-  { label: "Emergency Contact Person", value: employee.emergencyContactPerson || "N/A" },
-  { label: "Personal Email", value: employee.personalEmail || "N/A" },
-  { label: "Official Email", value: employee.officialEmail || "N/A" },
-  { label: "Country", value: employee.country || "N/A" },
-  { label: "State / Province", value: (employee as any).provinceName || employee.province || "N/A" },
-  { label: "City", value: (employee as any).cityName || employee.city || "N/A" },
-  { label: "Employee Salary", value: `PKR ${Number(employee.employeeSalary).toLocaleString()}` },
-  { label: "EOBI", value: employee.eobi ? "Yes" : "No" },
-  ...(employee.eobi ? [{ label: "EOBI Number", value: employee.eobiNumber || "N/A" }] : []),
-  { label: "Provident Fund", value: employee.providentFund ? "Yes" : "No" },
-  { label: "Overtime Applicable", value: employee.overtimeApplicable ? "Yes" : "No" },
-  { label: "Days Off", value: employee.daysOff || "N/A" },
-  { label: "Reporting Manager", value: employee.reportingManager || "N/A" },
-  { label: "Working Hours Policy", value: (employee as any).workingHoursPolicyName || employee.workingHoursPolicy || "N/A" },
-  { label: "Branch", value: (employee as any).branchName || employee.branch || "N/A" },
-  { label: "Leaves Policy", value: (employee as any).leavesPolicyName || employee.leavesPolicy || "N/A" },
-  { label: "Allow Remote Attendance", value: employee.allowRemoteAttendance ? "Yes" : "No" },
-].map((item, index) => (
-  <div
-    key={index}
-    className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
-  >
-    <p className="text-xs text-muted-foreground">{item.label}</p>
-    <p className="text-gray-900 font-semibold text-1xl mt-1">
-      {item.value}
-    </p>
-  </div>
-))}
-
-
-    </div>
-  </CardContent>
-</Card>
-
-
-
-
-
-
-
-
-
-
-{/* Address Information */}
-<Card className="border-none shadow-none">
-  <CardHeader>
-    <CardTitle>Address Information</CardTitle>
-  </CardHeader>
-
-  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {[
-      { label: "Current Address", value: employee.currentAddress },
-      { label: "Permanent Address", value: employee.permanentAddress },
-    ].map((item, index) => (
-      <div
-        key={index}
-        className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
-      >
-        <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
-        <p className="text-gray-900 font-semibold text-1xl mt-1">
-          {item.value || "N/A"}
-        </p>
-      </div>
-    ))}
-  </CardContent>
-</Card>
-
-
-
-{/* Bank Account Details */}
-<Card className="border-none shadow-none">
-  <CardHeader>
-    <CardTitle>Bank Account Details</CardTitle>
-  </CardHeader>
-
-  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-    {[
-      { label: "Bank Name", value: employee.bankName },
-      { label: "Account Number", value: employee.accountNumber },
-      { label: "Account Title", value: employee.accountTitle },
-    ].map((item, index) => (
-      <div
-        key={index}
-        className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
-      >
-        <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
-        <p className="text-gray-900 font-semibold text-1xl mt-1">
-          {item.value || "N/A"}
-        </p>
-      </div>
-    ))}
-  </CardContent>
-</Card>
-
-
-{/* Equipment Issued */}
-<Card className="border-none shadow-none">
-  <CardHeader>
-    <CardTitle>Equipment Issued</CardTitle>
-  </CardHeader>
-
-  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-    {[
-      { label: "Mouse", value: employee.mouse },
-    ].map((item, index) => {
-      const valStr = item.value ? "Issued" : "Not Issued";
-
-      return (
-        <div
-          key={index}
-          className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
-        >
-          <p className="text-xs font-medium text-muted-foreground">
-            {item.label}
-          </p>
-
-          <p className="text-gray-900 font-semibold text-1xl mt-1">
-            {valStr}
-          </p>
-        </div>
-      );
-    })}
-  </CardContent>
-</Card>
-
-
-
-
-
-        {/* Login Credentials */}
-        {(employee.accountType || employee.roles) && (
-          <Card>
+        {/* Qualification Section */}
+        {qualificationData && (
+          <Card className="border-none shadow-none">
             <CardHeader>
-              <CardTitle>Login Credentials</CardTitle>
+              <CardTitle className="text-lg font-semibold">Qualification</CardTitle>
+              <CardDescription>Employee educational qualifications</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {employee.accountType && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">Account Type</Label>
-                  <p className="font-medium">{employee.accountType}</p>
+            <CardContent>
+              <div className="p-4 border rounded-lg bg-muted/30">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { label: "Qualification", value: qualificationData.qualification },
+                    { label: "Institute", value: qualificationData.institute },
+                    { label: "Year", value: qualificationData.year },
+                    { label: "Grade", value: qualificationData.grade },
+                    { label: "Country", value: qualificationData.country },
+                    { label: "State", value: qualificationData.state },
+                    { label: "City", value: qualificationData.city },
+                  ].map((item, index) => (
+                    <div
+                      key={index}
+                      className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
+                    >
+                      <p className="text-xs text-muted-foreground">{item.label}</p>
+                      <p className="text-foreground font-semibold text-1xl mt-1">
+                        {item.value}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              )}
-              {employee.roles && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">Roles</Label>
-                  <p className="font-medium">{employee.roles}</p>
-                </div>
-              )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Address Information */}
+        <Card className="border-none shadow-none">
+          <CardHeader>
+            <CardTitle>Address Information</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+              { label: "Current Address", value: employee.currentAddress },
+              { label: "Permanent Address", value: employee.permanentAddress },
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
+              >
+                <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
+                <p className="text-foreground font-semibold text-1xl mt-1">
+                  {item.value || "N/A"}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Bank Account Details */}
+        <Card className="border-none shadow-none">
+          <CardHeader>
+            <CardTitle>Bank Account Details</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { label: "Bank Name", value: employee.bankName },
+              { label: "Account Number", value: employee.accountNumber },
+              { label: "Account Title", value: employee.accountTitle },
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
+              >
+                <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
+                <p className="text-foreground font-semibold text-1xl mt-1">
+                  {item.value || "N/A"}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Equipment Issued */}
+        {employee.equipmentAssignments && employee.equipmentAssignments.length > 0 && (
+          <Card className="border-none shadow-none">
+            <CardHeader>
+              <CardTitle>Equipment Issued</CardTitle>
+              <CardDescription>Equipment assigned to this employee</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {employee.equipmentAssignments.map((assignment: any) => (
+                  <div
+                    key={assignment.id}
+                    className="p-4 border rounded-lg bg-muted/10 hover:bg-muted/20 transition"
+                  >
+                    <p className="text-xs text-muted-foreground">Equipment</p>
+                    <p className="text-foreground font-semibold text-1xl mt-1">
+                      {assignment.equipment?.name || "N/A"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Assigned: {new Date(assignment.assignedDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
@@ -320,5 +331,3 @@ export default function ViewEmployeePage() {
     </div>
   );
 }
-
-
