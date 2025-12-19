@@ -1,0 +1,159 @@
+"use server";
+
+import { cookies } from "next/headers";
+
+const API_BASE = (
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api"
+).replace(/\/$/, "");
+
+export interface WarrantyPackage {
+  id: string;
+  name: string;
+  description?: string | null;
+  planLevel?: string | null;
+  eligibility?: string | null;
+  excess?: number | null;
+  labourRatePerHour?: number | null;
+  fixedClaimLimit?: number | null;
+  price12Months?: number | null;
+  price24Months?: number | null;
+  price36Months?: number | null;
+  includedFeatures?: string[] | null;
+  keyBenefits?: string[] | null;
+  coverageDuration: number;
+  durationValue: number;
+  durationUnit: "months" | "years";
+  context: "drive_safe" | "dealer" | "direct_customer";
+  price?: number | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ApiResponse<T> {
+  status: boolean;
+  message?: string;
+  data?: T;
+}
+
+export async function getWarrantyItemsAction(): Promise<
+  ApiResponse<{ id: string; label: string; type: string; status: string }[]>
+> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+  try {
+    const res = await fetch(`${API_BASE}/warranty-items`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return res.json();
+  } catch (error) {
+    return { status: false, message: "Failed to load warranty items" };
+  }
+}
+
+export async function createWarrantyPackageAction(
+  payload: Omit<
+    WarrantyPackage,
+    "id" | "coverageDuration" | "status" | "createdAt" | "updatedAt"
+  >
+): Promise<ApiResponse<WarrantyPackage>> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/warranty-packages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      console.error(
+        "Failed to create warranty package:",
+        res.status,
+        res.statusText
+      );
+      try {
+        const errorData = await res.json();
+        return {
+          status: false,
+          message: errorData.message || `Failed with status ${res.status}`,
+        };
+      } catch (e) {
+        return { status: false, message: `Failed with status ${res.status}` };
+      }
+    }
+
+    const json = await res.json();
+    return json;
+  } catch (error) {
+    console.error("Error creating warranty package:", error);
+    return { status: false, message: "Network error or server unreachable" };
+  }
+}
+
+export async function getWarrantyPackagesAction(): Promise<
+  ApiResponse<WarrantyPackage[]>
+> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+
+  const res = await fetch(`${API_BASE}/warranty-packages`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  const json = await res.json();
+  return json;
+}
+
+// Assign an existing warranty package to a dealer (copies into dealer's tenant DB)
+export async function assignWarrantyPackageToDealer(params: {
+  dealerId: string;
+  warrantyPackageId: string;
+  price?: number;
+}): Promise<
+  ApiResponse<{
+    masterPackage: WarrantyPackage;
+    dealerPackage: WarrantyPackage;
+  }>
+> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+
+  const res = await fetch(`${API_BASE}/warranty-packages/assign-to-dealer`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(params),
+    cache: "no-store",
+  });
+
+  const json = await res.json();
+  return json;
+}

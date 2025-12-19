@@ -1,15 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import DataTable from "@/components/common/data-table";
-import { columns, WarrantyPackageRow } from "./columns";
 import { ListSkeleton } from "@/components/dashboard/list-skeleton";
 import { getWarrantyPackagesAction } from "@/lib/actions/warranty-package";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { DealerWarrantyPackageRow, dealerColumns } from "./columns";
 
-export default function WarrantyPackagesListPage() {
-  const router = useRouter();
-  const [data, setData] = useState<WarrantyPackageRow[]>([]);
+export default function DealerWarrantyPackagesListPage() {
+  const [data, setData] = useState<DealerWarrantyPackageRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,15 +17,13 @@ export default function WarrantyPackagesListPage() {
       if (!isMounted) return;
 
       if (result.status && Array.isArray(result.data)) {
-        const mapped: WarrantyPackageRow[] = result.data.map((pkg: any) => ({
+        const mapped: DealerWarrantyPackageRow[] = result.data.map((pkg: any) => ({
           id: pkg.id,
           name: pkg.name,
           description: pkg.description || "",
-          context: pkg.context,
           durationValue: pkg.durationValue,
           durationUnit: pkg.durationUnit,
           price: pkg.price ?? 0,
-          createdAt: pkg.createdAt,
         }));
         setData(mapped);
       } else {
@@ -48,25 +44,22 @@ export default function WarrantyPackagesListPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Warranty Packages</h1>
+        <h1 className="text-3xl font-bold tracking-tight">My Warranty Packages</h1>
         <p className="text-muted-foreground mt-2">
-          Manage warranty package definitions
+          View warranty packages shared with your showroom and assign them to customers.
         </p>
       </div>
 
       <DataTable
-        columns={columns}
+        columns={dealerColumns}
         data={data}
         searchFields={[
           { key: "name", label: "Name" },
-          { key: "context", label: "Context" },
         ]}
-        toggleAction={() =>
-          router.push("/super-admin/warranty-packages/create")
-        }
-        actionText="Create Package"
+        // Dealers cannot create or edit packages, so no primary action button
       />
     </div>
   );
 }
+
 

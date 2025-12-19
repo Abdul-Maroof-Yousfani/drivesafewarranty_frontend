@@ -1,16 +1,25 @@
-"use client";
+import { getWarrantySalesAction } from "@/lib/actions/warranty-sales";
+import { WarrantySalesList } from "./warranty-sales-list";
 
-export default function WarrantySalesListPage() {
+export default async function WarrantySalesListPage() {
+  const response = await getWarrantySalesAction();
+  const data = response.data || [];
+  const hasError = response.status === false;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Warranty Sales</h1>
         <p className="text-muted-foreground mt-2">
-          View all warranty sales
+          View all warranty sales created by super admin
         </p>
       </div>
-      <p className="text-muted-foreground">Warranty sales list will be displayed here</p>
+      {hasError && (
+        <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-destructive">
+          {response.message || "Failed to load warranty sales"}
+        </div>
+      )}
+      <WarrantySalesList initialSales={data} />
     </div>
   );
 }
-

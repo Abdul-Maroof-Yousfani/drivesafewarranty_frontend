@@ -12,6 +12,7 @@ export interface User {
   lastName: string;
   role: string | null;
   permissions: string[];
+  mustChangePassword?: boolean;
 }
 
 export interface AuthResponse {
@@ -70,6 +71,17 @@ export async function login(formData: FormData): Promise<{ status: boolean; mess
         maxAge: 7 * 24 * 60 * 60, // 7 days
         path: "/",
       });
+
+      // Store mustChangePassword flag if present
+      if (data.data.user.mustChangePassword) {
+        cookieStore.set("mustChangePassword", "true", {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 24 * 60 * 60, // 24 hours
+          path: "/",
+        });
+      }
 
       cookieStore.set("user", JSON.stringify({
         id: data.data.user.id,

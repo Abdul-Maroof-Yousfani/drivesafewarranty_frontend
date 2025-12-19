@@ -144,6 +144,7 @@ export const columns: ColumnDef<DealerRow>[] = [
     size: 100,
   },
   {
+    accessorKey: "Actions",
     id: "actions",
     cell: ({ row }) => {
       const dealer = row.original;
@@ -181,24 +182,7 @@ export const columns: ColumnDef<DealerRow>[] = [
             </Tooltip>
           </TooltipProvider>
 
-          {dealer.excelFilePath && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDownloadCredentials(dealer.id)}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Download Credentials Excel</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+       
         </div>
       );
     },

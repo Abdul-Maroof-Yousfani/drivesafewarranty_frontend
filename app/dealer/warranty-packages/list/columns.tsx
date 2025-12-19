@@ -3,20 +3,42 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowUpDown, Eye, Edit } from "lucide-react";
+import { ArrowUpDown, Eye, ClipboardPlus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
-export type WarrantyPackageRow = {
+export type DealerWarrantyPackageRow = {
   id: string;
   name: string;
   description: string;
-  context: "drive_safe" | "dealer" | "direct_customer";
   durationValue: number;
   durationUnit: "months" | "years";
   price: number;
-  createdAt: string;
 };
 
-export const columns: ColumnDef<WarrantyPackageRow>[] = [
+export const dealerColumns: ColumnDef<DealerWarrantyPackageRow>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+    size: 28,
+  },
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -30,21 +52,12 @@ export const columns: ColumnDef<WarrantyPackageRow>[] = [
         </Button>
       );
     },
-  },
-  {
-    accessorKey: "context",
-    header: "Context",
-    cell: ({ row }) => {
-      const context = row.getValue("context") as string;
-      if (context === "drive_safe") return "Drive-Safe Website";
-      if (context === "dealer") return "Dealer";
-      if (context === "direct_customer") return "Direct Customer";
-      return context;
-    },
+    size: 250,
   },
   {
     accessorKey: "durationValue",
     header: "Duration",
+    size: 140,
     cell: ({ row }) => {
       const duration = row.getValue("durationValue") as number;
       const unit = row.original.durationUnit;
@@ -55,8 +68,10 @@ export const columns: ColumnDef<WarrantyPackageRow>[] = [
   {
     accessorKey: "price",
     header: "Base Price",
+    size: 140,
     cell: ({ row }) => {
       const price = row.getValue("price") as number;
+      if (!price) return "-";
       return `$${price.toLocaleString()}`;
     },
   },
@@ -67,18 +82,21 @@ export const columns: ColumnDef<WarrantyPackageRow>[] = [
       return (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" asChild>
-            <Link href={`/super-admin/warranty-packages/view/${pkg.id}`}>
+            <Link href={`/dealer/warranty-packages/view/${pkg.id}`}>
               <Eye className="h-4 w-4" />
             </Link>
           </Button>
           <Button variant="ghost" size="icon" asChild>
-            <Link href={`/super-admin/warranty-packages/edit/${pkg.id}`}>
-              <Edit className="h-4 w-4" />
+            {/* Dealer starts assignment flow for this package */}
+            <Link href={`/dealer/warranty-sales/create?packageId=${pkg.id}`}>
+              <ClipboardPlus className="h-4 w-4" />
             </Link>
           </Button>
         </div>
       );
     },
+    size: 120,
   },
 ];
+
 

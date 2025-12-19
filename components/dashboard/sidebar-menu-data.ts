@@ -471,9 +471,36 @@ export const warrantyPortalMenuData: MenuItem[] = [
         children: [
           { title: "Create", href: "/super-admin/dealers/create" },
           { title: "List", href: "/super-admin/dealers/list" },
-          { title: "View Details", href: "/super-admin/dealers/view" },
+              ],
+      },
+    ],
+  },
+  {
+    title: "Customer Management",
+    icon: UserCheck,
+    children: [
+      {
+        title: "Customers",
+        children: [
+          { title: "Create Customer", href: "/super-admin/customers/create" },
+          { title: "Customer List", href: "/super-admin/customers/list" },
+       
         ],
       },
+      {
+        title: "Documents",
+        icon: FileCheck,
+        children: [
+          { title: "Upload Documents", href: "/super-admin/documents/upload" },
+          { title: "View Documents", href: "/super-admin/documents/view" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Warranty Management",
+    icon: ShieldCheck,
+    children: [
       {
         title: "Warranty Packages",
         icon: Package,
@@ -489,31 +516,6 @@ export const warrantyPortalMenuData: MenuItem[] = [
         ],
       },
       {
-        title: "Dealer Pricing",
-        icon: DollarSign,
-        children: [
-          {
-            title: "Assign Pricing",
-            href: "/super-admin/dealer-pricing/assign",
-          },
-          { title: "View Pricing", href: "/super-admin/dealer-pricing/view" },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Customer Management",
-    icon: UserCheck,
-    children: [
-      {
-        title: "Customers",
-        children: [
-          { title: "Create Customer", href: "/super-admin/customers/create" },
-          { title: "Customer List", href: "/super-admin/customers/list" },
-          { title: "View Customer", href: "/super-admin/customers/view" },
-        ],
-      },
-      {
         title: "Warranty Sales",
         icon: ShieldCheck,
         children: [
@@ -525,15 +527,7 @@ export const warrantyPortalMenuData: MenuItem[] = [
             title: "Warranty Sales List",
             href: "/super-admin/warranty-sales/list",
           },
-          { title: "View Warranty", href: "/super-admin/warranty-sales/view" },
-        ],
-      },
-      {
-        title: "Documents",
-        icon: FileCheck,
-        children: [
-          { title: "Upload Documents", href: "/super-admin/documents/upload" },
-          { title: "View Documents", href: "/super-admin/documents/view" },
+       
         ],
       },
     ],

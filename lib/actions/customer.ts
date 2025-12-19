@@ -75,6 +75,7 @@ export async function createCustomer(data: {
   registrationNumber?: string | null;
   mileage?: number;
   dealerId?: string | null;
+  password: string;
 }): Promise<{ status: boolean; data?: Customer; message?: string }> {
   try {
     const token = await getAccessToken();

@@ -26,6 +26,25 @@ import { ChevronRight, Building2 } from "lucide-react";
 import { MenuItem, menuData, warrantyPortalMenuData } from "./sidebar-menu-data";
 import { useAuth } from "@/hooks/use-auth";
 
+// Helper function to transform menu items for dealer (replace /super-admin with /dealer)
+function transformMenuForDealer(menuItems: MenuItem[]): MenuItem[] {
+  return menuItems.map((item) => {
+    const transformedItem = { ...item };
+    
+    // Transform href if it exists and starts with /super-admin
+    if (transformedItem.href && transformedItem.href.startsWith("/super-admin")) {
+      transformedItem.href = transformedItem.href.replace("/super-admin", "/dealer");
+    }
+    
+    // Transform children recursively
+    if (transformedItem.children) {
+      transformedItem.children = transformMenuForDealer(transformedItem.children);
+    }
+    
+    return transformedItem;
+  });
+}
+
 function SubMenuItem({ item, pathname }: { item: MenuItem; pathname: string }) {
   const isActive = item.href === pathname;
 
@@ -117,10 +136,11 @@ export function AppSidebar({ erpMode = false }: AppSidebarProps) {
     // Super Admin or Dealer in ERP mode -> full HR/ERP menu
     currentMenuData = menuData;
   } else if (isDealer && !erpMode) {
-    // Dealer in Warranty Portal -> hide Dealer Management section
-    currentMenuData = warrantyPortalMenuData.filter(
-      (item) => item.title !== "Dealer Management"
+    // Dealer in Warranty Portal -> hide Dealer Management, Reports, Invoices and transform routes
+    const filteredMenu = warrantyPortalMenuData.filter(
+      (item) => item.title !== "Dealer Management" && item.title !== "Reports" && item.title !== "Invoices"
     );
+    currentMenuData = transformMenuForDealer(filteredMenu);
   } else {
     // Super Admin warranty portal or other roles -> full warranty portal menu
     currentMenuData = warrantyPortalMenuData;

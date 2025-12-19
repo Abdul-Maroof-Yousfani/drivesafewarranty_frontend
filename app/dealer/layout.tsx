@@ -11,6 +11,7 @@ import { HeaderNotifications } from "@/components/dashboard/header-notifications
 import { HeaderUserMenu } from "@/components/dashboard/header-user-menu";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { SessionChecker } from "@/components/auth/session-checker";
+import { PasswordResetPrompt } from "@/components/auth/password-reset-prompt";
 import { Button } from "@/components/ui/button";
 import { Search, Sparkles, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -58,6 +59,7 @@ export default function DealerLayout({
   return (
     <SidebarProvider>
       <SessionChecker />
+      <PasswordResetPrompt />
       {/* For dealer, ERP mode controls whether they see ERP (HR) or Warranty menu */}
       <AppSidebar erpMode={erpMode} />
       <SidebarInset>

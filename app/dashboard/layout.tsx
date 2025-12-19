@@ -9,6 +9,7 @@ import { HeaderUserMenu } from "@/components/dashboard/header-user-menu";
 import { HeaderMasterMenu } from "@/components/dashboard/header-master-menu";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { SessionChecker } from "@/components/auth/session-checker";
+import { PasswordResetPrompt } from "@/components/auth/password-reset-prompt";
 import { Button } from "@/components/ui/button";
 import { Search, X, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -71,6 +72,7 @@ export default function DashboardLayout({
   return (
     <SidebarProvider>
       <SessionChecker />
+      <PasswordResetPrompt />
       {/* For super admin: erpMode controls menu; for dealer: ERP mode ON shows HR/ERP menu */}
       <AppSidebar erpMode={(isSuperAdmin || isDealer) && erpMode} />
       <SidebarInset>

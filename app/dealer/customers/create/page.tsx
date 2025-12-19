@@ -78,7 +78,7 @@ export default function CreateCustomerPage() {
       const result = await createCustomer(data);
       if (result.status) {
         toast.success(result.message || "Customer created successfully");
-        router.push(`/super-admin/customers/list?newItemId=${result.data?.id}`);
+        router.push(`/dealer/customers/list?newItemId=${result.data?.id}`);
       } else {
         toast.error(result.message || "Failed to create customer");
         form.setError("root", {
@@ -94,13 +94,13 @@ export default function CreateCustomerPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
           Create New Customer
         </h1>
         <p className="text-muted-foreground mt-2">
-          Add a new customer to the system
+          Add a new customer to your system
         </p>
       </div>
 
@@ -354,3 +354,4 @@ export default function CreateCustomerPage() {
     </div>
   );
 }
+
