@@ -71,7 +71,7 @@ export default async function WarrantySaleViewPage({ params }: { params: Promise
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Price</span>
               <span className="font-medium">
-                {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(sale.warrantyPrice))}
+                {new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(Number(sale.warrantyPrice))}
               </span>
             </div>
             <div className="flex items-center justify-between">

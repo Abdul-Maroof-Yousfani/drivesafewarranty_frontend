@@ -179,7 +179,7 @@ export default function CreateDealerPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Create New Dealer</h1>
         <p className="text-muted-foreground mt-2">

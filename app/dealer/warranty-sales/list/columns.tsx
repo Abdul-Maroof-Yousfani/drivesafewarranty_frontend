@@ -4,6 +4,12 @@ import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type DealerSaleRow = {
   id: string;
@@ -43,16 +49,61 @@ export const columns: ColumnDef<DealerSaleRow>[] = [
     accessorKey: "policyNumber",
     header: "Policy Number",
     size: 240,
+    cell: ({ row }) => {
+      const val = row.getValue("policyNumber") as string;
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="truncate max-w-[220px]">{val}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{val}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    },
   },
   {
     accessorKey: "packageName",
     header: "Package",
     size: 220,
+    cell: ({ row }) => {
+      const val = row.getValue("packageName") as string;
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="truncate max-w-[200px]">{val}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{val}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    },
   },
   {
     accessorKey: "customerName",
     header: "Customer",
     size: 220,
+    cell: ({ row }) => {
+      const val = row.getValue("customerName") as string;
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="truncate max-w-[200px]">{val}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{val}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    },
   },
   {
     accessorKey: "warrantyPrice",
@@ -60,9 +111,9 @@ export const columns: ColumnDef<DealerSaleRow>[] = [
     size: 120,
     cell: ({ row }) => {
       const price = Number(row.getValue("warrantyPrice"));
-      const formatted = new Intl.NumberFormat("en-US", {
+      const formatted = new Intl.NumberFormat("en-GB", {
         style: "currency",
-        currency: "USD",
+        currency: "GBP",
       }).format(price);
       return formatted;
     },

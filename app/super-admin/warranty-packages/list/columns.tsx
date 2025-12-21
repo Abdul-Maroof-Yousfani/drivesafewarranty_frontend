@@ -57,7 +57,7 @@ export const columns: ColumnDef<WarrantyPackageRow>[] = [
     header: "Base Price",
     cell: ({ row }) => {
       const price = row.getValue("price") as number;
-      return `$${price.toLocaleString()}`;
+      return `£${price.toLocaleString()}`;
     },
   },
   {

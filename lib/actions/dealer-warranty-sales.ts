@@ -31,6 +31,7 @@ export async function createDealerWarrantySaleAction(payload: {
   customerId: string;
   warrantyPackageId: string;
   price: number;
+  duration?: number;
 }): Promise<{ status: boolean; data?: any; message?: string }> {
   try {
     const token = await getAccessToken();

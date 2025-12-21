@@ -75,7 +75,6 @@ import {
   SearchIcon,
   TrashIcon,
 } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -104,6 +103,8 @@ import {
   PaginationContent,
   PaginationItem,
 } from "@/components/ui/pagination";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 import { Autocomplete } from "@/components/ui/autocomplete";
 import {
   Select,
@@ -510,28 +511,53 @@ export default function DataTable<TData extends DataTableRow>({
                           "bg-muted-foreground/50 animate-pulse shadow-[inset_0px_5px_15px_-3px_rgba(0,_0,_0,_0.2)]"
                       )}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className={cn(
-                            cell.column.id === "select" && "w-[28px] px-2"
-                          )}
-                        >
-                          {cell.column.id === "select" ? (
-                            <div className="flex items-center justify-center w-full">
-                              {flexRender(
+                      {row.getVisibleCells().map((cell) => {
+                        const isSpecialColumn = ["select", "actions"].includes(cell.column.id);
+                        return (
+                          <TableCell
+                            key={cell.id}
+                            className={cn(
+                              cell.column.id === "select" && "w-[28px] px-2",
+                              !isSpecialColumn && "truncate max-w-[200px]"
+                            )}
+                            title={!isSpecialColumn ? String(cell.getValue()) : undefined}
+                          >
+                            {cell.column.id === "select" ? (
+                              <div className="flex items-center justify-center w-full">
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
+                              </div>
+                            ) : isSpecialColumn ? (
+                              flexRender(
                                 cell.column.columnDef.cell,
                                 cell.getContext()
-                              )}
-                            </div>
-                          ) : (
-                            flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )
-                          )}
-                        </TableCell>
-                      ))}
+                              )
+                            ) : (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="truncate">
+                                      {flexRender(
+                                        cell.column.columnDef.cell,
+                                        cell.getContext()
+                                      )}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {/* Try to render content, might be complex object */}
+                                    {flexRender(
+                                      cell.column.columnDef.cell,
+                                      cell.getContext()
+                                    )}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </TableCell>
+                        );
+                      })}
                     </TableRow>
                   );
                 })

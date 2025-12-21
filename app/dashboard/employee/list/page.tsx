@@ -437,7 +437,7 @@ export default function EmployeeListPage() {
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">
-                          PKR {Number(emp.employeeSalary).toLocaleString()}
+                          £ {Number(emp.employeeSalary).toLocaleString()}
                         </div>
                       </TableCell>
                       <TableCell>

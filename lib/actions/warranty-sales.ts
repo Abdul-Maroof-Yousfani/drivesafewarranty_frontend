@@ -114,6 +114,7 @@ export async function createMasterWarrantySaleAction(payload: {
   customerId: string;
   warrantyPackageId: string;
   price: number;
+  duration?: number;
   dealerId?: string;
 }): Promise<{ status: boolean; data?: WarrantySale; message?: string }> {
   try {

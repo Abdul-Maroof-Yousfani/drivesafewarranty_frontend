@@ -57,18 +57,8 @@ const packageSchema = z.object({
   price36Months: z.coerce
     .number()
     .min(0, "36‑month price must be non‑negative"),
-  durationValue: z.coerce
-    .number()
-    .int()
-    .positive("Duration must be greater than 0"),
-  durationUnit: z.enum(["months", "years"]),
-  includedFeatures: z
-    .array(z.object({ value: z.string().min(1, "Feature cannot be empty") }))
-    .optional()
-    .default([]),
-  keyBenefits: z
-    .array(z.object({ value: z.string().min(1, "Benefit cannot be empty") }))
-    .min(1, "Select at least one benefit"),
+  includedFeatures: z.array(z.string()).optional().default([]),
+  keyBenefits: z.array(z.string()).min(1, "Select at least one benefit"),
 });
 
 type PackageFormValues = z.infer<typeof packageSchema>;
@@ -78,7 +68,7 @@ export default function CreateWarrantyPackagePage() {
   const [loading, setLoading] = useState(false);
 
   const form = useForm<PackageFormValues>({
-    resolver: zodResolver(packageSchema) as any,
+    resolver: zodResolver(packageSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -90,15 +80,12 @@ export default function CreateWarrantyPackagePage() {
       price12Months: 0,
       price24Months: 0,
       price36Months: 0,
-      durationValue: 12,
-      durationUnit: "months",
       includedFeatures: [],
       keyBenefits: [],
     },
   });
 
   const [warrantyItems, setWarrantyItems] = useState<Array<{ id: string; label: string; type: string }>>([]);
-  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -112,12 +99,6 @@ export default function CreateWarrantyPackagePage() {
   const onSubmit = async (data: PackageFormValues) => {
     setLoading(true);
     try {
-      const selectedLabels = warrantyItems
-        .filter((x) => selectedItemIds.includes(x.id))
-        .map((x) => x.label);
-      const keyBenefits = selectedLabels;
-      const includedFeatures: string[] = [];
-
       const result = await createWarrantyPackageAction({
         name: data.name,
         description: data.description,
@@ -129,11 +110,9 @@ export default function CreateWarrantyPackagePage() {
         price12Months: data.price12Months,
         price24Months: data.price24Months,
         price36Months: data.price36Months,
-        durationValue: data.durationValue,
-        durationUnit: data.durationUnit,
         context: "drive_safe",
-        includedFeatures,
-        keyBenefits,
+        includedFeatures: data.includedFeatures,
+        keyBenefits: data.keyBenefits,
       } as any);
 
       if (result.status) {
@@ -142,11 +121,11 @@ export default function CreateWarrantyPackagePage() {
         );
         router.push("/super-admin/warranty-packages/list");
       } else {
-        toast.error(result.message || "Failed to create warranty package");
+        toast.error(result.message || "Failed to create warranty package. Please check the details and try again.");
       }
     } catch (error) {
       console.error("Error creating package:", error);
-      toast.error("An unexpected error occurred");
+      toast.error("An unexpected error occurred. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -228,47 +207,6 @@ export default function CreateWarrantyPackagePage() {
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4 ">
-                <FormField
-                  control={form.control}
-                  name="durationUnit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration Unit</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select unit" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="months">Months</SelectItem>
-                          <SelectItem value="years">Years</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="durationValue"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration </FormLabel>
-                      <FormControl>
-                        <Input type="number" min={1} {...field} />
-                      </FormControl>
-                      
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               <div className="grid grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
@@ -311,25 +249,54 @@ export default function CreateWarrantyPackagePage() {
                 />
               </div>
 
-              <FormItem>
-                <FormLabel>Coverage Benefits</FormLabel>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {warrantyItems.map((item) => (
-                    <label key={item.id} className="flex items-center gap-2">
-                      <Checkbox
-                        checked={selectedItemIds.includes(item.id)}
-                        onCheckedChange={(checked) => {
-                          setSelectedItemIds((prev) =>
-                            checked ? [...prev, item.id] : prev.filter((id) => id !== item.id)
-                          );
-                        }}
-                      />
-                      <span className="text-sm">{item.label}</span>
-                    </label>
-                  ))}
-                </div>
-                <FormDescription>Select applicable benefits for this package.</FormDescription>
-              </FormItem>
+              <FormField
+                control={form.control}
+                name="keyBenefits"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Coverage Benefits</FormLabel>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {warrantyItems.map((item) => (
+                        <FormField
+                          key={item.id}
+                          control={form.control}
+                          name="keyBenefits"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={item.id}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(item.label)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, item.label])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== item.label
+                                            )
+                                          );
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {item.label}
+                                </FormLabel>
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <FormDescription>
+                      Select applicable benefits for this package.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

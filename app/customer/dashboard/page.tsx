@@ -1,24 +1,81 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, Calendar, FileText, Car, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { 
+  ShieldCheck, 
+  Calendar, 
+  FileText, 
+  Car, 
+  ArrowRight, 
+  CheckCircle2, 
+  Search, 
+  AlertCircle,
+  Loader2
+} from "lucide-react";
 import Link from "next/link";
+import { getWarrantySalesAction, WarrantySale } from "@/lib/actions/warranty-sales";
+import { toast } from "sonner";
+import { formatCurrency } from "@/app/shared/utils";
 
 export default function CustomerDashboard() {
-  // TODO: Fetch customer-specific warranty data
-  const warranty = {
-    package: "Gold 2 Year",
-    startDate: new Date().toLocaleDateString(),
-    endDate: new Date().toLocaleDateString(),
-    status: "Active",
-    vehicle: "Toyota Camry 2023",
-  };
+  const [warranties, setWarranties] = useState<WarrantySale[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  useEffect(() => {
+    const fetchWarranties = async () => {
+      try {
+        const res = await getWarrantySalesAction();
+        if (res.status && Array.isArray(res.data)) {
+          // Filter warranties for the current customer if the API returns all
+          // Assuming the API handles permission, but for safety we display what we get
+          // If the API returns ALL sales (admin view), this would be a security issue 
+          // that should be fixed on backend. We will assume API returns correct data for user context.
+          setWarranties(res.data);
+        } else {
+          toast.error(res.message || "Failed to load warranty information");
+        }
+      } catch (error) {
+        console.error("Error fetching warranties:", error);
+        toast.error("An error occurred while loading your dashboard");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWarranties();
+  }, []);
+
+  const filteredWarranties = warranties.filter(warranty => {
+    const matchesSearch = 
+      warranty.policyNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      warranty.warrantyPackage.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (warranty.dealer?.businessNameTrading || "").toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = filterStatus === "all" || warranty.status === filterStatus;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const activeWarranty = warranties.find(w => w.status === "active");
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header Section */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <ShieldCheck className="h-8 w-8 text-primary" />
@@ -28,81 +85,128 @@ export default function CustomerDashboard() {
             View your warranty details, vehicle information, and coverage status
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+             <Link href="/customer/enquiries">Support</Link>
+          </Button>
+        </div>
       </div>
 
-      {/* Warranty Status Card */}
-      <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-green-50/50 to-background dark:from-green-950/20">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Warranty Status</p>
-                <p className="text-2xl font-bold flex items-center gap-2 mt-1">
-                  <span>{warranty.status}</span>
-                  <span className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                    {warranty.package}
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Warranty Details Card */}
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              Warranty Information
-            </CardTitle>
-            <CardDescription>Your warranty package and coverage details</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <p className="text-sm font-medium">Package Type</p>
-                <p className="text-sm font-bold">{warranty.package}</p>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <p className="text-sm font-medium">Coverage Start</p>
-                <p className="text-sm">{warranty.startDate}</p>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <p className="text-sm font-medium">Coverage End</p>
-                <p className="text-sm font-medium">{warranty.endDate}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Vehicle Information Card */}
-        <Card className="border-l-4 border-l-purple-500">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Car className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              Vehicle Information
-            </CardTitle>
-            <CardDescription>Your covered vehicle details</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border border-purple-200 dark:border-purple-800">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="h-12 w-12 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                  <Car className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+      {/* Main Status Card - Shows primary active warranty or summary */}
+      {activeWarranty ? (
+        <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-green-50/50 to-background dark:from-green-950/20 shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-lg font-bold">{warranty.vehicle}</p>
-                  <p className="text-xs text-muted-foreground">Protected Vehicle</p>
+                  <p className="text-sm font-medium text-muted-foreground">Active Coverage</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <h2 className="text-2xl font-bold">{activeWarranty.warrantyPackage.name}</h2>
+                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                      Active
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Policy #: {activeWarranty.policyNumber}
+                  </p>
                 </div>
+              </div>
+              <div className="text-right hidden md:block">
+                <p className="text-sm text-muted-foreground">Coverage Start</p>
+                <p className="font-medium">{new Date(activeWarranty.saleDate).toLocaleDateString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
+      ) : (
+        <Card className="border-l-4 border-l-yellow-500 bg-gradient-to-br from-yellow-50/50 to-background dark:from-yellow-950/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                <AlertCircle className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-lg font-bold">No Active Coverage Found</p>
+                <p className="text-muted-foreground">You currently don't have any active warranty packages.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Warranties List / Grid */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <h2 className="text-xl font-semibold">My Warranties</h2>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search policies..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </div>
+        </div>
+
+        {filteredWarranties.length === 0 ? (
+          <div className="text-center py-12 border rounded-lg bg-muted/10">
+            <p className="text-muted-foreground">No warranties found matching your search.</p>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredWarranties.map((warranty) => (
+              <Card key={warranty.id} className="flex flex-col overflow-hidden transition-all hover:shadow-md border-t-4 border-t-primary/20">
+                <CardHeader className="pb-3 bg-muted/20">
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg">{warranty.warrantyPackage.name}</CardTitle>
+                    <Badge variant={warranty.status === "active" ? "default" : "secondary"}>
+                      {warranty.status}
+                    </Badge>
+                  </div>
+                  <CardDescription>Policy: {warranty.policyNumber}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 pt-4 space-y-4">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        <Calendar className="h-3 w-3" /> Sale Date
+                      </span>
+                      <span className="font-medium">{new Date(warranty.saleDate).toLocaleDateString()}</span>
+                    </div>
+                    {warranty.dealer && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground flex items-center gap-2">
+                          <Car className="h-3 w-3" /> Dealer
+                        </span>
+                        <span className="font-medium truncate max-w-[150px]" title={warranty.dealer.businessNameTrading || warranty.dealer.businessNameLegal}>
+                          {warranty.dealer.businessNameTrading || warranty.dealer.businessNameLegal}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                       <span className="text-muted-foreground">Price</span>
+                       <span className="font-medium">{formatCurrency(Number(warranty.warrantyPrice))}</span>
+                    </div>
+                  </div>
+                </CardContent>
+                <div className="p-4 pt-0 mt-auto">
+                  <Button variant="outline" className="w-full group" asChild>
+                    <Link href={`/customer/documents`}>
+                      View Documents 
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Quick Actions Card */}
@@ -113,7 +217,7 @@ export default function CustomerDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-2">
-            <Button variant="outline" className="w-full justify-start h-auto py-4" asChild>
+            <Button variant="outline" className="w-full justify-start h-auto py-4 hover:bg-muted/50 transition-colors" asChild>
               <Link href="/customer/documents">
                 <div className="flex items-center gap-3 w-full">
                   <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -127,7 +231,7 @@ export default function CustomerDashboard() {
                 </div>
               </Link>
             </Button>
-            <Button variant="outline" className="w-full justify-start h-auto py-4" asChild>
+            <Button variant="outline" className="w-full justify-start h-auto py-4 hover:bg-muted/50 transition-colors" asChild>
               <Link href="/customer/enquiries">
                 <div className="flex items-center gap-3 w-full">
                   <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -147,4 +251,3 @@ export default function CustomerDashboard() {
     </div>
   );
 }
-

@@ -1,4 +1,4 @@
-import { getCustomers } from "@/lib/actions/customer";
+import { getDealerCustomersAction } from "@/lib/actions/dealer-customer";
 import { CustomerList } from "./customer-list";
 import { ListError } from "@/components/dashboard/list-error";
 
@@ -11,7 +11,7 @@ export default async function DealerCustomersListPage({
 }) {
   try {
     const { newItemId } = await searchParams;
-    const result = await getCustomers();
+    const result = await getDealerCustomersAction();
 
     if (!result.status || !result.data) {
       return (

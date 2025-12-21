@@ -69,7 +69,7 @@ export default function DealerDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">${stats.totalEarnings.toLocaleString()}</div>
+            <div className="text-3xl font-bold">£{stats.totalEarnings.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Outstanding to Drive Safe
             </p>

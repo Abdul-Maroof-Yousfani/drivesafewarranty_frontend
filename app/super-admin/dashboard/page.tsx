@@ -102,7 +102,7 @@ export default function SuperAdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">${stats.totalEarnings.toLocaleString()}</div>
+            <div className="text-3xl font-bold">£{stats.totalEarnings.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <TrendingUp className="h-3 w-3" />
               All-time warranty sales revenue

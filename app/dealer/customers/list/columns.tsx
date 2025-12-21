@@ -57,10 +57,40 @@ export const columns: ColumnDef<CustomerRow>[] = [
       );
     },
     size: 200,
+    cell: ({ row }) => {
+      const val = row.getValue("name") as string;
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="truncate max-w-[180px]">{val}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{val}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    },
   },
   {
     accessorKey: "email",
     header: "Email",
+    cell: ({ row }) => {
+      const val = row.getValue("email") as string;
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="truncate max-w-[200px]">{val}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{val}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    },
   },
   {
     accessorKey: "phone",
@@ -75,9 +105,16 @@ export const columns: ColumnDef<CustomerRow>[] = [
       const year = row.original.vehicleYear;
       const vehicleText = `${make} ${model} (${year})`;
       return (
-        <div className="max-w-[200px] " title={vehicleText}>
-          {vehicleText}
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="truncate max-w-[200px]">{vehicleText}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{vehicleText}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     },
     size: 250,

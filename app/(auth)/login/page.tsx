@@ -32,7 +32,19 @@ export default function LoginPage() {
       const result = await login(formData);
       
       if (result.status) {
-        router.push(callbackUrl);
+        if (callbackUrl === "/dashboard" && result.role) {
+          if (result.role === 'super_admin' || result.role === 'admin') {
+            router.push('/super-admin/dashboard');
+          } else if (result.role === 'dealer') {
+            router.push('/dealer/dashboard');
+          } else if (result.role === 'customer') {
+            router.push('/customer/dashboard');
+          } else {
+            router.push(callbackUrl);
+          }
+        } else {
+          router.push(callbackUrl);
+        }
         router.refresh();
       } else {
         setError(result.message);

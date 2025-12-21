@@ -26,7 +26,7 @@ export interface AuthResponse {
 }
 
 // Login action
-export async function login(formData: FormData): Promise<{ status: boolean; message: string }> {
+export async function login(formData: FormData): Promise<{ status: boolean; message: string; role?: string }> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
@@ -98,7 +98,7 @@ export async function login(formData: FormData): Promise<{ status: boolean; mess
         path: "/",
       });
 
-      return { status: true, message: "Login successful" };
+      return { status: true, message: "Login successful", role: data.data.user.role || undefined };
     }
 
     return { status: false, message: data.message || "Login failed" };

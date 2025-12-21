@@ -105,12 +105,26 @@ export const columns: ColumnDef<DealerRow>[] = [
       const businessName = row.getValue("businessName") as string;
       const tradingName = row.original.tradingName;
       return (
-        <div>
-          <div className="font-medium">{businessName}</div>
-          {tradingName && tradingName !== businessName && (
-            <div className="text-xs text-muted-foreground">Trading: {tradingName}</div>
-          )}
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[230px]">
+                <div className="font-medium truncate">{businessName}</div>
+                {tradingName && tradingName !== businessName && (
+                  <div className="text-xs text-muted-foreground truncate">
+                    Trading: {tradingName}
+                  </div>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{businessName}</p>
+              {tradingName && tradingName !== businessName && (
+                <p className="text-xs">Trading: {tradingName}</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     },
     size: 250,
@@ -119,16 +133,61 @@ export const columns: ColumnDef<DealerRow>[] = [
     accessorKey: "contactPerson",
     header: "Contact Person",
     size: 150,
+    cell: ({ row }) => {
+      const val = row.getValue("contactPerson") as string;
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="truncate max-w-[130px]">{val}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{val}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    },
   },
   {
     accessorKey: "email",
     header: "Email",
     size: 200,
+    cell: ({ row }) => {
+      const val = row.getValue("email") as string;
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="truncate max-w-[180px]">{val}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{val}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    },
   },
   {
     accessorKey: "phone",
     header: "Phone",
     size: 150,
+    cell: ({ row }) => {
+      const val = row.getValue("phone") as string;
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="truncate max-w-[130px]">{val}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{val}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    },
   },
   {
     accessorKey: "status",

@@ -39,7 +39,7 @@ export const columns: ColumnDef<Invoice>[] = [
     header: "Amount",
     cell: ({ row }) => {
       const amount = row.getValue("amount") as number;
-      return `$${amount.toLocaleString()}`;
+      return `£${amount.toLocaleString()}`;
     },
   },
   {

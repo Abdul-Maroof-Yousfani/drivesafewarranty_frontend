@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowUpDown, Eye, ClipboardPlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { EditPackagePriceDialog } from "@/components/dealer/edit-package-price-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type DealerWarrantyPackageRow = {
   id: string;
@@ -13,6 +16,7 @@ export type DealerWarrantyPackageRow = {
   durationValue: number;
   durationUnit: "months" | "years";
   price: number;
+  status: string;
 };
 
 export const dealerColumns: ColumnDef<DealerWarrantyPackageRow>[] = [
@@ -72,8 +76,21 @@ export const dealerColumns: ColumnDef<DealerWarrantyPackageRow>[] = [
     cell: ({ row }) => {
       const price = row.getValue("price") as number;
       if (!price) return "-";
-      return `$${price.toLocaleString()}`;
+      return `£${price.toLocaleString()}`;
     },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string;
+      return (
+        <Badge variant={status === "active" ? "default" : "secondary"}>
+          {status}
+        </Badge>
+      );
+    },
+    size: 100,
   },
   {
     id: "actions",
@@ -81,17 +98,41 @@ export const dealerColumns: ColumnDef<DealerWarrantyPackageRow>[] = [
       const pkg = row.original;
       return (
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href={`/dealer/warranty-packages/view/${pkg.id}`}>
-              <Eye className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Button variant="ghost" size="icon" asChild>
-            {/* Dealer starts assignment flow for this package */}
-            <Link href={`/dealer/warranty-sales/create?packageId=${pkg.id}`}>
-              <ClipboardPlus className="h-4 w-4" />
-            </Link>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href={`/dealer/warranty-packages/view/${pkg.id}`}>
+                    <Eye className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View Details</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <EditPackagePriceDialog 
+            packageId={pkg.id} 
+            currentPrice={pkg.price} 
+            packageName={pkg.name} 
+          />
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href={`/dealer/warranty-sales/create?packageId=${pkg.id}`}>
+                    <ClipboardPlus className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Assign to Customer</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       );
     },

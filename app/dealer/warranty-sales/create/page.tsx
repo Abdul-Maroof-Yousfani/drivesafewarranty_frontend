@@ -29,14 +29,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getCustomers } from "@/lib/actions/customer";
-import { getWarrantyPackagesAction } from "@/lib/actions/warranty-package";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { getDealerCustomersAction } from "@/lib/actions/dealer-customer";
+import { getDealerWarrantyPackagesAction } from "@/lib/actions/warranty-package";
 import { createDealerWarrantySaleAction } from "@/lib/actions/dealer-warranty-sales";
+import { formatCurrency } from "@/lib/utils";
 
 const dealerSaleSchema = z.object({
   customerId: z.string().min(1, "Please select a customer"),
   warrantyPackageId: z.string().min(1, "Please select a package"),
   price: z.coerce.number().min(0, "Price must be a non‑negative number"),
+  duration: z.coerce.number().min(1, "Duration is required"),
 });
 
 type DealerSaleFormValues = z.infer<typeof dealerSaleSchema>;
@@ -54,6 +57,7 @@ export default function DealerCreateWarrantySalePage() {
       customerId: "",
       warrantyPackageId: "",
       price: 0,
+      duration: 12,
     },
   });
 
@@ -62,8 +66,8 @@ export default function DealerCreateWarrantySalePage() {
     (async () => {
       try {
         const [customersRes, packagesRes] = await Promise.all([
-          getCustomers(),
-          getWarrantyPackagesAction(),
+          getDealerCustomersAction(),
+          getDealerWarrantyPackagesAction(),
         ]);
 
         if (customersRes.status && customersRes.data) {
@@ -80,10 +84,20 @@ export default function DealerCreateWarrantySalePage() {
           if (found) {
             setPkg(found);
             form.setValue("warrantyPackageId", found.id);
+            
+            // Auto-select duration/price logic
             if (found.price12Months != null) {
+              form.setValue("duration", 12);
               form.setValue("price", Number(found.price12Months));
+            } else if (found.price24Months != null) {
+              form.setValue("duration", 24);
+              form.setValue("price", Number(found.price24Months));
+            } else if (found.price36Months != null) {
+              form.setValue("duration", 36);
+              form.setValue("price", Number(found.price36Months));
             } else if (found.price != null) {
               form.setValue("price", Number(found.price));
+              form.setValue("duration", found.coverageDuration || 12);
             }
           }
         }
@@ -93,6 +107,19 @@ export default function DealerCreateWarrantySalePage() {
     })();
   }, [form, searchParams]);
 
+  const handleDurationSelect = (duration: number) => {
+    form.setValue("duration", duration);
+    if (pkg) {
+      if (duration === 12 && pkg.price12Months != null) {
+        form.setValue("price", Number(pkg.price12Months));
+      } else if (duration === 24 && pkg.price24Months != null) {
+        form.setValue("price", Number(pkg.price24Months));
+      } else if (duration === 36 && pkg.price36Months != null) {
+        form.setValue("price", Number(pkg.price36Months));
+      }
+    }
+  };
+
   const onSubmit = async (data: DealerSaleFormValues) => {
     setLoading(true);
     try {
@@ -100,6 +127,7 @@ export default function DealerCreateWarrantySalePage() {
         customerId: data.customerId,
         warrantyPackageId: data.warrantyPackageId,
         price: data.price,
+        duration: data.duration,
       });
       if (res.status) {
         router.push("/dealer/warranty-sales/list");
@@ -145,7 +173,7 @@ export default function DealerCreateWarrantySalePage() {
               )}
               {pkg.price != null && (
                 <p>
-                  <span className="font-medium">Suggested/Base Price:</span> $
+                  <span className="font-medium">Suggested/Base Price:</span> £
                   {pkg.price}
                 </p>
               )}
@@ -186,6 +214,86 @@ export default function DealerCreateWarrantySalePage() {
                   </FormItem>
                 )}
               />
+
+              {pkg && (
+                <div className="space-y-4 rounded-md border p-4 bg-muted/20">
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                        <FormLabel>Excess (£)</FormLabel>
+                        <Input 
+                          readOnly 
+                          value={pkg.excess ? pkg.excess : "0"} 
+                          className="bg-background text-muted-foreground"
+                        />
+                     </div>
+                     <div className="space-y-2">
+                        <FormLabel>Fixed Claim Limit (£)</FormLabel>
+                        <Input 
+                          readOnly 
+                          value={pkg.fixedClaimLimit ? pkg.fixedClaimLimit : "0"} 
+                          className="bg-background text-muted-foreground"
+                        />
+                     </div>
+                  </div>
+
+                  <FormLabel className="text-base pt-2 block">Select Duration & Price</FormLabel>
+                  <FormField
+                    control={form.control}
+                    name="duration"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={(val) => handleDurationSelect(Number(val))}
+                            defaultValue={String(field.value)}
+                            className="flex flex-col space-y-1"
+                          >
+                            {pkg.price12Months != null && (
+                              <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="12" />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  12 Months — {formatCurrency(pkg.price12Months)}
+                                </FormLabel>
+                              </FormItem>
+                            )}
+                            {pkg.price24Months != null && (
+                              <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="24" />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  24 Months — {formatCurrency(pkg.price24Months)}
+                                </FormLabel>
+                              </FormItem>
+                            )}
+                            {pkg.price36Months != null && (
+                              <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="36" />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  36 Months — {formatCurrency(pkg.price36Months)}
+                                </FormLabel>
+                              </FormItem>
+                            )}
+                            
+                            {!pkg.price12Months && 
+                             !pkg.price24Months && 
+                             !pkg.price36Months && (
+                               <div className="text-sm text-muted-foreground">
+                                 Standard Duration ({(pkg.coverageDuration || 12)} Months)
+                               </div>
+                             )}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
 
               <FormField
                 control={form.control}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import DataTable from "@/components/common/data-table";
 import { ListSkeleton } from "@/components/dashboard/list-skeleton";
-import { getWarrantyPackagesAction } from "@/lib/actions/warranty-package";
+import { getDealerWarrantyPackagesAction } from "@/lib/actions/warranty-package";
 import { DealerWarrantyPackageRow, dealerColumns } from "./columns";
 
 export default function DealerWarrantyPackagesListPage() {
@@ -13,7 +13,7 @@ export default function DealerWarrantyPackagesListPage() {
   useEffect(() => {
     let isMounted = true;
     (async () => {
-      const result = await getWarrantyPackagesAction();
+      const result = await getDealerWarrantyPackagesAction();
       if (!isMounted) return;
 
       if (result.status && Array.isArray(result.data)) {
@@ -24,6 +24,7 @@ export default function DealerWarrantyPackagesListPage() {
           durationValue: pkg.durationValue,
           durationUnit: pkg.durationUnit,
           price: pkg.price ?? 0,
+          status: pkg.status,
         }));
         setData(mapped);
       } else {

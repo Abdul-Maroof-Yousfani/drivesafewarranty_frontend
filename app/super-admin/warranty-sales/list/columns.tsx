@@ -66,9 +66,9 @@ export const columns: ColumnDef<WarrantySale>[] = [
     size: 120,
     cell: ({ row }) => {
       const price = Number(row.getValue("warrantyPrice"));
-      const formatted = new Intl.NumberFormat("en-US", {
+      const formatted = new Intl.NumberFormat("en-GB", {
         style: "currency",
-        currency: "USD",
+        currency: "GBP",
       }).format(price);
       return formatted;
     },
