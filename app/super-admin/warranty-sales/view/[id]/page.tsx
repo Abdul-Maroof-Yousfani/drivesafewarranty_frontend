@@ -84,6 +84,51 @@ export default async function WarrantySaleViewPage({ params }: { params: Promise
             </div>
           </CardContent>
         </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Assigned Package Details</CardTitle>
+            <CardDescription>Effective values used for this assignment</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Excess</span>
+              <span className="font-medium">
+                £{(sale.excess ?? sale.warrantyPackage?.excess ?? 0).toString()}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Labour Rate</span>
+              <span className="font-medium">
+                £{(sale.labourRatePerHour ?? sale.warrantyPackage?.labourRatePerHour ?? 0).toString()}/hr
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Fixed Claim Limit</span>
+              <span className="font-medium">
+                £{(sale.fixedClaimLimit ?? sale.warrantyPackage?.fixedClaimLimit ?? 0).toString()}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">12‑Month Price</span>
+              <span className="font-medium">
+                £{(sale.price12Months ?? sale.warrantyPackage?.price12Months ?? 0).toString()}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">24‑Month Price</span>
+              <span className="font-medium">
+                £{(sale.price24Months ?? sale.warrantyPackage?.price24Months ?? 0).toString()}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">36‑Month Price</span>
+              <span className="font-medium">
+                £{(sale.price36Months ?? sale.warrantyPackage?.price36Months ?? 0).toString()}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

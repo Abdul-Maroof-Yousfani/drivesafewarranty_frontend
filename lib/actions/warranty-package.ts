@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 
 const API_BASE = (
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api"
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api"
 ).replace(/\/$/, "");
 
 export interface WarrantyPackage {
@@ -56,10 +56,7 @@ export async function getWarrantyItemsAction(): Promise<
 }
 
 export async function createWarrantyPackageAction(
-  payload: Omit<
-    WarrantyPackage,
-    "id" | "status" | "createdAt" | "updatedAt"
-  >
+  payload: Omit<WarrantyPackage, "id" | "status" | "createdAt" | "updatedAt">
 ): Promise<ApiResponse<WarrantyPackage>> {
   const cookieStore = await cookies();
   const token = cookieStore.get("accessToken")?.value;
@@ -90,10 +87,16 @@ export async function createWarrantyPackageAction(
         // Return the specific message from backend if available
         return {
           status: false,
-          message: errorData.message || errorData.error || `Failed with status ${res.status}`,
+          message:
+            errorData.message ||
+            errorData.error ||
+            `Failed with status ${res.status}`,
         };
       } catch (e) {
-        return { status: false, message: `Failed with status ${res.status} - ${res.statusText}` };
+        return {
+          status: false,
+          message: `Failed with status ${res.status} - ${res.statusText}`,
+        };
       }
     }
 
@@ -145,10 +148,13 @@ export async function getDealerWarrantyPackagesAction(): Promise<
     },
     cache: "no-store",
   });
-  
+
   if (!res.ok) {
-     const errorData = await res.json().catch(() => ({}));
-     return { status: false, message: errorData.message || `Failed with status ${res.status}` };
+    const errorData = await res.json().catch(() => ({}));
+    return {
+      status: false,
+      message: errorData.message || `Failed with status ${res.status}`,
+    };
   }
 
   const json = await res.json();
@@ -188,7 +194,9 @@ export async function updateDealerPackagePriceAction(
   }
 }
 
-export async function getWarrantyPackageByIdAction(id: string): Promise<ApiResponse<WarrantyPackage>> {
+export async function getWarrantyPackageByIdAction(
+  id: string
+): Promise<ApiResponse<WarrantyPackage>> {
   const cookieStore = await cookies();
   const token = cookieStore.get("accessToken")?.value;
 
@@ -221,6 +229,12 @@ export async function assignWarrantyPackageToDealer(params: {
   warrantyPackageId: string;
   price?: number;
   duration?: number;
+  excess?: number | null;
+  labourRatePerHour?: number | null;
+  fixedClaimLimit?: number | null;
+  price12Months?: number | null;
+  price24Months?: number | null;
+  price36Months?: number | null;
 }): Promise<
   ApiResponse<{
     masterPackage: WarrantyPackage;

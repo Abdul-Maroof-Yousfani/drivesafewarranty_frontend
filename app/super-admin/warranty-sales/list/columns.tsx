@@ -35,7 +35,7 @@ export const columns: ColumnDef<WarrantySale>[] = [
   },
   {
     accessorKey: "policyNumber",
-    header: "Policy Number",
+    header: "Sale ID",
     size: 260,
   },
   {
@@ -57,20 +57,6 @@ export const columns: ColumnDef<WarrantySale>[] = [
         return dealer.businessNameTrading || dealer.businessNameLegal;
       }
       return "N/A";
-    },
-  },
-
-  {
-    accessorKey: "warrantyPrice",
-    header: "Price",
-    size: 120,
-    cell: ({ row }) => {
-      const price = Number(row.getValue("warrantyPrice"));
-      const formatted = new Intl.NumberFormat("en-GB", {
-        style: "currency",
-        currency: "GBP",
-      }).format(price);
-      return formatted;
     },
   },
   {

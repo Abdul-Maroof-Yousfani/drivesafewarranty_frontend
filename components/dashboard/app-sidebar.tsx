@@ -22,27 +22,38 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChevronRight, Building2 } from "lucide-react";
+import { ChevronRight, Building2, Shield, User } from "lucide-react";
 import { MenuItem, menuData, warrantyPortalMenuData } from "./sidebar-menu-data";
+import { customerMenuData } from "./customer-menu-data";
 import { useAuth } from "@/hooks/use-auth";
 
 // Helper function to transform menu items for dealer (replace /super-admin with /dealer)
 function transformMenuForDealer(menuItems: MenuItem[]): MenuItem[] {
-  return menuItems.map((item) => {
-    const transformedItem = { ...item };
-    
-    // Transform href if it exists and starts with /super-admin
-    if (transformedItem.href && transformedItem.href.startsWith("/super-admin")) {
-      transformedItem.href = transformedItem.href.replace("/super-admin", "/dealer");
-    }
-    
-    // Transform children recursively
-    if (transformedItem.children) {
-      transformedItem.children = transformMenuForDealer(transformedItem.children);
-    }
-    
-    return transformedItem;
-  });
+  return menuItems
+    .filter((item) => item.title !== "Create Package")
+    .map((item) => {
+      const transformedItem = { ...item };
+
+      // Transform href if it exists and starts with /super-admin
+      if (
+        transformedItem.href &&
+        transformedItem.href.startsWith("/super-admin")
+      ) {
+        transformedItem.href = transformedItem.href.replace(
+          "/super-admin",
+          "/dealer"
+        );
+      }
+
+      // Transform children recursively
+      if (transformedItem.children) {
+        transformedItem.children = transformMenuForDealer(
+          transformedItem.children
+        );
+      }
+
+      return transformedItem;
+    });
 }
 
 function SubMenuItem({ item, pathname }: { item: MenuItem; pathname: string }) {
@@ -126,43 +137,57 @@ interface AppSidebarProps {
 
 export function AppSidebar({ erpMode = false }: AppSidebarProps) {
   const pathname = usePathname();
-  const { user, isAdmin } = useAuth();
-  const isSuperAdmin = isAdmin();
-  const isDealer = user?.role === "dealer";
-
-  // Determine which menu to show based on role + ERP mode
-  let currentMenuData: MenuItem[];
-  if ((isSuperAdmin || isDealer) && erpMode) {
-    // Super Admin or Dealer in ERP mode -> full HR/ERP menu
-    currentMenuData = menuData;
-  } else if (isDealer && !erpMode) {
-    // Dealer in Warranty Portal -> hide Dealer Management, Reports, Invoices and transform routes
-    const filteredMenu = warrantyPortalMenuData.filter(
-      (item) => item.title !== "Dealer Management" && item.title !== "Reports" && item.title !== "Invoices"
-    );
-    currentMenuData = transformMenuForDealer(filteredMenu);
-  } else {
-    // Super Admin warranty portal or other roles -> full warranty portal menu
-    currentMenuData = warrantyPortalMenuData;
+  const { isAdmin, user } = useAuth();
+  
+  // Determine user role and select appropriate menu
+  const isDealer = user?.role === 'dealer';
+  const isCustomer = user?.role === 'customer';
+  
+  let menuItems: MenuItem[] = [];
+  
+  if (isAdmin()) {
+    menuItems = erpMode ? menuData : warrantyPortalMenuData;
+  } else if (isDealer) {
+    menuItems = transformMenuForDealer(warrantyPortalMenuData);
+  } else if (isCustomer) {
+    menuItems = customerMenuData;
   }
-  const portalTitle =  "Drive Safe Warranty";
+
+  if (!menuItems.length) return null;
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2 justify-center">
-          <span className="font-semibold text-lg group-data-[collapsible=icon]:hidden">
-            {portalTitle}
+    <Sidebar className="border-r w-64 h-screen fixed">
+      <SidebarHeader className="p-4 border-b">
+        <div className="flex items-center gap-2">
+          {isCustomer ? (
+            <Shield className="h-6 w-6 text-primary" />
+          ) : isAdmin() ? (
+            <Building2 className="h-6 w-6 text-primary" />
+          ) : (
+            <User className="h-6 w-6 text-primary" />
+          )}
+          <span className="font-semibold">
+            {isCustomer 
+              ? 'My Warranty'
+              : isAdmin() 
+                ? (erpMode ? 'ERP Portal' : 'Warranty Portal')
+                : isDealer 
+                  ? 'Dealer Portal'
+                  : 'Portal'}
           </span>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <ScrollArea className="h-[calc(100vh-80px)]">
           <SidebarGroup>
-            <SidebarGroupLabel>{erpMode ? "ERP Navigation" : "Warranty Portal"}</SidebarGroupLabel>
+            {!isCustomer && (
+              <SidebarGroupLabel>
+                {erpMode ? "ERP Navigation" : "Warranty Portal"}
+              </SidebarGroupLabel>
+            )}
             <SidebarGroupContent>
               <SidebarMenu>
-                {currentMenuData.map((item) => (
+                {menuItems.map((item) => (
                   <MenuItemComponent key={item.title} item={item} pathname={pathname} />
                 ))}
               </SidebarMenu>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,6 +53,7 @@ type CustomerFormValues = z.infer<typeof customerSchema>;
 export default function CreateCustomerPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
@@ -74,8 +76,8 @@ export default function CreateCustomerPage() {
   const onSubmit = async (data: CustomerFormValues) => {
     setLoading(true);
     try {
-      const { createCustomer } = await import("@/lib/actions/customer");
-      const result = await createCustomer(data);
+      const { createDealerCustomerAction } = await import("@/lib/actions/dealer-customer");
+      const result = await createDealerCustomerAction(data);
       if (result.status) {
         toast.success(result.message || "Customer created successfully");
         router.push(`/dealer/customers/list?newItemId=${result.data?.id}`);
@@ -204,11 +206,24 @@ export default function CreateCustomerPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Set initial password (customer must change on first login)"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Set initial password (customer must change on first login)"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormDescription>
                       Customer will be prompted to change this password on their first login.

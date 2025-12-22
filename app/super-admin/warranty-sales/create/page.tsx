@@ -50,6 +50,24 @@ const warrantySaleSchema = z.object({
   warrantyPackageId: z.string().min(1, "Please select a warranty package"),
   price: z.coerce.number().min(0, "Price must be a non‑negative number"),
   duration: z.coerce.number().min(1, "Duration is required"),
+  excess: z.coerce
+    .number()
+    .min(0, "Excess must be a non‑negative number")
+    .nullable()
+    .optional(),
+  labourRatePerHour: z.coerce
+    .number()
+    .min(0, "Labour rate must be a non‑negative number")
+    .nullable()
+    .optional(),
+  fixedClaimLimit: z.coerce
+    .number()
+    .min(0, "Fixed claim limit must be a non‑negative number")
+    .nullable()
+    .optional(),
+  price12Months: z.coerce.number().min(0).nullable().optional(),
+  price24Months: z.coerce.number().min(0).nullable().optional(),
+  price36Months: z.coerce.number().min(0).nullable().optional(),
 });
 
 type WarrantySaleFormValues = z.infer<typeof warrantySaleSchema>;
@@ -71,8 +89,16 @@ export default function CreateWarrantySalePage() {
       warrantyPackageId: "",
       price: 0,
       duration: 12, // Default to 12 months
+      excess: null,
+      labourRatePerHour: null,
+      fixedClaimLimit: null,
+      price12Months: null,
+      price24Months: null,
+      price36Months: null,
     },
   });
+
+  const assignType = form.watch("assignTo");
 
   // Load customers, dealers and packages for selection
   useEffect(() => {
@@ -105,6 +131,27 @@ export default function CreateWarrantySalePage() {
     form.setValue("warrantyPackageId", packageId);
 
     if (pkg) {
+      form.setValue("excess", pkg.excess != null ? Number(pkg.excess) : 0);
+      form.setValue(
+        "labourRatePerHour",
+        pkg.labourRatePerHour != null ? Number(pkg.labourRatePerHour) : 0
+      );
+      form.setValue(
+        "fixedClaimLimit",
+        pkg.fixedClaimLimit != null ? Number(pkg.fixedClaimLimit) : 0
+      );
+      form.setValue(
+        "price12Months",
+        pkg.price12Months != null ? Number(pkg.price12Months) : null
+      );
+      form.setValue(
+        "price24Months",
+        pkg.price24Months != null ? Number(pkg.price24Months) : null
+      );
+      form.setValue(
+        "price36Months",
+        pkg.price36Months != null ? Number(pkg.price36Months) : null
+      );
       // Auto-select 12 months if available, or whatever is available
       if (pkg.price12Months != null) {
         form.setValue("duration", 12);
@@ -118,8 +165,13 @@ export default function CreateWarrantySalePage() {
       } else if (pkg.price != null) {
         // Fallback for flat price packages
         form.setValue("price", Number(pkg.price));
-        // Default duration if not specified? 
-        form.setValue("duration", pkg.coverageDuration ? pkg.coverageDuration / 30 / 24 / 60 / 60 / 1000 : 12); // Approximate or default
+        // Default duration if not specified?
+        form.setValue(
+          "duration",
+          pkg.coverageDuration
+            ? pkg.coverageDuration / 30 / 24 / 60 / 60 / 1000
+            : 12
+        ); // Approximate or default
       }
     }
   };
@@ -128,11 +180,20 @@ export default function CreateWarrantySalePage() {
     form.setValue("duration", duration);
     if (selectedPackage) {
       if (duration === 12 && selectedPackage.price12Months != null) {
-        form.setValue("price", Number(selectedPackage.price12Months));
+        form.setValue(
+          "price",
+          Number(Number(selectedPackage.price12Months).toFixed(2))
+        );
       } else if (duration === 24 && selectedPackage.price24Months != null) {
-        form.setValue("price", Number(selectedPackage.price24Months));
+        form.setValue(
+          "price",
+          Number(Number(selectedPackage.price24Months).toFixed(2))
+        );
       } else if (duration === 36 && selectedPackage.price36Months != null) {
-        form.setValue("price", Number(selectedPackage.price36Months));
+        form.setValue(
+          "price",
+          Number(Number(selectedPackage.price36Months).toFixed(2))
+        );
       }
     }
   };
@@ -146,13 +207,18 @@ export default function CreateWarrantySalePage() {
           setLoading(false);
           return;
         }
-        // For dealer assignment, we might not strictly need duration if it copies the whole package,
-        // but passing price is supported.
         const result = await assignWarrantyPackageToDealer({
           dealerId: data.dealerId,
           warrantyPackageId: data.warrantyPackageId,
           price: data.price,
           duration: data.duration,
+          // override fields for this assignment
+          excess: data.excess ?? null,
+          labourRatePerHour: data.labourRatePerHour ?? null,
+          fixedClaimLimit: data.fixedClaimLimit ?? null,
+          price12Months: data.price12Months ?? null,
+          price24Months: data.price24Months ?? null,
+          price36Months: data.price36Months ?? null,
         });
         if (result.status) {
           toast.success(
@@ -174,6 +240,12 @@ export default function CreateWarrantySalePage() {
           warrantyPackageId: data.warrantyPackageId,
           price: data.price,
           duration: data.duration,
+          excess: data.excess ?? null,
+          labourRatePerHour: data.labourRatePerHour ?? null,
+          fixedClaimLimit: data.fixedClaimLimit ?? null,
+          price12Months: data.price12Months ?? null,
+          price24Months: data.price24Months ?? null,
+          price36Months: data.price36Months ?? null,
         });
         if (result.status) {
           toast.success("Warranty package assigned to customer successfully");
@@ -257,7 +329,8 @@ export default function CreateWarrantySalePage() {
             <CardHeader>
               <CardTitle>Select Recipient</CardTitle>
               <CardDescription>
-                Choose the specific customer or dealer who will receive this warranty package.
+                Choose the specific customer or dealer who will receive this
+                warranty package.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -367,106 +440,269 @@ export default function CreateWarrantySalePage() {
 
               {selectedPackage && (
                 <div className="space-y-4 rounded-md border p-4 bg-muted/20">
-                  <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <FormLabel>Excess (£)</FormLabel>
-                        <Input 
-                          readOnly 
-                          value={selectedPackage.excess ? selectedPackage.excess : "0"} 
-                          className="bg-background text-muted-foreground"
-                        />
-                     </div>
-                     <div className="space-y-2">
-                        <FormLabel>Fixed Claim Limit (£)</FormLabel>
-                        <Input 
-                          readOnly 
-                          value={selectedPackage.fixedClaimLimit ? selectedPackage.fixedClaimLimit : "0"} 
-                          className="bg-background text-muted-foreground"
-                        />
-                     </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="excess"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Excess (£)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min={0}
+                              placeholder="Enter excess"
+                              {...field}
+                              value={
+                                field.value === null ||
+                                field.value === undefined
+                                  ? ""
+                                  : field.value
+                              }
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? null
+                                    : Number(e.target.value)
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="labourRatePerHour"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Labour Rate (£/hr)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min={0}
+                              placeholder="Enter labour rate"
+                              {...field}
+                              value={
+                                field.value === null ||
+                                field.value === undefined
+                                  ? ""
+                                  : field.value
+                              }
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? null
+                                    : Number(e.target.value)
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="fixedClaimLimit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fixed Claim Limit (£)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min={0}
+                              placeholder="Enter claim limit"
+                              {...field}
+                              value={
+                                field.value === null ||
+                                field.value === undefined
+                                  ? ""
+                                  : field.value
+                              }
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? null
+                                    : Number(e.target.value)
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
-                  <FormLabel className="text-base pt-2 block">Select Duration & Price</FormLabel>
-                  <FormField
-                    control={form.control}
-                    name="duration"
-                    render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={(val) => handleDurationSelect(Number(val))}
-                            defaultValue={String(field.value)}
-                            className="flex flex-col space-y-1"
-                          >
-                            {selectedPackage.price12Months != null && (
-                              <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value="12" />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  12 Months — {formatCurrency(selectedPackage.price12Months)}
-                                </FormLabel>
-                              </FormItem>
-                            )}
-                            {selectedPackage.price24Months != null && (
-                              <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value="24" />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  24 Months — {formatCurrency(selectedPackage.price24Months)}
-                                </FormLabel>
-                              </FormItem>
-                            )}
-                            {selectedPackage.price36Months != null && (
-                              <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value="36" />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  36 Months — {formatCurrency(selectedPackage.price36Months)}
-                                </FormLabel>
-                              </FormItem>
-                            )}
-                            
-                            {/* Fallback for packages without tiered pricing */}
-                            {!selectedPackage.price12Months && 
-                             !selectedPackage.price24Months && 
-                             !selectedPackage.price36Months && (
-                               <div className="text-sm text-muted-foreground">
-                                 Standard Duration ({(selectedPackage.coverageDuration || 12)} Months)
-                               </div>
-                             )}
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    <FormField
+                      control={form.control}
+                      name="price12Months"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>12‑Month Price (£)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min={0}
+                              placeholder="Enter 12‑month price"
+                              {...field}
+                              value={
+                                field.value === null ||
+                                field.value === undefined
+                                  ? ""
+                                  : field.value
+                              }
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? null
+                                    : Number(e.target.value)
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="price24Months"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>24‑Month Price (£)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min={0}
+                              placeholder="Enter 24‑month price"
+                              {...field}
+                              value={
+                                field.value === null ||
+                                field.value === undefined
+                                  ? ""
+                                  : field.value
+                              }
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? null
+                                    : Number(e.target.value)
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="price36Months"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>36‑Month Price (£)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min={0}
+                              placeholder="Enter 36‑month price"
+                              {...field}
+                              value={
+                                field.value === null ||
+                                field.value === undefined
+                                  ? ""
+                                  : field.value
+                              }
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? null
+                                    : Number(e.target.value)
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {assignType === "customer" && (
+                    <FormField
+                      control={form.control}
+                      name="duration"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={(val) =>
+                                handleDurationSelect(Number(val))
+                              }
+                              defaultValue={String(field.value)}
+                              className="flex flex-col space-y-1"
+                            >
+                              {selectedPackage &&
+                                selectedPackage.price12Months != null && (
+                                  <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl>
+                                      <RadioGroupItem value="12" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      12 Months —{" "}
+                                      {formatCurrency(
+                                        selectedPackage.price12Months
+                                      )}
+                                    </FormLabel>
+                                  </FormItem>
+                                )}
+                              {selectedPackage &&
+                                selectedPackage.price24Months != null && (
+                                  <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl>
+                                      <RadioGroupItem value="24" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      24 Months —{" "}
+                                      {formatCurrency(
+                                        selectedPackage.price24Months
+                                      )}
+                                    </FormLabel>
+                                  </FormItem>
+                                )}
+                              {selectedPackage &&
+                                selectedPackage.price36Months != null && (
+                                  <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl>
+                                      <RadioGroupItem value="36" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      36 Months —{" "}
+                                      {formatCurrency(
+                                        selectedPackage.price36Months
+                                      )}
+                                    </FormLabel>
+                                  </FormItem>
+                                )}
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
               )}
-
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Final Price (£)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="Enter final price"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      You can override the calculated price if needed.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 

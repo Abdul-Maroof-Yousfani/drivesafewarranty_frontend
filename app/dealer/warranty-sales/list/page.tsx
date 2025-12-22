@@ -65,7 +65,7 @@ export default function DealerWarrantySalesListPage() {
         columns={columns}
         data={data}
         searchFields={[
-          { key: "policyNumber", label: "Policy Number" },
+          { key: "policyNumber", label: "id" },
           { key: "packageName", label: "Package" },
           { key: "customerName", label: "Customer" },
         ]}

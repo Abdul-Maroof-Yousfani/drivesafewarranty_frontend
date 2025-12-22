@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, FieldValues, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Control } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,31 +36,157 @@ import { getDealerWarrantyPackagesAction } from "@/lib/actions/warranty-package"
 import { createDealerWarrantySaleAction } from "@/lib/actions/dealer-warranty-sales";
 import { formatCurrency } from "@/lib/utils";
 
+// Reusable number input field component
+function NumberInputField({
+  control,
+  name,
+  label,
+  placeholder,
+  type = "number",
+  step = "0.01",
+  min = "0",
+}: FormControlProps) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => {
+        // Convert the value to a string for the input
+        const value =
+          field.value === null || field.value === undefined
+            ? ""
+            : field.value.toString();
+
+        return (
+          <FormItem>
+            <FormLabel>{label}</FormLabel>
+            <FormControl>
+              <Input
+                type={type}
+                step={step}
+                min={min}
+                placeholder={placeholder}
+                value={value}
+                onChange={(e) => {
+                  // Convert empty string to null, otherwise parse as number
+                  const newValue =
+                    e.target.value === "" ? null : Number(e.target.value);
+                  field.onChange(newValue);
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
+    />
+  );
+}
+
 const dealerSaleSchema = z.object({
   customerId: z.string().min(1, "Please select a customer"),
   warrantyPackageId: z.string().min(1, "Please select a package"),
   price: z.coerce.number().min(0, "Price must be a non‑negative number"),
   duration: z.coerce.number().min(1, "Duration is required"),
+  // New fields for package assignment
+  excess: z.coerce
+    .number()
+    .min(0, "Excess must be a non-negative number")
+    .nullable(),
+  labourRatePerHour: z.coerce
+    .number()
+    .min(0, "Labour rate must be a non-negative number")
+    .nullable(),
+  fixedClaimLimit: z.coerce
+    .number()
+    .min(0, "Fixed claim limit must be a non-negative number")
+    .nullable(),
+  price12Months: z.coerce.number().min(0).nullable().optional(),
+  price24Months: z.coerce.number().min(0).nullable().optional(),
+  price36Months: z.coerce.number().min(0).nullable().optional(),
 });
 
-type DealerSaleFormValues = z.infer<typeof dealerSaleSchema>;
+type DealerSaleFormValues = {
+  customerId: string;
+  warrantyPackageId: string;
+  price: number;
+  duration: number;
+  excess: number | null;
+  labourRatePerHour: number | null;
+  fixedClaimLimit: number | null;
+  price12Months?: number | null;
+  price24Months?: number | null;
+  price36Months?: number | null;
+};
+
+// Type for form control props
+type FormControlProps = {
+  control: Control<DealerSaleFormValues>;
+  name: keyof DealerSaleFormValues;
+  label: string;
+  placeholder: string;
+  type?: string;
+  step?: string;
+  min?: string | number;
+};
 
 export default function DealerCreateWarrantySalePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [packages, setPackages] = useState<any[]>([]);
   const [pkg, setPkg] = useState<any | null>(null);
 
   const form = useForm<DealerSaleFormValues>({
-    resolver: zodResolver(dealerSaleSchema),
+    // @ts-ignore - The resolver types are complex and not perfectly aligned with the schema
+    resolver: zodResolver(dealerSaleSchema) as any,
     defaultValues: {
       customerId: "",
       warrantyPackageId: "",
       price: 0,
       duration: 12,
+      excess: null,
+      labourRatePerHour: null,
+      fixedClaimLimit: null,
+      price12Months: null,
+      price24Months: null,
+      price36Months: null,
     },
   });
+
+  const handlePackageSelect = (packageId: string) => {
+    const selectedPkg = packages.find((p) => p.id === packageId);
+    if (selectedPkg) {
+      setPkg(selectedPkg);
+
+      // Set package ID and original prices
+      form.setValue("warrantyPackageId", selectedPkg.id);
+      form.setValue("excess", selectedPkg.excess || 0);
+      form.setValue("labourRatePerHour", selectedPkg.labourRatePerHour || 0);
+      form.setValue("fixedClaimLimit", selectedPkg.fixedClaimLimit || 0);
+
+      // Store original prices for reference
+      form.setValue("price12Months", selectedPkg.price12Months || null);
+      form.setValue("price24Months", selectedPkg.price24Months || null);
+      form.setValue("price36Months", selectedPkg.price36Months || null);
+
+      // Auto-select duration/price logic
+      if (selectedPkg.price12Months != null) {
+        form.setValue("duration", 12);
+        form.setValue("price", Number(selectedPkg.price12Months));
+      } else if (selectedPkg.price24Months != null) {
+        form.setValue("duration", 24);
+        form.setValue("price", Number(selectedPkg.price24Months));
+      } else if (selectedPkg.price36Months != null) {
+        form.setValue("duration", 36);
+        form.setValue("price", Number(selectedPkg.price36Months));
+      } else if (selectedPkg.price != null) {
+        form.setValue("price", Number(selectedPkg.price));
+        form.setValue("duration", selectedPkg.coverageDuration || 12);
+      }
+    }
+  };
 
   // Load customers (from dealer tenant DB) and preselect package from query
   useEffect(() => {
@@ -74,30 +201,40 @@ export default function DealerCreateWarrantySalePage() {
           setCustomers(customersRes.data);
         }
 
-        const packageId = searchParams.get("packageId");
-        if (
-          packagesRes.status &&
-          Array.isArray(packagesRes.data) &&
-          packageId
-        ) {
-          const found = packagesRes.data.find((p: any) => p.id === packageId);
-          if (found) {
-            setPkg(found);
-            form.setValue("warrantyPackageId", found.id);
-            
-            // Auto-select duration/price logic
-            if (found.price12Months != null) {
-              form.setValue("duration", 12);
-              form.setValue("price", Number(found.price12Months));
-            } else if (found.price24Months != null) {
-              form.setValue("duration", 24);
-              form.setValue("price", Number(found.price24Months));
-            } else if (found.price36Months != null) {
-              form.setValue("duration", 36);
-              form.setValue("price", Number(found.price36Months));
-            } else if (found.price != null) {
-              form.setValue("price", Number(found.price));
-              form.setValue("duration", found.coverageDuration || 12);
+        if (packagesRes.status && Array.isArray(packagesRes.data)) {
+          setPackages(packagesRes.data);
+
+          const packageId = searchParams.get("packageId");
+          if (packageId) {
+            const found = packagesRes.data.find((p: any) => p.id === packageId);
+            if (found) {
+              setPkg(found);
+
+              // Set package ID and original prices
+              form.setValue("warrantyPackageId", found.id);
+              form.setValue("excess", found.excess || 0);
+              form.setValue("labourRatePerHour", found.labourRatePerHour || 0);
+              form.setValue("fixedClaimLimit", found.fixedClaimLimit || 0);
+
+              // Store original prices for reference
+              form.setValue("price12Months", found.price12Months || null);
+              form.setValue("price24Months", found.price24Months || null);
+              form.setValue("price36Months", found.price36Months || null);
+
+              // Auto-select duration/price logic
+              if (found.price12Months != null) {
+                form.setValue("duration", 12);
+                form.setValue("price", Number(found.price12Months));
+              } else if (found.price24Months != null) {
+                form.setValue("duration", 24);
+                form.setValue("price", Number(found.price24Months));
+              } else if (found.price36Months != null) {
+                form.setValue("duration", 36);
+                form.setValue("price", Number(found.price36Months));
+              } else if (found.price != null) {
+                form.setValue("price", Number(found.price));
+                form.setValue("duration", found.coverageDuration || 12);
+              }
             }
           }
         }
@@ -111,16 +248,16 @@ export default function DealerCreateWarrantySalePage() {
     form.setValue("duration", duration);
     if (pkg) {
       if (duration === 12 && pkg.price12Months != null) {
-        form.setValue("price", Number(pkg.price12Months));
+        form.setValue("price", Number(Number(pkg.price12Months).toFixed(2)));
       } else if (duration === 24 && pkg.price24Months != null) {
-        form.setValue("price", Number(pkg.price24Months));
+        form.setValue("price", Number(Number(pkg.price24Months).toFixed(2)));
       } else if (duration === 36 && pkg.price36Months != null) {
-        form.setValue("price", Number(pkg.price36Months));
+        form.setValue("price", Number(Number(pkg.price36Months).toFixed(2)));
       }
     }
   };
 
-  const onSubmit = async (data: DealerSaleFormValues) => {
+  const onSubmit: SubmitHandler<DealerSaleFormValues> = async (data) => {
     setLoading(true);
     try {
       const res = await createDealerWarrantySaleAction({
@@ -128,6 +265,12 @@ export default function DealerCreateWarrantySalePage() {
         warrantyPackageId: data.warrantyPackageId,
         price: data.price,
         duration: data.duration,
+        excess: data.excess,
+        labourRatePerHour: data.labourRatePerHour,
+        fixedClaimLimit: data.fixedClaimLimit,
+        price12Months: data.price12Months ?? null,
+        price24Months: data.price24Months ?? null,
+        price36Months: data.price36Months ?? null,
       });
       if (res.status) {
         router.push("/dealer/warranty-sales/list");
@@ -153,45 +296,12 @@ export default function DealerCreateWarrantySalePage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Package Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1 text-sm">
-          {pkg ? (
-            <>
-              <p>
-                <span className="font-medium">Name:</span> {pkg.name}
-              </p>
-              {pkg.durationValue && pkg.durationUnit && (
-                <p>
-                  <span className="font-medium">Duration:</span>{" "}
-                  {pkg.durationValue}{" "}
-                  {pkg.durationUnit === "years" ? "Year" : "Month"}
-                  {pkg.durationValue > 1 ? "s" : ""}
-                </p>
-              )}
-              {pkg.price != null && (
-                <p>
-                  <span className="font-medium">Suggested/Base Price:</span> £
-                  {pkg.price}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-muted-foreground">
-              No package selected. Please go back to the package list and choose
-              "Assign" from there.
-            </p>
-          )}
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Assignment Details</CardTitle>
           <CardDescription>
-            Choose a customer and final price for this assignment.
+            Choose a customer and price for this assignment.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -203,13 +313,27 @@ export default function DealerCreateWarrantySalePage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Selected Package</FormLabel>
-                    <FormControl>
-                      <Input
-                        readOnly
-                        value={pkg ? pkg.name : "No package selected"}
-                        className="bg-muted/40"
-                      />
-                    </FormControl>
+                    <Select
+                      onValueChange={(val) => {
+                        field.onChange(val);
+                        handlePackageSelect(val);
+                      }}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a package" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {packages.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -217,26 +341,48 @@ export default function DealerCreateWarrantySalePage() {
 
               {pkg && (
                 <div className="space-y-4 rounded-md border p-4 bg-muted/20">
-                  <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <FormLabel>Excess (£)</FormLabel>
-                        <Input 
-                          readOnly 
-                          value={pkg.excess ? pkg.excess : "0"} 
-                          className="bg-background text-muted-foreground"
-                        />
-                     </div>
-                     <div className="space-y-2">
-                        <FormLabel>Fixed Claim Limit (£)</FormLabel>
-                        <Input 
-                          readOnly 
-                          value={pkg.fixedClaimLimit ? pkg.fixedClaimLimit : "0"} 
-                          className="bg-background text-muted-foreground"
-                        />
-                     </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <NumberInputField
+                      control={form.control}
+                      name="excess"
+                      label="Excess (£)"
+                      placeholder="Enter excess amount"
+                    />
+                    <NumberInputField
+                      control={form.control}
+                      name="labourRatePerHour"
+                      label="Labour Rate (£/hr)"
+                      placeholder="Enter labour rate"
+                    />
+                    <NumberInputField
+                      control={form.control}
+                      name="fixedClaimLimit"
+                      label="Fixed Claim Limit (£)"
+                      placeholder="Enter claim limit"
+                    />
                   </div>
 
-                  <FormLabel className="text-base pt-2 block">Select Duration & Price</FormLabel>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <NumberInputField
+                      control={form.control}
+                      name="price12Months"
+                      label="12‑Month Price (£)"
+                      placeholder="Enter 12‑month price"
+                    />
+                    <NumberInputField
+                      control={form.control}
+                      name="price24Months"
+                      label="24‑Month Price (£)"
+                      placeholder="Enter 24‑month price"
+                    />
+                    <NumberInputField
+                      control={form.control}
+                      name="price36Months"
+                      label="36‑Month Price (£)"
+                      placeholder="Enter 36‑month price"
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
                     name="duration"
@@ -244,7 +390,9 @@ export default function DealerCreateWarrantySalePage() {
                       <FormItem className="space-y-3">
                         <FormControl>
                           <RadioGroup
-                            onValueChange={(val) => handleDurationSelect(Number(val))}
+                            onValueChange={(val) =>
+                              handleDurationSelect(Number(val))
+                            }
                             defaultValue={String(field.value)}
                             className="flex flex-col space-y-1"
                           >
@@ -254,7 +402,8 @@ export default function DealerCreateWarrantySalePage() {
                                   <RadioGroupItem value="12" />
                                 </FormControl>
                                 <FormLabel className="font-normal">
-                                  12 Months — {formatCurrency(pkg.price12Months)}
+                                  12 Months —{" "}
+                                  {formatCurrency(pkg.price12Months)}
                                 </FormLabel>
                               </FormItem>
                             )}
@@ -264,7 +413,8 @@ export default function DealerCreateWarrantySalePage() {
                                   <RadioGroupItem value="24" />
                                 </FormControl>
                                 <FormLabel className="font-normal">
-                                  24 Months — {formatCurrency(pkg.price24Months)}
+                                  24 Months —{" "}
+                                  {formatCurrency(pkg.price24Months)}
                                 </FormLabel>
                               </FormItem>
                             )}
@@ -274,18 +424,11 @@ export default function DealerCreateWarrantySalePage() {
                                   <RadioGroupItem value="36" />
                                 </FormControl>
                                 <FormLabel className="font-normal">
-                                  36 Months — {formatCurrency(pkg.price36Months)}
+                                  36 Months —{" "}
+                                  {formatCurrency(pkg.price36Months)}
                                 </FormLabel>
                               </FormItem>
                             )}
-                            
-                            {!pkg.price12Months && 
-                             !pkg.price24Months && 
-                             !pkg.price36Months && (
-                               <div className="text-sm text-muted-foreground">
-                                 Standard Duration ({(pkg.coverageDuration || 12)} Months)
-                               </div>
-                             )}
                           </RadioGroup>
                         </FormControl>
                         <FormMessage />
@@ -318,25 +461,6 @@ export default function DealerCreateWarrantySalePage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Final Price</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="Enter customer price"
-                        {...field}
-                      />
-                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

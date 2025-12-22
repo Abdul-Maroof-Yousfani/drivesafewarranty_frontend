@@ -36,3 +36,40 @@ export async function getDealerCustomersAction(): Promise<{
     };
   }
 }
+
+export async function createDealerCustomerAction(data: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  vehicleMake: string;
+  vehicleModel: string;
+  vehicleYear: number;
+  vin?: string | null;
+  registrationNumber?: string | null;
+  mileage?: number;
+  password: string;
+}): Promise<{ status: boolean; data?: Customer; message?: string }> {
+  try {
+    const token = await getAccessToken();
+    const res = await fetch(`${API_BASE}/dealer/customers`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (result.status) {
+      import("next/cache").then(({ revalidatePath }) => {
+        revalidatePath("/dealer/customers/list");
+      });
+    }
+    return result;
+  } catch (error) {
+    console.error("Failed to create dealer customer:", error);
+    return { status: false, message: "Failed to create customer" };
+  }
+}
