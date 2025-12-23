@@ -17,15 +17,23 @@ export default function DealerWarrantyPackagesListPage() {
       if (!isMounted) return;
 
       if (result.status && Array.isArray(result.data)) {
-        const mapped: DealerWarrantyPackageRow[] = result.data.map((pkg: any) => ({
-          id: pkg.id,
-          name: pkg.name,
-          description: pkg.description || "",
-          durationValue: pkg.durationValue,
-          durationUnit: pkg.durationUnit,
-          price: pkg.price ?? 0,
-          status: pkg.status,
-        }));
+        const mapped: DealerWarrantyPackageRow[] = result.data.map(
+          (pkg: any) => ({
+            id: pkg.id,
+            name: pkg.name,
+            description: pkg.description || "",
+            durationValue: pkg.durationValue,
+            durationUnit: pkg.durationUnit,
+            price: pkg.price ?? 0,
+            price12Months: pkg.price12Months,
+            price24Months: pkg.price24Months,
+            price36Months: pkg.price36Months,
+            featuresCount: Array.isArray(pkg.keyBenefits)
+              ? pkg.keyBenefits.length
+              : 0,
+            status: pkg.status,
+          })
+        );
         setData(mapped);
       } else {
         setData([]);
@@ -45,22 +53,21 @@ export default function DealerWarrantyPackagesListPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">My Warranty Packages</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          My Warranty Packages
+        </h1>
         <p className="text-muted-foreground mt-2">
-          View warranty packages shared with your showroom and assign them to customers.
+          View warranty packages shared with your showroom and assign them to
+          customers.
         </p>
       </div>
 
       <DataTable
         columns={dealerColumns}
         data={data}
-        searchFields={[
-          { key: "name", label: "Name" },
-        ]}
+        searchFields={[{ key: "name", label: "Name" }]}
         // Dealers cannot create or edit packages, so no primary action button
       />
     </div>
   );
 }
-
-

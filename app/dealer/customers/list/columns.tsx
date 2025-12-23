@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowUpDown, Edit, Eye, Trash2 } from "lucide-react";
+import { ArrowUpDown, Edit, Eye, Package, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -160,13 +160,13 @@ export const columns: ColumnDef<CustomerRow>[] = [
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" asChild>
-                  <Link href={`/dealer/customers/delete/${customer.id}`}>
-                    <Trash2 className="h-4 w-4" />
+                  <Link href={`/dealer/warranty-sales/create?customerId=${customer.id}`}>
+                    <Package className="h-4 w-4" />
                   </Link>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Delete Customer</p>
+                <p>assign Warranty Package</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

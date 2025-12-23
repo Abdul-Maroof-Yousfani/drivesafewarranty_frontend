@@ -79,9 +79,10 @@ const dealerSchema = z.object({
   hasSignedAgreement: z.boolean().refine((val) => val === true, {
     message: "You must confirm that the dealer agreement has been signed",
   }),
-  onboardingDate: z.date({
-    required_error: "Onboarding date is required",
-  }),
+  onboardingDate: z
+  .date()
+  .refine((val) => val instanceof Date, { message: "Onboarding date is required" }),
+
 
   // Login Credentials (set by Super Admin)
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -634,31 +635,7 @@ export default function CreateDealerPage() {
             </CardContent>
           </Card>
 
-          {/* Database Credentials Info */}
-          <Card className="border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                Auto-Generated Database Credentials
-              </CardTitle>
-              <CardDescription>
-                The following database credentials will be auto-generated and
-                saved in an Excel file:
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="text-sm space-y-1">
-                <p className="font-medium">Database Credentials:</p>
-                <p className="text-muted-foreground">
-                  • Database Name: Auto-generated (dealer_xxx)
-                  <br />
-                  • Database Connection URL: Auto-generated
-                  <br />• All credentials (login + database) will be saved in an
-                  Excel file for download
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+         
 
           {form.formState.errors.root && (
             <div className="text-sm text-destructive">

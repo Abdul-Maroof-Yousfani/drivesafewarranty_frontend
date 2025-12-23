@@ -30,7 +30,7 @@ import { useAuth } from "@/hooks/use-auth";
 // Helper function to transform menu items for dealer (replace /super-admin with /dealer)
 function transformMenuForDealer(menuItems: MenuItem[]): MenuItem[] {
   return menuItems
-    .filter((item) => item.title !== "Create Package")
+    .filter((item) => item.title !== "Create Package" && item.title !== "Dealer Management")
     .map((item) => {
       const transformedItem = { ...item };
 
@@ -148,7 +148,9 @@ export function AppSidebar({ erpMode = false }: AppSidebarProps) {
   if (isAdmin()) {
     menuItems = erpMode ? menuData : warrantyPortalMenuData;
   } else if (isDealer) {
-    menuItems = transformMenuForDealer(warrantyPortalMenuData);
+    menuItems = transformMenuForDealer(
+      warrantyPortalMenuData.filter((item) => item.title !== "Dealer Management")
+    );
   } else if (isCustomer) {
     menuItems = customerMenuData;
   }
@@ -198,4 +200,3 @@ export function AppSidebar({ erpMode = false }: AppSidebarProps) {
     </Sidebar>
   );
 }
-

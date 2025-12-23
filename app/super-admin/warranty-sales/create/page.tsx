@@ -99,6 +99,7 @@ export default function CreateWarrantySalePage() {
   });
 
   const assignType = form.watch("assignTo");
+  const duration = form.watch("duration");
 
   // Load customers, dealers and packages for selection
   useEffect(() => {
@@ -178,23 +179,17 @@ export default function CreateWarrantySalePage() {
 
   const handleDurationSelect = (duration: number) => {
     form.setValue("duration", duration);
-    if (selectedPackage) {
-      if (duration === 12 && selectedPackage.price12Months != null) {
-        form.setValue(
-          "price",
-          Number(Number(selectedPackage.price12Months).toFixed(2))
-        );
-      } else if (duration === 24 && selectedPackage.price24Months != null) {
-        form.setValue(
-          "price",
-          Number(Number(selectedPackage.price24Months).toFixed(2))
-        );
-      } else if (duration === 36 && selectedPackage.price36Months != null) {
-        form.setValue(
-          "price",
-          Number(Number(selectedPackage.price36Months).toFixed(2))
-        );
-      }
+
+    const p12 = form.getValues("price12Months");
+    const p24 = form.getValues("price24Months");
+    const p36 = form.getValues("price36Months");
+
+    if (duration === 12 && p12 != null) {
+      form.setValue("price", Number(Number(p12).toFixed(2)));
+    } else if (duration === 24 && p24 != null) {
+      form.setValue("price", Number(Number(p24).toFixed(2)));
+    } else if (duration === 36 && p36 != null) {
+      form.setValue("price", Number(Number(p36).toFixed(2)));
     }
   };
 
@@ -552,6 +547,9 @@ export default function CreateWarrantySalePage() {
                               step="0.01"
                               min={0}
                               placeholder="Enter 12‑month price"
+                              disabled={
+                                assignType === "customer" && duration !== 12
+                              }
                               {...field}
                               value={
                                 field.value === null ||
@@ -559,13 +557,20 @@ export default function CreateWarrantySalePage() {
                                   ? ""
                                   : field.value
                               }
-                              onChange={(e) =>
-                                field.onChange(
+                              onChange={(e) => {
+                                const val =
                                   e.target.value === ""
                                     ? null
-                                    : Number(e.target.value)
-                                )
-                              }
+                                    : Number(e.target.value);
+                                field.onChange(val);
+                                if (
+                                  assignType === "customer" &&
+                                  duration === 12 &&
+                                  val !== null
+                                ) {
+                                  form.setValue("price", val);
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -584,6 +589,9 @@ export default function CreateWarrantySalePage() {
                               step="0.01"
                               min={0}
                               placeholder="Enter 24‑month price"
+                              disabled={
+                                assignType === "customer" && duration !== 24
+                              }
                               {...field}
                               value={
                                 field.value === null ||
@@ -591,13 +599,20 @@ export default function CreateWarrantySalePage() {
                                   ? ""
                                   : field.value
                               }
-                              onChange={(e) =>
-                                field.onChange(
+                              onChange={(e) => {
+                                const val =
                                   e.target.value === ""
                                     ? null
-                                    : Number(e.target.value)
-                                )
-                              }
+                                    : Number(e.target.value);
+                                field.onChange(val);
+                                if (
+                                  assignType === "customer" &&
+                                  duration === 24 &&
+                                  val !== null
+                                ) {
+                                  form.setValue("price", val);
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -616,6 +631,9 @@ export default function CreateWarrantySalePage() {
                               step="0.01"
                               min={0}
                               placeholder="Enter 36‑month price"
+                              disabled={
+                                assignType === "customer" && duration !== 36
+                              }
                               {...field}
                               value={
                                 field.value === null ||
@@ -623,13 +641,20 @@ export default function CreateWarrantySalePage() {
                                   ? ""
                                   : field.value
                               }
-                              onChange={(e) =>
-                                field.onChange(
+                              onChange={(e) => {
+                                const val =
                                   e.target.value === ""
                                     ? null
-                                    : Number(e.target.value)
-                                )
-                              }
+                                    : Number(e.target.value);
+                                field.onChange(val);
+                                if (
+                                  assignType === "customer" &&
+                                  duration === 36 &&
+                                  val !== null
+                                ) {
+                                  form.setValue("price", val);
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />

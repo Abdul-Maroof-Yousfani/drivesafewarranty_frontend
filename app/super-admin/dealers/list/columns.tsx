@@ -3,52 +3,31 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowUpDown, Eye, Edit, Trash2, Download } from "lucide-react";
+import { ArrowUpDown, Eye, Edit } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
-
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api").replace(/\/$/, "");
-
-// Client-side function to download credentials
-async function handleDownloadCredentials(dealerId: string) {
-  try {
-    // Use credentials: 'include' to send httpOnly cookies automatically
-    const res = await fetch(`${API_BASE}/dealers/${dealerId}/credentials/download`, {
-      method: 'GET',
-      credentials: 'include', // This sends httpOnly cookies automatically
-    });
-    
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to download credentials' }));
-      toast.error(errorData.message || 'Failed to download credentials');
-      return;
-    }
-    
-    // Get filename from Content-Disposition header or use default
-    const contentDisposition = res.headers.get('Content-Disposition');
-    const filename = contentDisposition
-      ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
-      : `dealer-credentials-${dealerId}.xlsx`;
-    
-    // Create blob and download
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-    
-    toast.success("Credentials file downloaded successfully");
-  } catch (error) {
-    console.error("Failed to download credentials:", error);
-    toast.error("Failed to download credentials");
-  }
-}
+import { useState, useTransition } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { updateDealer } from "@/lib/actions/dealer";
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export type DealerRow = {
   id: string;
@@ -58,11 +37,151 @@ export type DealerRow = {
   phone: string;
   contactPerson: string;
   status: string;
+  businessAddress?: string;
+  dealerLicenseNumber?: string;
+  businessRegistrationNumber?: string;
   databaseName?: string | null;
   username?: string | null;
   excelFilePath?: string;
   createdAt: Date | string;
 };
+
+const dealerEditSchema = z.object({
+  businessNameLegal: z.string().min(1),
+  businessNameTrading: z.string().optional(),
+  businessAddress: z.string().min(1),
+  contactPersonName: z.string().min(1),
+  phone: z.string().min(1),
+  email: z.string().email(),
+  dealerLicenseNumber: z.string().optional(),
+  businessRegistrationNumber: z.string().optional(),
+  status: z.string().min(1),
+});
+type DealerEditValues = z.infer<typeof dealerEditSchema>;
+
+function ActionsCell({ dealer }: { dealer: DealerRow }) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const form = useForm<DealerEditValues>({
+    resolver: zodResolver(dealerEditSchema),
+    defaultValues: {
+      businessNameLegal: dealer.businessName,
+      businessNameTrading: dealer.tradingName,
+      businessAddress: dealer.businessAddress || "",
+      contactPersonName: dealer.contactPerson,
+      phone: dealer.phone,
+      email: dealer.email,
+      dealerLicenseNumber: dealer.dealerLicenseNumber || "",
+      businessRegistrationNumber: dealer.businessRegistrationNumber || "",
+      status: dealer.status,
+    },
+  });
+
+  async function onSubmit(values: DealerEditValues) {
+    startTransition(async () => {
+      const res = await updateDealer(dealer.id, {
+        businessNameLegal: values.businessNameLegal,
+        businessNameTrading: values.businessNameTrading,
+        businessAddress: values.businessAddress,
+        contactPersonName: values.contactPersonName,
+        phone: values.phone,
+        email: values.email,
+        dealerLicenseNumber: values.dealerLicenseNumber,
+        businessRegistrationNumber: values.businessRegistrationNumber,
+        status: values.status,
+      });
+      if (res.status) {
+        toast.success("Dealer updated");
+        setOpen(false);
+      } else {
+        toast.error(res.message || "Failed to update dealer");
+      }
+    });
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" asChild>
+              <Link href={`/super-admin/dealers/view/${dealer.id}`}>
+                <Eye className="h-4 w-4" />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>View Dealer</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <Edit className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Edit Dealer</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Legal Business Name</Label>
+                <Input {...form.register("businessNameLegal")} />
+              </div>
+              <div className="space-y-2">
+                <Label>Trading Name</Label>
+                <Input {...form.register("businessNameTrading")} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Business Address</Label>
+              <Input {...form.register("businessAddress")} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Contact Person</Label>
+                <Input {...form.register("contactPersonName")} />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input {...form.register("phone")} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input type="email" {...form.register("email")} />
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Input {...form.register("status")} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Dealer License #</Label>
+                <Input {...form.register("dealerLicenseNumber")} />
+              </div>
+              <div className="space-y-2">
+                <Label>Business Registration #</Label>
+                <Input {...form.register("businessRegistrationNumber")} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={isPending}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 
 export const columns: ColumnDef<DealerRow>[] = [
   {
@@ -206,45 +325,7 @@ export const columns: ColumnDef<DealerRow>[] = [
     accessorKey: "Actions",
     id: "actions",
     cell: ({ row }) => {
-      const dealer = row.original;
-      
-
-      return (
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link href={`/super-admin/dealers/view/${dealer.id}`}>
-                    <Eye className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>View Dealer</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link href={`/super-admin/dealers/edit/${dealer.id}`}>
-                    <Edit className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Edit Dealer</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-       
-        </div>
-      );
+      return <ActionsCell dealer={row.original} />;
     },
   },
 ];
-

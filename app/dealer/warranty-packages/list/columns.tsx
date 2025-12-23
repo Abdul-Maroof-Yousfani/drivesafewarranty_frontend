@@ -16,6 +16,10 @@ export type DealerWarrantyPackageRow = {
   durationValue: number;
   durationUnit: "months" | "years";
   price: number;
+  price12Months?: number | null;
+  price24Months?: number | null;
+  price36Months?: number | null;
+  featuresCount: number;
   status: string;
 };
 
@@ -59,23 +63,41 @@ export const dealerColumns: ColumnDef<DealerWarrantyPackageRow>[] = [
     size: 250,
   },
   {
-    accessorKey: "durationValue",
-    header: "Duration",
-    size: 140,
+    accessorKey: "featuresCount",
+    header: "Features",
+    size: 100,
     cell: ({ row }) => {
-      const duration = row.getValue("durationValue") as number;
-      const unit = row.original.durationUnit;
-      const label = unit === "years" ? "Year" : "Month";
-      return `${duration} ${label}${duration > 1 ? "s" : ""}`;
+      const count = row.getValue("featuresCount") as number;
+      return <div className="text-center font-medium">{count}</div>;
     },
   },
   {
-    accessorKey: "price",
-    header: "Base Price",
-    size: 140,
+    accessorKey: "price12Months",
+    header: "12 Months",
+    size: 120,
     cell: ({ row }) => {
-      const price = row.getValue("price") as number;
-      if (!price) return "-";
+      const price = row.getValue("price12Months") as number | null;
+      if (price === null || price === undefined) return "-";
+      return `£${price.toLocaleString()}`;
+    },
+  },
+  {
+    accessorKey: "price24Months",
+    header: "24 Months",
+    size: 120,
+    cell: ({ row }) => {
+      const price = row.getValue("price24Months") as number | null;
+      if (price === null || price === undefined) return "-";
+      return `£${price.toLocaleString()}`;
+    },
+  },
+  {
+    accessorKey: "price36Months",
+    header: "36 Months",
+    size: 120,
+    cell: ({ row }) => {
+      const price = row.getValue("price36Months") as number | null;
+      if (price === null || price === undefined) return "-";
       return `£${price.toLocaleString()}`;
     },
   },

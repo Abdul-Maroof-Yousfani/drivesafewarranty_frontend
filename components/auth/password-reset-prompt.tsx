@@ -38,9 +38,9 @@ export function PasswordResetPrompt() {
         <AlertDescription className="text-orange-800 dark:text-orange-200">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
-              <p className="font-semibold mb-1">First Login Detected</p>
+              <p className="font-semibold mb-1">Login Detected</p>
               <p className="text-sm">
-                This is your first login. Please change your password in your profile settings for security.
+                Please change your password in your profile settings for security.
               </p>
             </div>
             <Button

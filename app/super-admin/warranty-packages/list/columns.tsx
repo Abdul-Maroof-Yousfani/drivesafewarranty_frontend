@@ -3,7 +3,14 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowUpDown, Eye, Edit } from "lucide-react";
+import { ArrowUpDown, Eye, Edit, ClipboardPlus } from "lucide-react";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type WarrantyPackageRow = {
   id: string;
@@ -52,15 +59,9 @@ export const columns: ColumnDef<WarrantyPackageRow>[] = [
       return `${duration} ${label}${duration > 1 ? "s" : ""}`;
     },
   },
+ 
   {
-    accessorKey: "price",
-    header: "Base Price",
-    cell: ({ row }) => {
-      const price = row.getValue("price") as number;
-      return `£${price.toLocaleString()}`;
-    },
-  },
-  {
+    accessorKey: "Actions",
     id: "actions",
     cell: ({ row }) => {
       const pkg = row.original;
@@ -76,9 +77,24 @@ export const columns: ColumnDef<WarrantyPackageRow>[] = [
               <Edit className="h-4 w-4" />
             </Link>
           </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" asChild>
+                  <Link
+                    href={`/super-admin/warranty-sales/create?packageId=${pkg.id}`}
+                  >
+                    <ClipboardPlus className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Assign to Customer</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       );
     },
   },
 ];
-

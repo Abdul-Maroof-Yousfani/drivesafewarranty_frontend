@@ -29,11 +29,6 @@ export const customerMenuData: MenuItem[] = [
     href: "/customer/warranties",
   },
   {
-    title: "My Vehicles",
-    icon: Car,
-    href: "/customer/vehicles",
-  },
-  {
     title: "Documents",
     icon: FileText,
     href: "/customer/documents",

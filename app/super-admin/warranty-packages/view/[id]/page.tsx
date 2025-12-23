@@ -6,13 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ArrowLeft, Download, ShieldCheck, Users, BarChart3, Clock, DollarSign, Activity } from "lucide-react";
 
-export default async function WarrantyPackageViewPage({ params }: { params: { id: string } }) {
-  // In Next.js 15 params is a promise, but in 14 it's an object. 
-  // Handling both by not awaiting if it's not a promise, but async function suggests server component.
-  // We'll treat it as object for now based on other files.
-  const id = params.id;
+export default async function WarrantyPackageViewPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
   const res = await getWarrantyPackageByIdAction(id);
-  
+
   if (!res.status || !res.data) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
@@ -23,7 +25,7 @@ export default async function WarrantyPackageViewPage({ params }: { params: { id
       </div>
     );
   }
-  
+
   const pkg = res.data;
 
   return (
@@ -43,9 +45,7 @@ export default async function WarrantyPackageViewPage({ params }: { params: { id
             </div>
           </div>
         </div>
-        <Button variant="outline">
-          <Download className="mr-2 h-4 w-4" /> Export Details
-        </Button>
+  
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -134,16 +134,7 @@ export default async function WarrantyPackageViewPage({ params }: { params: { id
                    )) || <p className="text-sm text-muted-foreground">No benefits listed.</p>}
                  </ul>
                </div>
-               <div>
-                 <h3 className="font-semibold mb-2">Included Features</h3>
-                 <ul className="space-y-2">
-                   {pkg.includedFeatures?.map((f, i) => (
-                     <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                       <span className="text-primary">✓</span> {f}
-                     </li>
-                   )) || <p className="text-sm text-muted-foreground">No features listed.</p>}
-                 </ul>
-               </div>
+             
              </div>
            </CardContent>
         </Card>

@@ -362,32 +362,12 @@ export default function DealerCreateWarrantySalePage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <NumberInputField
-                      control={form.control}
-                      name="price12Months"
-                      label="12‑Month Price (£)"
-                      placeholder="Enter 12‑month price"
-                    />
-                    <NumberInputField
-                      control={form.control}
-                      name="price24Months"
-                      label="24‑Month Price (£)"
-                      placeholder="Enter 24‑month price"
-                    />
-                    <NumberInputField
-                      control={form.control}
-                      name="price36Months"
-                      label="36‑Month Price (£)"
-                      placeholder="Enter 36‑month price"
-                    />
-                  </div>
-
                   <FormField
                     control={form.control}
                     name="duration"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
+                        <FormLabel>Select Duration</FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={(val) =>
@@ -434,6 +414,13 @@ export default function DealerCreateWarrantySalePage() {
                         <FormMessage />
                       </FormItem>
                     )}
+                  />
+
+                  <NumberInputField
+                    control={form.control}
+                    name="price"
+                    label="Plan Amount (£)"
+                    placeholder="Enter final plan amount"
                   />
                 </div>
               )}
