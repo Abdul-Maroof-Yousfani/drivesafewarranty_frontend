@@ -11,6 +11,8 @@ export interface User {
   lastName: string;
   role: string | null;
   permissions: string[];
+  phone?: string;
+  avatar?: string | null;
 }
 
 export function useAuth() {
@@ -30,20 +32,29 @@ export function useAuth() {
     setLoading(false);
   }, []);
 
-  const hasPermission = useCallback((permission: string): boolean => {
-    if (!user) return false;
-    return user.permissions.includes(permission);
-  }, [user]);
+  const hasPermission = useCallback(
+    (permission: string): boolean => {
+      if (!user) return false;
+      return user.permissions.includes(permission);
+    },
+    [user]
+  );
 
-  const hasAnyPermission = useCallback((permissions: string[]): boolean => {
-    if (!user) return false;
-    return permissions.some((p) => user.permissions.includes(p));
-  }, [user]);
+  const hasAnyPermission = useCallback(
+    (permissions: string[]): boolean => {
+      if (!user) return false;
+      return permissions.some((p) => user.permissions.includes(p));
+    },
+    [user]
+  );
 
-  const hasAllPermissions = useCallback((permissions: string[]): boolean => {
-    if (!user) return false;
-    return permissions.every((p) => user.permissions.includes(p));
-  }, [user]);
+  const hasAllPermissions = useCallback(
+    (permissions: string[]): boolean => {
+      if (!user) return false;
+      return permissions.every((p) => user.permissions.includes(p));
+    },
+    [user]
+  );
 
   const isAdmin = useCallback((): boolean => {
     return user?.role === "admin" || user?.role === "super_admin";
@@ -66,4 +77,3 @@ export function useAuth() {
     logout,
   };
 }
-

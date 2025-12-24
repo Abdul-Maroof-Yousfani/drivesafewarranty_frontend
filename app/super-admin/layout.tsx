@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Search, X, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 
 export default function SuperAdminLayout({
@@ -27,7 +28,7 @@ export default function SuperAdminLayout({
   const router = useRouter();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [erpMode, setErpMode] = useState(false);
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
 
   useEffect(() => {
     const saved =
@@ -68,13 +69,25 @@ export default function SuperAdminLayout({
       <SidebarInset>
         <header className="flex h-[3.95rem] items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-6 sticky top-0 z-40 w-full justify-between">
           <div className="flex items-center gap-2">
+            {/* Left corner logo */}
+            <Avatar className="h-8 w-8">
+              {user?.avatar ? (
+                <AvatarImage src={user.avatar} alt="Logo" />
+              ) : (
+                <AvatarFallback className="text-xs">
+                  {user?.firstName && user?.lastName
+                    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+                    : "DS"}
+                </AvatarFallback>
+              )}
+            </Avatar>
             <SidebarTrigger />
-            {/* Desktop Search */}
+
             <div className="hidden sm:block flex-1 max-w-xs lg:max-w-sm">
               <HeaderSearch />
             </div>
           </div>
-          {/* Mobile Search Button */}
+
           <Button
             variant="ghost"
             size="icon"

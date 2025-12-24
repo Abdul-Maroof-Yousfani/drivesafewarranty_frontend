@@ -13,6 +13,8 @@ export interface User {
   role: string | null;
   permissions: string[];
   mustChangePassword?: boolean;
+  phone?: string;
+  avatar?: string | null;
 }
 
 export interface AuthResponse {
@@ -26,7 +28,9 @@ export interface AuthResponse {
 }
 
 // Login action
-export async function login(formData: FormData): Promise<{ status: boolean; message: string; role?: string }> {
+export async function login(
+  formData: FormData
+): Promise<{ status: boolean; message: string; role?: string }> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
@@ -45,7 +49,7 @@ export async function login(formData: FormData): Promise<{ status: boolean; mess
 
     if (data.status && data.data) {
       const cookieStore = await cookies();
-      
+
       // Set HTTP-only cookies for tokens
       cookieStore.set("accessToken", data.data.accessToken, {
         httpOnly: true,
@@ -83,22 +87,30 @@ export async function login(formData: FormData): Promise<{ status: boolean; mess
         });
       }
 
-      cookieStore.set("user", JSON.stringify({
-        id: data.data.user.id,
-        email: data.data.user.email,
-        firstName: data.data.user.firstName,
-        lastName: data.data.user.lastName,
-        role: data.data.user.role,
-        permissions: data.data.user.permissions,
-      }), {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-        path: "/",
-      });
+      cookieStore.set(
+        "user",
+        JSON.stringify({
+          id: data.data.user.id,
+          email: data.data.user.email,
+          firstName: data.data.user.firstName,
+          lastName: data.data.user.lastName,
+          role: data.data.user.role,
+          permissions: data.data.user.permissions,
+        }),
+        {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60, // 7 days
+          path: "/",
+        }
+      );
 
-      return { status: true, message: "Login successful", role: data.data.user.role || undefined };
+      return {
+        status: true,
+        message: "Login successful",
+        role: data.data.user.role || undefined,
+      };
     }
 
     return { status: false, message: data.message || "Login failed" };
@@ -199,7 +211,10 @@ export async function refreshAccessToken(): Promise<boolean> {
 }
 
 // Authenticated fetch helper
-export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+export async function authFetch(
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> {
   const cookieStore = await cookies();
   let accessToken = cookieStore.get("accessToken")?.value;
 
@@ -229,7 +244,9 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
 }
 
 // Change password
-export async function changePassword(formData: FormData): Promise<{ status: boolean; message: string }> {
+export async function changePassword(
+  formData: FormData
+): Promise<{ status: boolean; message: string }> {
   const currentPassword = formData.get("currentPassword") as string;
   const newPassword = formData.get("newPassword") as string;
 
@@ -293,4 +310,3 @@ export async function checkSession(): Promise<{ valid: boolean }> {
     return { valid: false };
   }
 }
-

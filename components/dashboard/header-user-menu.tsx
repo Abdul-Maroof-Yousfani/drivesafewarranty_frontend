@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,19 +37,27 @@ export function HeaderUserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
           <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white text-sm font-medium">
-              {initials}
-            </AvatarFallback>
+            {user.avatar ? (
+              <AvatarImage src={user.avatar} alt="Avatar" />
+            ) : (
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white text-sm font-medium">
+                {initials}
+              </AvatarFallback>
+            )}
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
+            <p className="text-sm font-medium">
+              {user.firstName} {user.lastName}
+            </p>
             <p className="text-xs text-muted-foreground">{user.email}</p>
             {user.role && (
-              <p className="text-xs text-blue-500 capitalize">{user.role.replace("_", " ")}</p>
+              <p className="text-xs text-blue-500 capitalize">
+                {user.role.replace("_", " ")}
+              </p>
             )}
           </div>
         </DropdownMenuLabel>
@@ -94,7 +102,10 @@ export function HeaderUserMenu() {
           </>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem
+          onClick={logout}
+          className="text-destructive focus:text-destructive"
+        >
           <LogOut className="mr-2 h-4 w-4" />
           Log out
         </DropdownMenuItem>
