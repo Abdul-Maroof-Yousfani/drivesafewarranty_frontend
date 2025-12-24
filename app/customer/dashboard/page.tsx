@@ -1,23 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ShieldCheck, 
-  Calendar, 
-  FileText, 
-  Car, 
-  ArrowRight, 
-  CheckCircle2, 
-  Search, 
+import {
+  ShieldCheck,
+  Calendar,
+  FileText,
+  Car,
+  ArrowRight,
+  CheckCircle2,
+  Search,
   AlertCircle,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { getWarrantySalesAction, WarrantySale } from "@/lib/actions/warranty-sales";
+import {
+  getWarrantySalesAction,
+  WarrantySale,
+} from "@/lib/actions/warranty-sales";
 import { toast } from "sonner";
 import { formatCurrency } from "@/app/shared/utils";
 
@@ -34,7 +43,7 @@ export default function CustomerDashboard() {
         if (res.status && Array.isArray(res.data)) {
           // Filter warranties for the current customer if the API returns all
           // Assuming the API handles permission, but for safety we display what we get
-          // If the API returns ALL sales (admin view), this would be a security issue 
+          // If the API returns ALL sales (admin view), this would be a security issue
           // that should be fixed on backend. We will assume API returns correct data for user context.
           setWarranties(res.data);
         } else {
@@ -51,18 +60,23 @@ export default function CustomerDashboard() {
     fetchWarranties();
   }, []);
 
-  const filteredWarranties = warranties.filter(warranty => {
-    const matchesSearch = 
+  const filteredWarranties = warranties.filter((warranty) => {
+    const matchesSearch =
       warranty.policyNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      warranty.warrantyPackage.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (warranty.dealer?.businessNameTrading || "").toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = filterStatus === "all" || warranty.status === filterStatus;
+      warranty.warrantyPackage.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (warranty.dealer?.businessNameTrading || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+
+    const matchesStatus =
+      filterStatus === "all" || warranty.status === filterStatus;
 
     return matchesSearch && matchesStatus;
   });
 
-  const activeWarranty = warranties.find(w => w.status === "active");
+  const activeWarranty = warranties.find((w) => w.status === "active");
 
   if (loading) {
     return (
@@ -87,7 +101,7 @@ export default function CustomerDashboard() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" asChild>
-             <Link href="/customer/enquiries">Support</Link>
+            <Link href="/customer/enquiries">Support</Link>
           </Button>
         </div>
       </div>
@@ -102,21 +116,30 @@ export default function CustomerDashboard() {
                   <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active Coverage</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Active Coverage
+                  </p>
                   <div className="flex flex-wrap items-center gap-2 mt-1">
-                    <h2 className="text-2xl font-bold">{activeWarranty.warrantyPackage.name}</h2>
-                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                    <h2 className="text-2xl font-bold">
+                      {activeWarranty.warrantyPackage.name}
+                    </h2>
+                    <Badge
+                      variant="outline"
+                      className="bg-green-100 text-green-800 border-green-200"
+                    >
                       Active
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Policy #: {activeWarranty.policyNumber}
+                    Warranty #: {activeWarranty.policyNumber}
                   </p>
                 </div>
               </div>
               <div className="text-right hidden md:block">
                 <p className="text-sm text-muted-foreground">Coverage Start</p>
-                <p className="font-medium">{new Date(activeWarranty.saleDate).toLocaleDateString()}</p>
+                <p className="font-medium">
+                  {new Date(activeWarranty.saleDate).toLocaleDateString()}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -130,7 +153,9 @@ export default function CustomerDashboard() {
               </div>
               <div>
                 <p className="text-lg font-bold">No Active Coverage Found</p>
-                <p className="text-muted-foreground">You currently don't have any active warranty packages.</p>
+                <p className="text-muted-foreground">
+                  You currently don't have any active warranty packages.
+                </p>
               </div>
             </div>
           </CardContent>
@@ -156,20 +181,33 @@ export default function CustomerDashboard() {
 
         {filteredWarranties.length === 0 ? (
           <div className="text-center py-12 border rounded-lg bg-muted/10">
-            <p className="text-muted-foreground">No warranties found matching your search.</p>
+            <p className="text-muted-foreground">
+              No warranties found matching your search.
+            </p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredWarranties.map((warranty) => (
-              <Card key={warranty.id} className="flex flex-col overflow-hidden transition-all hover:shadow-md border-t-4 border-t-primary/20">
+              <Card
+                key={warranty.id}
+                className="flex flex-col overflow-hidden transition-all hover:shadow-md border-t-4 border-t-primary/20"
+              >
                 <CardHeader className="pb-3 bg-muted/20">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{warranty.warrantyPackage.name}</CardTitle>
-                    <Badge variant={warranty.status === "active" ? "default" : "secondary"}>
+                    <CardTitle className="text-lg">
+                      {warranty.warrantyPackage.name}
+                    </CardTitle>
+                    <Badge
+                      variant={
+                        warranty.status === "active" ? "default" : "secondary"
+                      }
+                    >
                       {warranty.status}
                     </Badge>
                   </div>
-                  <CardDescription>Policy: {warranty.policyNumber}</CardDescription>
+                  <CardDescription>
+                    Policy: {warranty.policyNumber}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 pt-4 space-y-4">
                   <div className="space-y-2 text-sm">
@@ -177,28 +215,39 @@ export default function CustomerDashboard() {
                       <span className="text-muted-foreground flex items-center gap-2">
                         <Calendar className="h-3 w-3" /> Sale Date
                       </span>
-                      <span className="font-medium">{new Date(warranty.saleDate).toLocaleDateString()}</span>
+                      <span className="font-medium">
+                        {new Date(warranty.saleDate).toLocaleDateString()}
+                      </span>
                     </div>
                     {warranty.dealer && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground flex items-center gap-2">
                           <Car className="h-3 w-3" /> Dealer
                         </span>
-                        <span className="font-medium truncate max-w-[150px]" title={warranty.dealer.businessNameTrading || warranty.dealer.businessNameLegal}>
-                          {warranty.dealer.businessNameTrading || warranty.dealer.businessNameLegal}
+                        <span
+                          className="font-medium truncate max-w-[150px]"
+                          title={
+                            warranty.dealer.businessNameTrading ||
+                            warranty.dealer.businessNameLegal
+                          }
+                        >
+                          {warranty.dealer.businessNameTrading ||
+                            warranty.dealer.businessNameLegal}
                         </span>
                       </div>
                     )}
                     <div className="flex justify-between">
-                       <span className="text-muted-foreground">Price</span>
-                       <span className="font-medium">{formatCurrency(Number(warranty.warrantyPrice))}</span>
+                      <span className="text-muted-foreground">Price</span>
+                      <span className="font-medium">
+                        {formatCurrency(Number(warranty.warrantyPrice))}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
                 <div className="p-4 pt-0 mt-auto">
                   <Button variant="outline" className="w-full group" asChild>
                     <Link href={`/customer/documents`}>
-                      View Documents 
+                      View Documents
                       <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </Button>
@@ -213,11 +262,17 @@ export default function CustomerDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Access your warranty documents and services</CardDescription>
+          <CardDescription>
+            Access your warranty documents and services
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-2">
-            <Button variant="outline" className="w-full justify-start h-auto py-4 hover:bg-muted/50 transition-colors" asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-start h-auto py-4 hover:bg-muted/50 transition-colors"
+              asChild
+            >
               <Link href="/customer/documents">
                 <div className="flex items-center gap-3 w-full">
                   <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -225,13 +280,19 @@ export default function CustomerDashboard() {
                   </div>
                   <div className="flex-1 text-left">
                     <p className="font-medium">View Documents</p>
-                    <p className="text-xs text-muted-foreground">Warranty papers & certificates</p>
+                    <p className="text-xs text-muted-foreground">
+                      Warranty papers & certificates
+                    </p>
                   </div>
                   <ArrowRight className="h-4 w-4" />
                 </div>
               </Link>
             </Button>
-            <Button variant="outline" className="w-full justify-start h-auto py-4 hover:bg-muted/50 transition-colors" asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-start h-auto py-4 hover:bg-muted/50 transition-colors"
+              asChild
+            >
               <Link href="/customer/enquiries">
                 <div className="flex items-center gap-3 w-full">
                   <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -239,7 +300,9 @@ export default function CustomerDashboard() {
                   </div>
                   <div className="flex-1 text-left">
                     <p className="font-medium">Submit Enquiry</p>
-                    <p className="text-xs text-muted-foreground">Request service or support</p>
+                    <p className="text-xs text-muted-foreground">
+                      Request service or support
+                    </p>
                   </div>
                   <ArrowRight className="h-4 w-4" />
                 </div>

@@ -12,6 +12,7 @@ export interface CustomerWarrantySale {
   coverageStartDate: string;
   coverageEndDate: string;
   status: string;
+  planMonths?: number | null;
   warrantyPackage: {
     id: string;
     name: string;

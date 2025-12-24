@@ -10,6 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Edit,
@@ -20,14 +22,12 @@ import {
   Calendar,
   ShieldCheck,
 } from "lucide-react";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 
 interface CustomerViewProps {
   customer: Customer;
 }
 
-export function CustomerView({ customer }: CustomerViewProps) {
+export function CustomerViewDealer({ customer }: CustomerViewProps) {
   const router = useRouter();
 
   if (!customer) {
@@ -59,7 +59,7 @@ export function CustomerView({ customer }: CustomerViewProps) {
             Back
           </Button>
           <Button asChild className="flex-1 sm:flex-none">
-            <Link href={`/super-admin/customers/edit/${customer.id}`}>
+            <Link href={`/dealer/customers/edit/${customer.id}`}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Link>
@@ -68,7 +68,6 @@ export function CustomerView({ customer }: CustomerViewProps) {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Customer Information */}
         <Card>
           <CardHeader>
             <CardTitle>Customer Information</CardTitle>
@@ -111,18 +110,9 @@ export function CustomerView({ customer }: CustomerViewProps) {
                 {customer.status}
               </Badge>
             </div>
-            {customer.dealerName && (
-              <div>
-                <p className="text-sm font-medium">Dealer</p>
-                <p className="text-sm text-muted-foreground">
-                  {customer.dealerName}
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
 
-        {/* Vehicle Information */}
         <Card>
           <CardHeader>
             <CardTitle>Vehicle Information</CardTitle>
@@ -220,34 +210,21 @@ export function CustomerView({ customer }: CustomerViewProps) {
                   </p>
                 </div>
               )}
-              {customer.currentWarranty.dealerName && (
-                <div>
-                  <p className="text-sm font-medium">Assigned By</p>
-                  <p className="text-sm text-muted-foreground">
-                    {customer.currentWarranty.dealerName}
-                  </p>
-                </div>
-              )}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No active warranty found.</p>
+            <p className="text-sm text-muted-foreground">
+              No active warranty found.
+            </p>
           )}
         </CardContent>
       </Card>
 
-      {/* Additional Information */}
       <Card>
         <CardHeader>
           <CardTitle>Additional Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <p className="text-sm font-medium">Created By</p>
-              <p className="text-sm text-muted-foreground">
-                {customer.createdBy || "N/A"}
-              </p>
-            </div>
             <div className="flex items-start gap-3">
               <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>

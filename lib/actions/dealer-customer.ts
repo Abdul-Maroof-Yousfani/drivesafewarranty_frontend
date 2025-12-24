@@ -37,6 +37,30 @@ export async function getDealerCustomersAction(): Promise<{
   }
 }
 
+export async function getDealerCustomerByIdAction(
+  id: string
+): Promise<{ status: boolean; data: Customer | null; message?: string }> {
+  try {
+    const token = await getAccessToken();
+    const res = await fetch(`${API_BASE}/dealer/customers/${id}`, {
+      cache: "no-store",
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        data: null,
+        message: (errorData as any).message || `Failed with status ${res.status}`,
+      };
+    }
+    return res.json();
+  } catch (error) {
+    console.error("Failed to fetch dealer customer:", error);
+    return { status: false, data: null, message: "Failed to fetch customer" };
+  }
+}
+
 export async function createDealerCustomerAction(data: {
   firstName: string;
   lastName: string;

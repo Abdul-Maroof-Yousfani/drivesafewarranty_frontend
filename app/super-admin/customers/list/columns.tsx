@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowUpDown, Edit, Eye } from "lucide-react";
+import { ArrowUpDown, ClipboardPlus, Edit, Eye } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
@@ -257,6 +257,7 @@ function CustomerActionsCell({ customer }: { customer: CustomerRow }) {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+     
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button variant="ghost" size="icon">
@@ -328,6 +329,22 @@ function CustomerActionsCell({ customer }: { customer: CustomerRow }) {
           </form>
         </DialogContent>
       </Dialog>
+       <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" asChild>
+              <Link
+                href={`/super-admin/warranty-sales/create?customerId=${customer.id}`}
+              >
+                <ClipboardPlus className="h-4 w-4" />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Assign Warranty Package</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }

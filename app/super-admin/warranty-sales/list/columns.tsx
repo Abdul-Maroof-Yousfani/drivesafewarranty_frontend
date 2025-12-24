@@ -48,15 +48,14 @@ export const columns: ColumnDef<WarrantySale>[] = [
     id: "soldTo",
     header: "Sold To",
     cell: ({ row }) => {
-      const customer = row.original.customer;
       const dealer = row.original.dealer;
-      if (customer) {
-        return `${customer.firstName} ${customer.lastName}`;
-      }
       if (dealer) {
-        return dealer.businessNameTrading || dealer.businessNameLegal;
+        const legal = dealer.businessNameLegal || "";
+        const trading = dealer.businessNameTrading || "";
+        return trading ? `${legal} (${trading})` : legal || "N/A";
       }
-      return "N/A";
+      const customer = row.original.customer;
+      return customer ? `${customer.firstName} ${customer.lastName}` : "N/A";
     },
   },
   {

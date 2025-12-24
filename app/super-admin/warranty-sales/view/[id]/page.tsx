@@ -1,13 +1,23 @@
 import { notFound } from "next/navigation";
 import { getWarrantySaleByIdAction } from "@/lib/actions/warranty-sales";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
-export default async function WarrantySaleViewPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function WarrantySaleViewPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const res = await getWarrantySaleByIdAction(id);
   if (!res.status || !res.data) {
@@ -30,8 +40,12 @@ export default async function WarrantySaleViewPage({ params }: { params: Promise
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Warranty Sale Details</h1>
-          <p className="text-muted-foreground mt-2">Comprehensive details of the warranty sale</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Warranty Sale Details
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Comprehensive details of the warranty sale
+          </p>
         </div>
       </div>
 
@@ -43,12 +57,16 @@ export default async function WarrantySaleViewPage({ params }: { params: Promise
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Policy Number</span>
+              <span className="text-sm text-muted-foreground">
+                Warranty Number
+              </span>
               <span className="font-medium">{sale.policyNumber}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Package</span>
-              <span className="font-medium">{sale.warrantyPackage?.name || "N/A"}</span>
+              <span className="font-medium">
+                {sale.warrantyPackage?.name || "N/A"}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Sold To</span>
@@ -60,35 +78,49 @@ export default async function WarrantySaleViewPage({ params }: { params: Promise
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Sale Date</span>
-              <span className="font-medium">{format(new Date(sale.saleDate), "PPP")}</span>
+              <span className="font-medium">
+                {format(new Date(sale.saleDate), "PPP")}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Coverage</span>
               <span className="font-medium">
-                {format(new Date(sale.coverageStartDate), "PPP")} - {format(new Date(sale.coverageEndDate), "PPP")}
+                {format(new Date(sale.coverageStartDate), "PPP")} -{" "}
+                {format(new Date(sale.coverageEndDate), "PPP")}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Price</span>
               <span className="font-medium">
-                {new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(Number(sale.warrantyPrice))}
+                {new Intl.NumberFormat("en-GB", {
+                  style: "currency",
+                  currency: "GBP",
+                }).format(Number(sale.warrantyPrice))}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Payment Method</span>
+              <span className="text-sm text-muted-foreground">
+                Payment Method
+              </span>
               <span className="font-medium">{sale.paymentMethod}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Status</span>
-              <Badge variant={sale.status === "active" ? "default" : "secondary"}>{sale.status}</Badge>
+              <Badge
+                variant={sale.status === "active" ? "default" : "secondary"}
+              >
+                {sale.status}
+              </Badge>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Assigned Package Details</CardTitle>
-            <CardDescription>Effective values used for this assignment</CardDescription>
+            <CardDescription>
+              Effective values used for this assignment
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
@@ -100,31 +132,65 @@ export default async function WarrantySaleViewPage({ params }: { params: Promise
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Labour Rate</span>
               <span className="font-medium">
-                £{(sale.labourRatePerHour ?? sale.warrantyPackage?.labourRatePerHour ?? 0).toString()}/hr
+                £
+                {(
+                  sale.labourRatePerHour ??
+                  sale.warrantyPackage?.labourRatePerHour ??
+                  0
+                ).toString()}
+                /hr
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Fixed Claim Limit</span>
+              <span className="text-sm text-muted-foreground">
+                Fixed Claim Limit
+              </span>
               <span className="font-medium">
-                £{(sale.fixedClaimLimit ?? sale.warrantyPackage?.fixedClaimLimit ?? 0).toString()}
+                £
+                {(
+                  sale.fixedClaimLimit ??
+                  sale.warrantyPackage?.fixedClaimLimit ??
+                  0
+                ).toString()}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">12‑Month Price</span>
+              <span className="text-sm text-muted-foreground">
+                12‑Month Price
+              </span>
               <span className="font-medium">
-                £{(sale.price12Months ?? sale.warrantyPackage?.price12Months ?? 0).toString()}
+                £
+                {(
+                  sale.price12Months ??
+                  sale.warrantyPackage?.price12Months ??
+                  0
+                ).toString()}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">24‑Month Price</span>
+              <span className="text-sm text-muted-foreground">
+                24‑Month Price
+              </span>
               <span className="font-medium">
-                £{(sale.price24Months ?? sale.warrantyPackage?.price24Months ?? 0).toString()}
+                £
+                {(
+                  sale.price24Months ??
+                  sale.warrantyPackage?.price24Months ??
+                  0
+                ).toString()}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">36‑Month Price</span>
+              <span className="text-sm text-muted-foreground">
+                36‑Month Price
+              </span>
               <span className="font-medium">
-                £{(sale.price36Months ?? sale.warrantyPackage?.price36Months ?? 0).toString()}
+                £
+                {(
+                  sale.price36Months ??
+                  sale.warrantyPackage?.price36Months ??
+                  0
+                ).toString()}
               </span>
             </div>
           </CardContent>

@@ -47,7 +47,7 @@ export const columns: ColumnDef<DealerSaleRow>[] = [
   },
   {
     accessorKey: "policyNumber",
-    header: "Policy Number",
+    header: "Warranty Number",
     size: 240,
     cell: ({ row }) => {
       const val = row.getValue("policyNumber") as string;

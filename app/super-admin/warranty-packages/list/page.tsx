@@ -6,11 +6,15 @@ import { ListSkeleton } from "@/components/dashboard/list-skeleton";
 import { getWarrantyPackagesAction } from "@/lib/actions/warranty-package";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { deleteWarrantyPackages } from "@/lib/actions/warranty-package";
+import { useTransition } from "react";
+import { toast } from "sonner";
 
 export default function WarrantyPackagesListPage() {
   const router = useRouter();
   const [data, setData] = useState<WarrantyPackageRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     let isMounted = true;
@@ -23,11 +27,18 @@ export default function WarrantyPackagesListPage() {
           id: pkg.id,
           name: pkg.name,
           description: pkg.description || "",
-          context: pkg.context,
           durationValue: pkg.durationValue,
           durationUnit: pkg.durationUnit,
           price: pkg.price ?? 0,
           createdAt: pkg.createdAt,
+          featuresCount: Array.isArray(pkg.includedFeatures)
+            ? pkg.includedFeatures.length
+            : Array.isArray(pkg.keyBenefits)
+            ? pkg.keyBenefits.length
+            : 0,
+          price12Months: pkg.price12Months ?? null,
+          price24Months: pkg.price24Months ?? null,
+          price36Months: pkg.price36Months ?? null,
         }));
         setData(mapped);
       } else {
@@ -45,6 +56,18 @@ export default function WarrantyPackagesListPage() {
     return <ListSkeleton />;
   }
 
+  const handleMultiDelete = (ids: string[]) => {
+    startTransition(async () => {
+      const result = await deleteWarrantyPackages(ids);
+      if (result.status) {
+        toast.success(result.message);
+        router.refresh();
+      } else {
+        toast.error(result.message);
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -57,16 +80,13 @@ export default function WarrantyPackagesListPage() {
       <DataTable
         columns={columns}
         data={data}
-        searchFields={[
-          { key: "name", label: "Name" },
-          { key: "context", label: "Context" },
-        ]}
+        searchFields={[{ key: "name", label: "Name" }]}
         toggleAction={() =>
           router.push("/super-admin/warranty-packages/create")
         }
         actionText="Create Package"
+        onMultiDelete={handleMultiDelete}
       />
     </div>
   );
 }
-

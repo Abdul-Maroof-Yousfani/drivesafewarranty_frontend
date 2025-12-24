@@ -5,10 +5,14 @@ import DataTable from "@/components/common/data-table";
 import { ListSkeleton } from "@/components/dashboard/list-skeleton";
 import { getDealerWarrantyPackagesAction } from "@/lib/actions/warranty-package";
 import { DealerWarrantyPackageRow, dealerColumns } from "./columns";
+import { deleteDealerWarrantyPackages } from "@/lib/actions/warranty-package";
+import { useTransition } from "react";
+import { toast } from "sonner";
 
 export default function DealerWarrantyPackagesListPage() {
   const [data, setData] = useState<DealerWarrantyPackageRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     let isMounted = true;
@@ -50,6 +54,17 @@ export default function DealerWarrantyPackagesListPage() {
     return <ListSkeleton />;
   }
 
+  const handleMultiDelete = (ids: string[]) => {
+    startTransition(async () => {
+      const result = await deleteDealerWarrantyPackages(ids);
+      if (result.status) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -66,6 +81,7 @@ export default function DealerWarrantyPackagesListPage() {
         columns={dealerColumns}
         data={data}
         searchFields={[{ key: "name", label: "Name" }]}
+        onMultiDelete={handleMultiDelete}
         // Dealers cannot create or edit packages, so no primary action button
       />
     </div>

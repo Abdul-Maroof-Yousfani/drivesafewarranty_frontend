@@ -261,3 +261,101 @@ export async function assignWarrantyPackageToDealer(params: {
   const json = await res.json();
   return json;
 }
+
+export async function deleteWarrantyPackageAction(
+  id: string
+): Promise<{ status: boolean; message?: string }> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/warranty-packages/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.json();
+  } catch (error) {
+    console.error("Failed to delete warranty package:", error);
+    return { status: false, message: "Failed to delete warranty package" };
+  }
+}
+
+export async function deleteWarrantyPackages(
+  ids: string[]
+): Promise<{ status: boolean; message: string }> {
+  if (!ids.length) return { status: false, message: "No items to delete" };
+  try {
+    const results = await Promise.all(
+      ids.map((id) => deleteWarrantyPackageAction(id))
+    );
+    const failed = results.filter((r) => !r.status);
+    if (failed.length > 0) {
+      return {
+        status: false,
+        message: `${failed.length} package(s) failed to delete`,
+      };
+    }
+    return {
+      status: true,
+      message: `${results.length} package(s) deleted successfully`,
+    };
+  } catch (error) {
+    console.error("Failed to delete warranty packages:", error);
+    return { status: false, message: "Failed to delete warranty packages" };
+  }
+}
+
+export async function deleteDealerWarrantyPackageAction(
+  id: string
+): Promise<{ status: boolean; message?: string }> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/dealer/warranty-packages/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.json();
+  } catch (error) {
+    console.error("Failed to delete dealer warranty package:", error);
+    return { status: false, message: "Failed to delete warranty package" };
+  }
+}
+
+export async function deleteDealerWarrantyPackages(
+  ids: string[]
+): Promise<{ status: boolean; message: string }> {
+  if (!ids.length) return { status: false, message: "No items to delete" };
+  try {
+    const results = await Promise.all(
+      ids.map((id) => deleteDealerWarrantyPackageAction(id))
+    );
+    const failed = results.filter((r) => !r.status);
+    if (failed.length > 0) {
+      return {
+        status: false,
+        message: `${failed.length} package(s) failed to delete`,
+      };
+    }
+    return {
+      status: true,
+      message: `${results.length} package(s) deleted successfully`,
+    };
+  } catch (error) {
+    console.error("Failed to delete dealer warranty packages:", error);
+    return { status: false, message: "Failed to delete warranty packages" };
+  }
+}

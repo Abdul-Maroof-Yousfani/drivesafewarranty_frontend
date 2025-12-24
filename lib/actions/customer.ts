@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getAccessToken } from "@/lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 
 export interface Customer {
   id: string;
@@ -24,10 +25,27 @@ export interface Customer {
   createdBy?: string | null;
   createdAt: string;
   updatedAt: string;
+  currentWarranty?: {
+    id: string;
+    policyNumber: string;
+    status: string;
+    coverageStartDate: string;
+    coverageEndDate: string;
+    planMonths?: number | null;
+    warrantyPackage: {
+      id: string;
+      name: string;
+    };
+    dealerName?: string | null;
+  } | null;
 }
 
 // Customer Actions
-export async function getCustomers(): Promise<{ status: boolean; data: Customer[]; message?: string }> {
+export async function getCustomers(): Promise<{
+  status: boolean;
+  data: Customer[];
+  message?: string;
+}> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/customers`, {
@@ -41,24 +59,37 @@ export async function getCustomers(): Promise<{ status: boolean; data: Customer[
   }
 }
 
-export async function getCustomerById(id: string): Promise<{ status: boolean; data: Customer | null; message?: string }> {
+export async function getCustomerById(
+  id: string
+): Promise<{ status: boolean; data: Customer | null; message?: string }> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/customers/${id}`, {
       cache: "no-store",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
-    
+
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch customer' }));
-      return { status: false, data: null, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch customer" }));
+      return {
+        status: false,
+        data: null,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
-    
+
     const result = await res.json();
     return result;
   } catch (error) {
     console.error("Failed to fetch customer:", error);
-    return { status: false, data: null, message: error instanceof Error ? error.message : "Failed to fetch customer" };
+    return {
+      status: false,
+      data: null,
+      message:
+        error instanceof Error ? error.message : "Failed to fetch customer",
+    };
   }
 }
 
@@ -137,7 +168,9 @@ export async function updateCustomer(
   }
 }
 
-export async function deleteCustomer(id: string): Promise<{ status: boolean; message?: string }> {
+export async function deleteCustomer(
+  id: string
+): Promise<{ status: boolean; message?: string }> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/customers/${id}`, {
@@ -155,7 +188,9 @@ export async function deleteCustomer(id: string): Promise<{ status: boolean; mes
   }
 }
 
-export async function deleteCustomers(ids: string[]): Promise<{ status: boolean; message?: string }> {
+export async function deleteCustomers(
+  ids: string[]
+): Promise<{ status: boolean; message?: string }> {
   try {
     const token = await getAccessToken();
     const res = await fetch(`${API_BASE}/customers/bulk`, {
@@ -176,4 +211,3 @@ export async function deleteCustomers(ids: string[]): Promise<{ status: boolean;
     return { status: false, message: "Failed to delete customers" };
   }
 }
-

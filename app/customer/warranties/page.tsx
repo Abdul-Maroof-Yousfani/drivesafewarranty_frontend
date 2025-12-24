@@ -45,7 +45,7 @@ export default async function CustomerWarrantiesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">My Warranties</h1>
         <p className="text-muted-foreground">
@@ -53,7 +53,7 @@ export default async function CustomerWarrantiesPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2">
         {warranties.map((warranty) => {
           const startDate = new Date(
             warranty.coverageStartDate
@@ -66,6 +66,12 @@ export default async function CustomerWarrantiesPage() {
             new Date(warranty.coverageEndDate) > new Date();
           const price =
             warranty.warrantyPrice || warranty.warrantyPackage.price;
+          const planMonths =
+            typeof warranty.planMonths === "number" && warranty.planMonths > 0
+              ? warranty.planMonths
+              : warranty.warrantyPackage.durationUnit === "years"
+              ? warranty.warrantyPackage.durationValue * 12
+              : warranty.warrantyPackage.durationValue;
 
           // Parse features if they are strings (JSON)
           let features = [];
@@ -97,13 +103,21 @@ export default async function CustomerWarrantiesPage() {
               key={warranty.id}
               className="overflow-hidden border-t-4 border-t-primary shadow-sm hover:shadow-md transition-shadow"
             >
-              <CardHeader className="bg-muted/5 pb-4">
+              <CardHeader className="bg-muted/5 pb-2">
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <CardTitle className="text-xl text-primary">
                         {warranty.warrantyPackage.name}
                       </CardTitle>
+                      {planMonths ? (
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-background"
+                        >
+                          {planMonths} Months
+                        </Badge>
+                      ) : null}
                       {warranty.warrantyPackage.planLevel && (
                         <Badge
                           variant="outline"
@@ -114,7 +128,7 @@ export default async function CustomerWarrantiesPage() {
                       )}
                     </div>
                     <CardDescription className="font-mono text-xs">
-                      Policy #: {warranty.policyNumber}
+                      Warranty #: {warranty.policyNumber}
                     </CardDescription>
                   </div>
                   <Badge variant={isActive ? "default" : "destructive"}>
@@ -122,7 +136,7 @@ export default async function CustomerWarrantiesPage() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pt-6 space-y-6">
+              <CardContent className="space-y-3">
                 {/* Duration & Dates */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex flex-col space-y-1">
@@ -142,7 +156,7 @@ export default async function CustomerWarrantiesPage() {
                 <Separator />
 
                 {/* Coverage Highlights */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
                   {price !== undefined && price !== null && (
                     <div className="bg-muted/30 p-2 rounded border text-center">
                       <span className="block text-xs text-muted-foreground mb-1">

@@ -4,6 +4,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowUpDown, Eye, Edit, ClipboardPlus } from "lucide-react";
+import { HighlightText } from "@/components/common/data-table";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   Tooltip,
@@ -16,50 +18,85 @@ export type WarrantyPackageRow = {
   id: string;
   name: string;
   description: string;
-  context: "drive_safe" | "dealer" | "direct_customer";
   durationValue: number;
   durationUnit: "months" | "years";
   price: number;
   createdAt: string;
+  featuresCount: number;
+  price12Months?: number | null;
+  price24Months?: number | null;
+  price36Months?: number | null;
 };
 
 export const columns: ColumnDef<WarrantyPackageRow>[] = [
   {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+    size: 28,
+  },
+  {
     accessorKey: "name",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Package Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+    header: "Package Name",
+    enableSorting: true,
+    cell: ({ row }) => {
+      const name = row.getValue("name") as string;
+      return <HighlightText text={name} className="truncate" />;
     },
   },
   {
-    accessorKey: "context",
-    header: "Context",
+    accessorKey: "featuresCount",
+    header: "Features (count)",
+    enableSorting: true,
     cell: ({ row }) => {
-      const context = row.getValue("context") as string;
-      if (context === "drive_safe") return "Drive-Safe Website";
-      if (context === "dealer") return "Dealer";
-      if (context === "direct_customer") return "Direct Customer";
-      return context;
+      const count = row.getValue("featuresCount") as number;
+      return count ?? 0;
     },
   },
   {
-    accessorKey: "durationValue",
-    header: "Duration",
+    accessorKey: "price12Months",
+    header: "12 month price",
+    enableSorting: true,
     cell: ({ row }) => {
-      const duration = row.getValue("durationValue") as number;
-      const unit = row.original.durationUnit;
-      const label = unit === "years" ? "Year" : "Month";
-      return `${duration} ${label}${duration > 1 ? "s" : ""}`;
+      const val = row.getValue("price12Months") as number | null;
+      return val != null ? `£${Number(val).toFixed(2)}` : "—";
     },
   },
- 
+  {
+    accessorKey: "price24Months",
+    header: "24 month price",
+    enableSorting: true,
+    cell: ({ row }) => {
+      const val = row.getValue("price24Months") as number | null;
+      return val != null ? `£${Number(val).toFixed(2)}` : "—";
+    },
+  },
+  {
+    accessorKey: "price36Months",
+    header: "36 month price",
+    enableSorting: true,
+    cell: ({ row }) => {
+      const val = row.getValue("price36Months") as number | null;
+      return val != null ? `£${Number(val).toFixed(2)}` : "—";
+    },
+  },
   {
     accessorKey: "Actions",
     id: "actions",
