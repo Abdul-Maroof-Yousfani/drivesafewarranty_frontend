@@ -18,6 +18,10 @@ export interface WarrantyPackage {
   price12Months?: number | null;
   price24Months?: number | null;
   price36Months?: number | null;
+  // Dealer internal prices (cost to dealer when SA assigns package)
+  dealerPrice12Months?: number | null;
+  dealerPrice24Months?: number | null;
+  dealerPrice36Months?: number | null;
   includedFeatures?: string[] | null;
   keyBenefits?: string[] | null;
   coverageDuration?: number;
@@ -227,14 +231,14 @@ export async function getWarrantyPackageByIdAction(
 export async function assignWarrantyPackageToDealer(params: {
   dealerId: string;
   warrantyPackageId: string;
-  price?: number;
   duration?: number;
   excess?: number | null;
   labourRatePerHour?: number | null;
   fixedClaimLimit?: number | null;
-  price12Months?: number | null;
-  price24Months?: number | null;
-  price36Months?: number | null;
+  // Dealer internal prices (cost to dealer - SA can set these)
+  dealerPrice12Months?: number | null;
+  dealerPrice24Months?: number | null;
+  dealerPrice36Months?: number | null;
 }): Promise<
   ApiResponse<{
     masterPackage: WarrantyPackage;

@@ -18,6 +18,13 @@ export interface WarrantySale {
   price12Months?: number | null;
   price24Months?: number | null;
   price36Months?: number | null;
+  // Dealer cost fields - what SA charged the dealer
+  dealerCost12Months?: number | null;
+  dealerCost24Months?: number | null;
+  dealerCost36Months?: number | null;
+  coverageStartDate: string;
+  coverageEndDate: string;
+  paymentMethod: string;
   warrantyPackage: {
     id: string;
     name: string;
@@ -27,17 +34,24 @@ export interface WarrantySale {
     excess?: number | null;
     labourRatePerHour?: number | null;
     fixedClaimLimit?: number | null;
+    // Dealer pricing from package
+    dealerPrice12Months?: number | null;
+    dealerPrice24Months?: number | null;
+    dealerPrice36Months?: number | null;
   };
   customer?: {
     id: string;
     firstName: string;
     lastName: string;
     email?: string;
+    address?: string; // Added
   } | null;
   dealer?: {
     id: string;
     businessNameTrading: string | null;
     businessNameLegal: string;
+    businessAddress?: string; // Added
+    email?: string; // Added
   } | null;
   createdBy?: {
     id: string;

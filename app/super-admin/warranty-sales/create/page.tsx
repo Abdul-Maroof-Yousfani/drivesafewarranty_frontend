@@ -42,9 +42,7 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 
 const warrantySaleSchema = z.object({
-  assignTo: z.enum(["customer", "dealer"], {
-    required_error: "Please select who you are assigning the package to",
-  }),
+  assignTo: z.enum(["customer", "dealer"]),
   customerId: z.string().optional(),
   dealerId: z.string().optional(),
   warrantyPackageId: z.string().min(1, "Please select a warranty package"),
@@ -65,9 +63,14 @@ const warrantySaleSchema = z.object({
     .min(0, "Fixed claim limit must be a non‑negative number")
     .nullable()
     .optional(),
+  // Fixed customer prices (read-only, from package)
   price12Months: z.coerce.number().min(0).nullable().optional(),
   price24Months: z.coerce.number().min(0).nullable().optional(),
   price36Months: z.coerce.number().min(0).nullable().optional(),
+  // Dealer internal prices (cost to dealer when assigning to dealer)
+  dealerPrice12Months: z.coerce.number().min(0).nullable().optional(),
+  dealerPrice24Months: z.coerce.number().min(0).nullable().optional(),
+  dealerPrice36Months: z.coerce.number().min(0).nullable().optional(),
 });
 
 type WarrantySaleFormValues = z.infer<typeof warrantySaleSchema>;
@@ -95,6 +98,10 @@ export default function CreateWarrantySalePage() {
       price12Months: null,
       price24Months: null,
       price36Months: null,
+      // Dealer internal pricing defaults
+      dealerPrice12Months: null,
+      dealerPrice24Months: null,
+      dealerPrice36Months: null,
     },
   });
 
@@ -205,15 +212,16 @@ export default function CreateWarrantySalePage() {
         const result = await assignWarrantyPackageToDealer({
           dealerId: data.dealerId,
           warrantyPackageId: data.warrantyPackageId,
-          price: data.price,
           duration: data.duration,
-          // override fields for this assignment
+          // Package operational settings
           excess: data.excess ?? null,
           labourRatePerHour: data.labourRatePerHour ?? null,
           fixedClaimLimit: data.fixedClaimLimit ?? null,
-          price12Months: data.price12Months ?? null,
-          price24Months: data.price24Months ?? null,
-          price36Months: data.price36Months ?? null,
+          // Dealer internal prices (cost to dealer - editable by SA)
+          dealerPrice12Months: data.dealerPrice12Months ?? null,
+          dealerPrice24Months: data.dealerPrice24Months ?? null,
+          dealerPrice36Months: data.dealerPrice36Months ?? null,
+          // Note: Customer prices are fixed from master package, not sent
         });
         if (result.status) {
           toast.success(
@@ -441,26 +449,25 @@ export default function CreateWarrantySalePage() {
                       name="excess"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Excess (£)</FormLabel>
+                          <FormLabel>
+                            Excess (£)
+                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.01"
                               min={0}
                               placeholder="Enter excess"
+                              disabled
+                              readOnly
+                              className="bg-muted"
                               {...field}
                               value={
                                 field.value === null ||
-                                field.value === undefined
+                                  field.value === undefined
                                   ? ""
                                   : field.value
-                              }
-                              onChange={(e) =>
-                                field.onChange(
-                                  e.target.value === ""
-                                    ? null
-                                    : Number(e.target.value)
-                                )
                               }
                             />
                           </FormControl>
@@ -473,26 +480,25 @@ export default function CreateWarrantySalePage() {
                       name="labourRatePerHour"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Labour Rate (£/hr)</FormLabel>
+                          <FormLabel>
+                            Labour Rate (£/hr)
+                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.01"
                               min={0}
                               placeholder="Enter labour rate"
+                              disabled
+                              readOnly
+                              className="bg-muted"
                               {...field}
                               value={
                                 field.value === null ||
-                                field.value === undefined
+                                  field.value === undefined
                                   ? ""
                                   : field.value
-                              }
-                              onChange={(e) =>
-                                field.onChange(
-                                  e.target.value === ""
-                                    ? null
-                                    : Number(e.target.value)
-                                )
                               }
                             />
                           </FormControl>
@@ -505,26 +511,25 @@ export default function CreateWarrantySalePage() {
                       name="fixedClaimLimit"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Fixed Claim Limit (£)</FormLabel>
+                          <FormLabel>
+                            Fixed Claim Limit (£)
+                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.01"
                               min={0}
                               placeholder="Enter claim limit"
+                              disabled
+                              readOnly
+                              className="bg-muted"
                               {...field}
                               value={
                                 field.value === null ||
-                                field.value === undefined
+                                  field.value === undefined
                                   ? ""
                                   : field.value
-                              }
-                              onChange={(e) =>
-                                field.onChange(
-                                  e.target.value === ""
-                                    ? null
-                                    : Number(e.target.value)
-                                )
                               }
                             />
                           </FormControl>
@@ -534,43 +539,33 @@ export default function CreateWarrantySalePage() {
                     />
                   </div>
 
+                  {/* Customer Prices - Read-only when assigning to dealer */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                     <FormField
                       control={form.control}
                       name="price12Months"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>12‑Month Price (£)</FormLabel>
+                          <FormLabel>
+                            12‑Month Customer Price (£)
+                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.01"
                               min={0}
                               placeholder="Enter 12‑month price"
-                              disabled={
-                                assignType === "customer" && duration !== 12
-                              }
+                              disabled
+                              readOnly
+                              className="bg-muted"
                               {...field}
                               value={
                                 field.value === null ||
-                                field.value === undefined
+                                  field.value === undefined
                                   ? ""
                                   : field.value
                               }
-                              onChange={(e) => {
-                                const val =
-                                  e.target.value === ""
-                                    ? null
-                                    : Number(e.target.value);
-                                field.onChange(val);
-                                if (
-                                  assignType === "customer" &&
-                                  duration === 12 &&
-                                  val !== null
-                                ) {
-                                  form.setValue("price", val);
-                                }
-                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -582,37 +577,26 @@ export default function CreateWarrantySalePage() {
                       name="price24Months"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>24‑Month Price (£)</FormLabel>
+                          <FormLabel>
+                            24‑Month Customer Price (£)
+                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.01"
                               min={0}
                               placeholder="Enter 24‑month price"
-                              disabled={
-                                assignType === "customer" && duration !== 24
-                              }
+                              disabled
+                              readOnly
+                              className="bg-muted"
                               {...field}
                               value={
                                 field.value === null ||
-                                field.value === undefined
+                                  field.value === undefined
                                   ? ""
                                   : field.value
                               }
-                              onChange={(e) => {
-                                const val =
-                                  e.target.value === ""
-                                    ? null
-                                    : Number(e.target.value);
-                                field.onChange(val);
-                                if (
-                                  assignType === "customer" &&
-                                  duration === 24 &&
-                                  val !== null
-                                ) {
-                                  form.setValue("price", val);
-                                }
-                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -624,37 +608,26 @@ export default function CreateWarrantySalePage() {
                       name="price36Months"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>36‑Month Price (£)</FormLabel>
+                          <FormLabel>
+                            36‑Month Customer Price (£)
+                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.01"
                               min={0}
                               placeholder="Enter 36‑month price"
-                              disabled={
-                                assignType === "customer" && duration !== 36
-                              }
+                              disabled
+                              readOnly
+                              className="bg-muted"
                               {...field}
                               value={
                                 field.value === null ||
-                                field.value === undefined
+                                  field.value === undefined
                                   ? ""
                                   : field.value
                               }
-                              onChange={(e) => {
-                                const val =
-                                  e.target.value === ""
-                                    ? null
-                                    : Number(e.target.value);
-                                field.onChange(val);
-                                if (
-                                  assignType === "customer" &&
-                                  duration === 36 &&
-                                  val !== null
-                                ) {
-                                  form.setValue("price", val);
-                                }
-                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -662,6 +635,131 @@ export default function CreateWarrantySalePage() {
                       )}
                     />
                   </div>
+
+                  {/* Dealer Internal Prices - Only shown when assigning to dealer */}
+                  {assignType === "dealer" && (
+                    <div className="space-y-4 pt-4 border-t mt-4">
+                      <div>
+                        <h4 className="font-medium text-sm">Dealer Internal Pricing (Cost to Dealer)</h4>
+                        <p className="text-xs text-muted-foreground">
+                          Set the amount the dealer pays for this package. This is their cost, not the customer price.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="dealerPrice12Months"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>12‑Month Dealer Cost (£)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min={0}
+                                  placeholder="Enter dealer cost"
+                                  {...field}
+                                  value={
+                                    field.value === null ||
+                                      field.value === undefined
+                                      ? ""
+                                      : field.value
+                                  }
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value === ""
+                                        ? null
+                                        : Number(e.target.value)
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              {selectedPackage?.price12Months != null && field.value != null && (
+                                <p className="text-xs text-green-600">
+                                  Margin: {formatCurrency(Number(selectedPackage.price12Months) - Number(field.value))}
+                                </p>
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="dealerPrice24Months"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>24‑Month Dealer Cost (£)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min={0}
+                                  placeholder="Enter dealer cost"
+                                  {...field}
+                                  value={
+                                    field.value === null ||
+                                      field.value === undefined
+                                      ? ""
+                                      : field.value
+                                  }
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value === ""
+                                        ? null
+                                        : Number(e.target.value)
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              {selectedPackage?.price24Months != null && field.value != null && (
+                                <p className="text-xs text-green-600">
+                                  Margin: {formatCurrency(Number(selectedPackage.price24Months) - Number(field.value))}
+                                </p>
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="dealerPrice36Months"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>36‑Month Dealer Cost (£)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min={0}
+                                  placeholder="Enter dealer cost"
+                                  {...field}
+                                  value={
+                                    field.value === null ||
+                                      field.value === undefined
+                                      ? ""
+                                      : field.value
+                                  }
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value === ""
+                                        ? null
+                                        : Number(e.target.value)
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              {selectedPackage?.price36Months != null && field.value != null && (
+                                <p className="text-xs text-green-600">
+                                  Margin: {formatCurrency(Number(selectedPackage.price36Months) - Number(field.value))}
+                                </p>
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {assignType === "customer" && (
                     <FormField
