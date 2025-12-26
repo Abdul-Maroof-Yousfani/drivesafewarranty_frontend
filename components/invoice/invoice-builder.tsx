@@ -37,9 +37,9 @@ import { Separator } from "@/components/ui/separator";
 
 // Schema for invoice settings
 const invoiceSettingsSchema = z.object({
-    companyName: z.string().optional(),
-    companyAddress: z.string().optional(),
-    logoUrl: z.string().optional(),
+    companyName: z.string().default(""),
+    companyAddress: z.string().default(""),
+    logoUrl: z.string().default(""),
     logoPosition: z.enum(["left", "center", "right"]).default("left"),
     primaryColor: z.string().default("#0f172a"),
     accentColor: z.string().default("#f1f5f9"),
@@ -47,6 +47,7 @@ const invoiceSettingsSchema = z.object({
     billToTitle: z.string().default("Bill To:"),
     footerText: z.string().default("Thank you for your business!"),
     notes: z.string().default("Payment is due immediately upon receipt."),
+    font: z.enum(["Helvetica", "Times-Roman", "Courier", "Roboto", "Open Sans", "Arial", "Verdana", "Georgia", "Gill Sans", "Trebuchet MS"]).default("Helvetica"),
 });
 
 type InvoiceSettingsFormValues = z.infer<typeof invoiceSettingsSchema>;
@@ -62,6 +63,7 @@ const defaultSettings: InvoiceSettingsFormValues = {
     billToTitle: "Bill To:",
     footerText: "Thank you for your business!",
     notes: "Payment is due immediately upon receipt.",
+    font: "Helvetica",
 };
 
 import { InvoiceRenderer, InvoiceData } from "./invoice-renderer";
@@ -96,9 +98,10 @@ import { uploadLogoAction } from "@/lib/actions/upload";
 // --- Invoice Builder Component ---
 export function InvoiceBuilder() {
     const [loading, setLoading] = useState(false);
+    const [logoFile, setLogoFile] = useState<File | null>(null);
 
     const form = useForm<InvoiceSettingsFormValues>({
-        resolver: zodResolver(invoiceSettingsSchema),
+        resolver: zodResolver(invoiceSettingsSchema) as any,
         defaultValues: defaultSettings,
     });
 
@@ -116,14 +119,16 @@ export function InvoiceBuilder() {
                     form.reset({
                         ...defaultSettings,
                         ...res.data,
-                        // Ensure nulls are handled (if backend returns null for fields)
+                        // Ensure nulls/undefined from backend are handled
                         companyName: res.data.companyName || "",
                         companyAddress: res.data.companyAddress || "",
                         logoUrl: res.data.logoUrl || "",
+                        logoPosition: (res.data.logoPosition as any) || "left",
                         headerText: res.data.headerText || defaultSettings.headerText,
                         billToTitle: res.data.billToTitle || defaultSettings.billToTitle,
                         footerText: res.data.footerText || defaultSettings.footerText,
                         notes: res.data.notes || defaultSettings.notes,
+                        font: (res.data.font as any) || defaultSettings.font,
                     });
                 }
             } catch (error) {
@@ -139,9 +144,32 @@ export function InvoiceBuilder() {
     const onSubmit = async (data: InvoiceSettingsFormValues) => {
         setLoading(true);
         try {
-            const res = await saveInvoiceSettingsAction(data);
+            let finalLogoUrl = data.logoUrl;
+
+            // Upload logo if a new file is selected
+            if (logoFile) {
+                const formData = new FormData();
+                formData.append("file", logoFile);
+                formData.append("fileType", "logo");
+
+                const uploadRes = await uploadLogoAction(formData);
+                if (uploadRes.status && uploadRes.data?.url) {
+                    finalLogoUrl = uploadRes.data.url;
+                } else {
+                    toast.error("Failed to upload logo, saving other settings...");
+                }
+            }
+
+            const res = await saveInvoiceSettingsAction({
+                ...data,
+                logoUrl: finalLogoUrl,
+            });
+
             if (res.status) {
                 toast.success("Invoice settings saved successfully");
+                // Update form with the new logo URL to reset file state logic if needed
+                form.setValue("logoUrl", finalLogoUrl);
+                setLogoFile(null);
             } else {
                 toast.error(res.message || "Failed to save settings");
             }
@@ -209,15 +237,22 @@ export function InvoiceBuilder() {
                                                     <FormLabel>Logo</FormLabel>
                                                     <FormControl>
                                                         <div className="flex flex-col gap-2">
-                                                            {field.value && (
+                                                            {(field.value || logoFile) && (
                                                                 <div className="relative w-32 h-16 border rounded bg-gray-50 flex items-center justify-center mb-2">
-                                                                    <img src={field.value} alt="Logo Preview" className="max-w-full max-h-full object-contain" />
+                                                                    <img 
+                                                                        src={logoFile ? URL.createObjectURL(logoFile) : field.value} 
+                                                                        alt="Logo Preview" 
+                                                                        className="max-w-full max-h-full object-contain" 
+                                                                    />
                                                                     <Button
                                                                         type="button"
                                                                         variant="destructive"
                                                                         size="icon"
                                                                         className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                                                                        onClick={() => field.onChange("")}
+                                                                        onClick={() => {
+                                                                            field.onChange("");
+                                                                            setLogoFile(null);
+                                                                        }}
                                                                     >
                                                                         <span className="sr-only">Remove</span>
                                                                         <span aria-hidden="true">&times;</span>
@@ -228,58 +263,25 @@ export function InvoiceBuilder() {
                                                                 <Input
                                                                     type="file"
                                                                     accept="image/*"
-                                                                    onChange={async (e) => {
+                                                                    onChange={(e) => {
                                                                         const file = e.target.files?.[0];
                                                                         if (!file) return;
-
-                                                                        const formData = new FormData();
-                                                                        formData.append("file", file);
-                                                                        formData.append("fileType", "logo");
-
-                                                                        try {
-                                                                            toast.info("Uploading logo...");
-                                                                            // This requires an authenticated upload endpoint. 
-                                                                            // Since we are inside the component, we need to use a client-side fetch or a server action helper.
-                                                                            // Uploading directly via fetch is simplest here as we have client-side context (cookies).
-                                                                            // NOTE: This assumes /api/uploads is accessible and uses standard middleware.
-                                                                            // A better way would be a server action, but processing FormData in server action for files is tricky in Next.js pages router or simpler setups.
-                                                                            // Let's use direct fetch for now, assuming standard API token mechanism in cookies or we need to pass token.
-                                                                            // Wait, previous actions used `getAccessToken`. We might need that here.
-
-                                                                            // Let's create a helper function inside or use axios if available, or just fetch with token from cookies?
-                                                                            // The `getAccessToken` is a server side utility in `lib/actions`.
-                                                                            // On client, we rely on httpOnly cookies effectively for API routes if configured, OR we need the token.
-                                                                            // Ideally, `uploadRoutes.js` uses `authenticate` middleware which checks Authorization header.
-                                                                            // Our Actions use `getAccessToken` and pass it in header.
-                                                                            // On Client, we can't easily get the HttpOnly cookie value to put in header.
-                                                                            // BUT, if the cookie is set on the domain, it sends automatically? 
-                                                                            // `authMiddleware.js` checks `req.headers.authorization`. It DOES NOT check cookies primarily for access token (only for refresh).
-                                                                            // So we need to get the token. 
-                                                                            // Options:
-                                                                            // 1. Create a Server Action `uploadFileAction(formData)` (Next.js 14 supports this well).
-                                                                            // 2. Client side fetch but we need the token.
-
-                                                                            // I will use Option 1: Create a Server Action for upload in `lib/actions/upload.ts`.
-                                                                            // BUT for this step, I'll stub the fetch and then create the action in the next step to ensure it works properly.
-                                                                            // I will use a hypothetical `uploadLogoAction`.
-
-                                                                            const res = await uploadLogoAction(formData);
-                                                                            if (res.status && res.data?.url) {
-                                                                                field.onChange(res.data.url);
-                                                                                toast.success("Logo uploaded!");
-                                                                            } else {
-                                                                                toast.error(res.message || "Upload failed");
-                                                                            }
-                                                                        } catch (err) {
-                                                                            console.error(err);
-                                                                            toast.error("Upload error");
-                                                                        }
+                                                                        
+                                                                        setLogoFile(file);
+                                                                        
+                                                                        // Create a local blob URL for preview
+                                                                        const previewUrl = URL.createObjectURL(file);
+                                                                        // Update form state so Live Preview (which watches form) sees it
+                                                                        form.setValue("logoUrl", previewUrl);
+                                                                        
+                                                                        // Clean up blob URL on unmount or change if needed, 
+                                                                        // but for now this is the simplest fix.
                                                                     }}
                                                                 />
                                                             </div>
                                                         </div>
                                                     </FormControl>
-                                                    <FormDescription>Upload a logo image (PNG, JPG).</FormDescription>
+                                                    <FormDescription>Upload a logo image (PNG, JPG). Upload happens when saving.</FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -295,6 +297,35 @@ export function InvoiceBuilder() {
                                         <CardDescription>Customize colors and layout.</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="font"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Font Style</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select font" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="Helvetica" style={{ fontFamily: "Helvetica, sans-serif" }}>Helvetica (Standard)</SelectItem>
+                                                            <SelectItem value="Times-Roman" style={{ fontFamily: "Times New Roman, serif" }}>Times Roman (Serif)</SelectItem>
+                                                            <SelectItem value="Courier" style={{ fontFamily: "Courier New, monospace" }}>Courier (Monospace)</SelectItem>
+                                                            <SelectItem value="Roboto" style={{ fontFamily: "Roboto, sans-serif" }}>Roboto (Sans)</SelectItem>
+                                                            <SelectItem value="Open Sans" style={{ fontFamily: "Open Sans, sans-serif" }}>Open Sans (Sans)</SelectItem>
+                                                            <SelectItem value="Arial" style={{ fontFamily: "Arial, sans-serif" }}>Arial</SelectItem>
+                                                            <SelectItem value="Verdana" style={{ fontFamily: "Verdana, sans-serif" }}>Verdana</SelectItem>
+                                                            <SelectItem value="Georgia" style={{ fontFamily: "Georgia, serif" }}>Georgia</SelectItem>
+                                                            <SelectItem value="Gill Sans" style={{ fontFamily: "Gill Sans, sans-serif" }}>Gill Sans</SelectItem>
+                                                            <SelectItem value="Trebuchet MS" style={{ fontFamily: "Trebuchet MS, sans-serif" }}>Trebuchet MS</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                         <FormField
                                             control={form.control}
                                             name="logoPosition"

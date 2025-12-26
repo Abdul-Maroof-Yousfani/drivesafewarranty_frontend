@@ -3,7 +3,7 @@
 import { getAccessToken } from '../auth';
 import { revalidatePath } from 'next/cache';
 
-const API_URL = process.env.API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.API_URL || 'http://localhost:8080/api';
 
 async function getAuthHeaders() {
   const token = await getAccessToken();

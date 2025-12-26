@@ -3,7 +3,7 @@
 import { getAccessToken } from '../auth';
 import { revalidatePath } from 'next/cache';
 
-const API_URL = process.env.API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.API_URL || 'http://localhost:8080/api';
 const PUBLIC_BASE =
   (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/api$/, '') ||
   API_URL.replace(/\/api$/, '');

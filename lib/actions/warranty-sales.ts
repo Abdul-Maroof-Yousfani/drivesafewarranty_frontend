@@ -3,7 +3,7 @@
 import { getAccessToken } from "@/lib/auth";
 
 const API_BASE = (
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api"
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api"
 ).replace(/\/$/, "");
 
 export interface WarrantySale {
@@ -11,6 +11,8 @@ export interface WarrantySale {
   policyNumber: string;
   saleDate: string;
   status: string;
+  dealerId?: string | null;
+  customerId?: string | null;
   warrantyPrice: string | number;
   excess?: number | null;
   labourRatePerHour?: number | null;

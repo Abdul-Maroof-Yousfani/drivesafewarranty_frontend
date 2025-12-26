@@ -34,6 +34,11 @@ export const customerMenuData: MenuItem[] = [
     href: "/customer/documents",
   },
   {
+    title: "Invoices",
+    icon: FileQuestion,
+    href: "/customer/invoices",
+  },
+  {
     title: "Claims & Services",
     icon: FileBarChart,
     children: [

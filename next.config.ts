@@ -6,7 +6,15 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/uploads/:path*",
-        destination: "http://localhost:5000/uploads/:path*",
+        destination: "http://localhost:8080/uploads/:path*",
+      },
+      {
+        source: "/dealer-storage/:path*",
+        destination: "http://localhost:8080/dealer-storage/:path*",
+      },
+      {
+        source: "/dealers/:path*",
+        destination: "http://localhost:8080/dealers/:path*",
       },
     ];
   },

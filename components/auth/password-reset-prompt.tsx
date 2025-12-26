@@ -23,7 +23,7 @@ export function PasswordResetPrompt() {
       setShowAlert(true);
       // Show toast notification as well
       toast.info("This is your first login. Please change your password in your profile settings.", {
-        duration: 5000,
+        duration: 8080,
       });
     }
   }, []);

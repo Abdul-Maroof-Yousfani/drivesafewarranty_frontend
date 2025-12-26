@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const API_BASE = process.env.API_URL || "http://localhost:5000/api";
+const API_BASE = process.env.API_URL || "http://localhost:8080/api";
 console.log(API_BASE);
 export interface User {
   id: number;
@@ -218,11 +218,13 @@ export async function authFetch(
   const cookieStore = await cookies();
   let accessToken = cookieStore.get("accessToken")?.value;
 
+  const isFormData = options.body instanceof FormData;
+
   const makeRequest = async (token: string | undefined) => {
     return fetch(`${API_BASE}${url}`, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        ...(!isFormData && { "Content-Type": "application/json" }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
@@ -308,5 +310,58 @@ export async function checkSession(): Promise<{ valid: boolean }> {
   } catch (error) {
     console.error("Session check error:", error);
     return { valid: false };
+  }
+}
+
+// Get current user profile from server
+export async function getMe(): Promise<{ status: boolean; data?: any; message?: string }> {
+  try {
+    const response = await authFetch("/auth/me");
+    return await response.json();
+  } catch (error) {
+    console.error("Get me error:", error);
+    return { status: false, message: "Failed to get user profile" };
+  }
+}
+
+// Update current user profile
+export async function updateMe(data: {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  avatar?: string | null;
+}): Promise<{ status: boolean; message: string; data?: any }> {
+  try {
+    const response = await authFetch("/auth/me", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Update me error:", error);
+    return { status: false, message: "Failed to update profile" };
+  }
+}
+
+// Upload logo/avatar
+export async function uploadLogo(file: File): Promise<{ status: boolean; url?: string; message?: string }> {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fileType", "logo");
+
+    const response = await authFetch("/uploads", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await response.json();
+    if (result.status && result.data) {
+      return { status: true, url: result.data.url };
+    }
+    return { status: false, message: result.message || "Upload failed" };
+  } catch (error) {
+    console.error("Upload logo error:", error);
+    return { status: false, message: "Failed to upload logo" };
   }
 }

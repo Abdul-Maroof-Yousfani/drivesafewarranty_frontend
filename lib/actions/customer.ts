@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getAccessToken } from "@/lib/auth";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api";
 
 export interface Customer {
   id: string;

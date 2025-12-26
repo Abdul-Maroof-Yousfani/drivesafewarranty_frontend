@@ -24,6 +24,7 @@ function getDashboardPath(role: string | undefined | null): string {
 
 export default function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
+  console.log(`[Middleware] Request: ${pathname}`);
 
   // Get tokens and role from cookies
   const accessToken = request.cookies.get("accessToken")?.value;
@@ -38,6 +39,7 @@ export default function middleware(request: NextRequest): NextResponse {
   // Redirect authenticated users away from public routes (e.g. /login)
   if (isAuthenticated && isPublicRoute) {
     const target = getDashboardPath(userRole);
+    console.log(`[Middleware] Redirecting auth user from ${pathname} to ${target}`);
     return NextResponse.redirect(new URL(target, request.url));
   }
 

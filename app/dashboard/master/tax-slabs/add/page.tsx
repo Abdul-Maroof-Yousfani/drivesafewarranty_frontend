@@ -138,7 +138,7 @@ export default function AddTaxSlabPage() {
                     <Label>Max Amount *</Label>
                     <Input
                       type="number"
-                      placeholder="50000"
+                      placeholder="80800"
                       value={ts.maxAmount}
                       onChange={(e) =>
                         updateField(ts.id, "maxAmount", e.target.value)

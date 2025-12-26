@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAccessToken } from "@/lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE = "http://localhost:8080/api";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,8 +25,7 @@ export async function POST(req: NextRequest) {
     if (!json.status) {
       return NextResponse.json(json, { status: res.status });
     }
-    const id = json.data?.id;
-    const url = `${API_BASE}/uploads/${id}/download`;
+    const url = json.data?.url || `${API_BASE}/uploads/${json.data?.id}/download`;
     return NextResponse.json({ status: true, data: { ...json.data, url } });
   } catch (error: any) {
     return NextResponse.json({ status: false, message: error?.message || "Upload failed" }, { status: 500 });

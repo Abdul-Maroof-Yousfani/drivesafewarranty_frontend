@@ -2,18 +2,21 @@
 
 import { getAccessToken } from "@/lib/auth";
 
-const API_BASE = (
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api"
-).replace(/\/$/, "");
+import { API_BASE } from "./constants";
 
-export async function getInvoiceSettingsAction(): Promise<{
+export async function getInvoiceSettingsAction(dealerId?: string): Promise<{
     status: boolean;
     data?: any;
     message?: string;
 }> {
     try {
         const token = await getAccessToken();
-        const res = await fetch(`${API_BASE}/settings`, {
+        const url = new URL(`${API_BASE}/settings`);
+        if (dealerId) {
+            url.searchParams.append("dealerId", dealerId);
+        }
+
+        const res = await fetch(url.toString(), {
             method: "GET",
             headers: {
                 ...(token && { Authorization: `Bearer ${token}` }),

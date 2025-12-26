@@ -578,7 +578,7 @@ export const warrantyPortalMenuData: MenuItem[] = [
     icon: Receipt,
     children: [
       { title: "Invoice History", href: "/super-admin/invoices" },
-      { title: "Invoice Settings", href: "/super-admin/settings/invoice" },
+      { title: "Invoice Settings", href: "/super-admin/invoices/invoice" },
     ],
   },
   {

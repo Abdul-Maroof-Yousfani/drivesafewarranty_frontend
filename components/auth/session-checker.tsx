@@ -38,15 +38,8 @@ export function SessionChecker() {
     // Set up interval
     const interval = setInterval(performCheck, CHECK_INTERVAL);
 
-    // Also check on window focus
-    const handleFocus = () => {
-      performCheck();
-    };
-    window.addEventListener("focus", handleFocus);
-
     return () => {
       clearInterval(interval);
-      window.removeEventListener("focus", handleFocus);
     };
   }, [performCheck]);
 
