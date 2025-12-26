@@ -471,7 +471,7 @@ export const warrantyPortalMenuData: MenuItem[] = [
         children: [
           { title: "Create", href: "/super-admin/dealers/create" },
           { title: "List", href: "/super-admin/dealers/list" },
-              ],
+        ],
       },
     ],
   },
@@ -484,7 +484,7 @@ export const warrantyPortalMenuData: MenuItem[] = [
         children: [
           { title: "Create Customer", href: "/super-admin/customers/create" },
           { title: "Customer List", href: "/super-admin/customers/list" },
-       
+
         ],
       },
       {
@@ -527,7 +527,7 @@ export const warrantyPortalMenuData: MenuItem[] = [
             title: "Warranty Sales List",
             href: "/super-admin/warranty-sales/list",
           },
-       
+
         ],
       },
     ],
@@ -577,9 +577,8 @@ export const warrantyPortalMenuData: MenuItem[] = [
     title: "Invoices",
     icon: Receipt,
     children: [
-      { title: "Generate Invoice", href: "/super-admin/invoices/generate" },
-      { title: "Invoice List", href: "/super-admin/invoices/list" },
-      { title: "Invoice History", href: "/super-admin/invoices/history" },
+      { title: "Invoice History", href: "/super-admin/invoices" },
+      { title: "Invoice Settings", href: "/super-admin/settings/invoice" },
     ],
   },
   {

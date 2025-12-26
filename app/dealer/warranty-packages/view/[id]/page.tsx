@@ -1,13 +1,29 @@
 "use client";
 
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ListSkeleton } from "@/components/dashboard/list-skeleton";
-import { getWarrantyPackageByIdAction } from "@/lib/actions/warranty-package";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { ArrowLeft, CheckCircle2, Wallet, ShieldCheck, FileText } from "lucide-react";
+import { getWarrantyPackageByIdAction } from "@/lib/actions/warranty-package";
+import { ListSkeleton } from "@/components/dashboard/list-skeleton";
+
+function formatCurrency(amount: number | null | undefined) {
+  if (amount === null || amount === undefined) return "-";
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+  }).format(amount);
+}
 
 export default function DealerViewWarrantyPackagePage({
   params,
@@ -16,23 +32,31 @@ export default function DealerViewWarrantyPackagePage({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+
   interface WarrantyPackage {
     id: string;
     name: string;
-    planLevel?: string | null;
-    durationValue?: number | null;
-    durationUnit?: "months" | "years" | string | null;
-    price12Months?: number | null;
-    price24Months?: number | null;
-    price36Months?: number | null;
     description?: string | null;
+    planLevel?: string | null;
     eligibility?: string | null;
     excess?: number | null;
     labourRatePerHour?: number | null;
     fixedClaimLimit?: number | null;
     includedFeatures?: string[] | null;
     keyBenefits?: string[] | null;
+    durationValue?: number | null;
+    durationUnit?: string | null;
+    // Customer Price (Selling Price)
+    price12Months?: number | null;
+    price24Months?: number | null;
+    price36Months?: number | null;
+    // Dealer Cost (Buying Price)
+    dealerPrice12Months?: number | null;
+    dealerPrice24Months?: number | null;
+    dealerPrice36Months?: number | null;
+    status?: string | null;
   }
+
   const [pkg, setPkg] = useState<WarrantyPackage | null>(null);
   const { id } = React.use(params);
 
@@ -60,113 +84,177 @@ export default function DealerViewWarrantyPackagePage({
 
   if (!pkg) {
     return (
-      <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">Package not found.</p>
+      <div className="flex flex-col items-center justify-center h-60 space-y-4">
+        <p className="text-muted-foreground">Package not found.</p>
         <Button variant="outline" onClick={() => router.back()}>
-          Go Back
+          <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
         </Button>
       </div>
     );
   }
 
-  const durationLabel =
-    pkg.durationValue && pkg.durationUnit
-      ? `${pkg.durationValue} ${
-          pkg.durationUnit === "years" ? "Year" : "Month"
-        }${pkg.durationValue > 1 ? "s" : ""}`
-      : null;
-
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Package Details</h1>
-          <p className="text-muted-foreground mt-2">
-            View package information before assigning it to your customers.
+    <div className="space-y-6 w-full p-4 md:p-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-3xl font-bold tracking-tight text-primary">{pkg.name}</h1>
+            {pkg.planLevel && (
+              <Badge variant="secondary" className="ml-2">
+                {pkg.planLevel}
+              </Badge>
+            )}
+          </div>
+          <p className="text-muted-foreground ml-11">
+            {pkg.description || "No description available."}
           </p>
         </div>
-        <Button asChild>
-          <Link href={`/dealer/warranty-sales/create?packageId=${pkg.id}`}>
-            Assign to Customer
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-md">
+            <Link href={`/dealer/warranty-sales/create?packageId=${pkg.id}`}>
+              Sell This Package
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{pkg.name}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          {pkg.price12Months != null && (
-            <p>
-              <span className="font-medium">12 Months Price:</span> $
-              {pkg.price12Months}
-            </p>
-          )}
-          {pkg.price24Months != null && (
-            <p>
-              <span className="font-medium">24 Months Price:</span> $
-              {pkg.price24Months}
-            </p>
-          )}
-          {pkg.price36Months != null && (
-            <p>
-              <span className="font-medium">36 Months Price:</span> $
-              {pkg.price36Months}
-            </p>
-          )}
-          {pkg.description && (
-            <p>
-              <span className="font-medium">Description:</span>{" "}
-              {pkg.description}
-            </p>
-          )}
-          {pkg.eligibility && (
-            <p>
-              <span className="font-medium">Eligibility:</span>{" "}
-              {pkg.eligibility}
-            </p>
-          )}
-          {pkg.excess != null && (
-            <p>
-              <span className="font-medium">Excess:</span> £{pkg.excess}
-            </p>
-          )}
-          {pkg.labourRatePerHour != null && (
-            <p>
-              <span className="font-medium">Labour Rate:</span> £
-              {pkg.labourRatePerHour} per hour
-            </p>
-          )}
-          {pkg.fixedClaimLimit != null && (
-            <p>
-              <span className="font-medium">Fixed Claim Limit:</span> £
-              {pkg.fixedClaimLimit}
-            </p>
-          )}
-          {Array.isArray(pkg.includedFeatures) &&
-            pkg.includedFeatures.length > 0 && (
-              <div>
-                <p className="font-medium mb-1">Included Features:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  {pkg.includedFeatures.map((f: string, idx: number) => (
-                    <li key={idx}>{f}</li>
-                  ))}
-                </ul>
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Left Column: Financials & Limits */}
+        <div className="space-y-6">
+          {/* Financial Overview (The requested "Proper Details") */}
+          <Card className="border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 shadow-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Wallet className="h-5 w-5 text-blue-600" />
+                <CardTitle className="text-blue-700 dark:text-blue-400">Pricing & Profitability</CardTitle>
               </div>
-            )}
-          {Array.isArray(pkg.keyBenefits) && pkg.keyBenefits.length > 0 && (
-            <div>
-              <p className="font-medium mb-1">Key Benefits:</p>
-              <ul className="list-disc list-inside space-y-1">
-                {pkg.keyBenefits.map((f: string, idx: number) => (
-                  <li key={idx}>{f}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              <CardDescription>
+                Breakdown of your cost (dealer price), selling price (customer price), and profit margin.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-blue-100/50 dark:bg-blue-900/50 border-b border-blue-200 dark:border-blue-800">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-semibold text-blue-900 dark:text-blue-100">Duration</th>
+                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Selling Price</th>
+                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Your Cost</th>
+                      <th className="px-4 py-3 text-right font-semibold text-green-600 dark:text-green-400">Profit</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-blue-200/50 dark:divide-blue-800/50">
+                    {[12, 24, 36].map((months) => {
+                      const priceKey = `price${months}Months` as keyof WarrantyPackage;
+                      const costKey = `dealerPrice${months}Months` as keyof WarrantyPackage;
+                      const sellingPrice = pkg[priceKey] as number | null;
+                      const costPrice = pkg[costKey] as number | null;
+
+                      if (sellingPrice == null && costPrice == null) return null;
+
+                      // Calculate profit: Selling Price - Cost Price (default 0 if null)
+                      const profit = (sellingPrice || 0) - (costPrice || 0);
+
+                      return (
+                        <tr key={months} className="hover:bg-blue-100/30 dark:hover:bg-blue-900/30 transition-colors">
+                          <td className="px-4 py-3 font-medium">{months} Months</td>
+                          <td className="px-4 py-3 text-right font-medium">{formatCurrency(sellingPrice)}</td>
+                          <td className="px-4 py-3 text-right font-medium text-muted-foreground">{formatCurrency(costPrice)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-green-600 dark:text-green-400">
+                            {profit > 0 ? "+" : ""}{formatCurrency(profit)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Limits & terms */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-gray-500" />
+                <CardTitle>Coverage Limits</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col p-3 rounded-lg bg-muted/40 border">
+                <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Excess</span>
+                <span className="text-xl font-bold mt-1 text-primary">{formatCurrency(pkg.excess)}</span>
+              </div>
+              <div className="flex flex-col p-3 rounded-lg bg-muted/40 border">
+                <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Labour Rate</span>
+                <span className="text-xl font-bold mt-1 text-primary">{formatCurrency(pkg.labourRatePerHour)}/hr</span>
+              </div>
+              <div className="flex flex-col p-3 rounded-lg bg-muted/40 border sm:col-span-2">
+                <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Fixed Claim Limit</span>
+                <span className="text-xl font-bold mt-1 text-primary">{formatCurrency(pkg.fixedClaimLimit)}</span>
+                <span className="text-xs text-muted-foreground mt-1">Maximum claim amount per incident</span>
+              </div>
+              {pkg.eligibility && (
+                <div className="flex flex-col p-3 rounded-lg bg-muted/40 border sm:col-span-2">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Eligibility</span>
+                  <span className="text-sm font-medium mt-1">{pkg.eligibility}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Features */}
+        <div className="space-y-6">
+          <Card className="h-full shadow-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-gray-500" />
+                <CardTitle>Features & Benefits</CardTitle>
+              </div>
+              <CardDescription>What is included in this package.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {Array.isArray(pkg.keyBenefits) && pkg.keyBenefits.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-3 flex items-center text-sm uppercase tracking-wide text-primary">Key Benefits</h3>
+                  <ul className="space-y-3">
+                    {pkg.keyBenefits.map((benefit, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm group">
+                        <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0 group-hover:text-green-600 transition-colors" />
+                        <span className="group-hover:text-primary transition-colors">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {Array.isArray(pkg.keyBenefits) && pkg.keyBenefits.length > 0 &&
+                Array.isArray(pkg.includedFeatures) && pkg.includedFeatures.length > 0 && (
+                  <Separator className="my-2" />
+                )}
+
+              {Array.isArray(pkg.includedFeatures) && pkg.includedFeatures.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-3 flex items-center text-sm uppercase tracking-wide text-primary">Included Features</h3>
+                  <ul className="grid gap-2 sm:grid-cols-2">
+                    {pkg.includedFeatures.map((feature, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm bg-muted/40 p-2.5 rounded-md border hover:border-blue-200 transition-colors">
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                        <span className="truncate font-medium text-muted-foreground hover:text-foreground transition-colors" title={feature}>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

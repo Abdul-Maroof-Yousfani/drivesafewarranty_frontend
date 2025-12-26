@@ -13,6 +13,15 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
+// Helper function to format currency
+function formatCurrency(value: number | string | null | undefined): string {
+  if (value === null || value === undefined) return "£0.00";
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+  }).format(Number(value));
+}
+
 export default async function WarrantySaleViewPage({
   params,
 }: {
@@ -24,12 +33,26 @@ export default async function WarrantySaleViewPage({
     notFound();
   }
   const sale = res.data;
+  const isDealer = !!sale.dealer;
   const buyerType = sale.customer ? "Customer" : sale.dealer ? "Dealer" : "N/A";
   const buyerName = sale.customer
     ? `${sale.customer.firstName} ${sale.customer.lastName}`
     : sale.dealer
-    ? sale.dealer.businessNameTrading || sale.dealer.businessNameLegal
-    : "N/A";
+      ? sale.dealer.businessNameTrading || sale.dealer.businessNameLegal
+      : "N/A";
+
+  // Calculate dealer costs and margins
+  const customerPrice12 = sale.price12Months ?? sale.warrantyPackage?.price12Months ?? 0;
+  const customerPrice24 = sale.price24Months ?? sale.warrantyPackage?.price24Months ?? 0;
+  const customerPrice36 = sale.price36Months ?? sale.warrantyPackage?.price36Months ?? 0;
+
+  const dealerCost12 = sale.dealerCost12Months ?? sale.warrantyPackage?.dealerPrice12Months ?? 0;
+  const dealerCost24 = sale.dealerCost24Months ?? sale.warrantyPackage?.dealerPrice24Months ?? 0;
+  const dealerCost36 = sale.dealerCost36Months ?? sale.warrantyPackage?.dealerPrice36Months ?? 0;
+
+  const margin12 = Number(customerPrice12) - Number(dealerCost12);
+  const margin24 = Number(customerPrice24) - Number(dealerCost24);
+  const margin36 = Number(customerPrice36) - Number(dealerCost36);
 
   return (
     <div className="space-y-6">
@@ -74,7 +97,7 @@ export default async function WarrantySaleViewPage({
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Type</span>
-              <Badge>{buyerType}</Badge>
+              <Badge variant={isDealer ? "secondary" : "default"}>{buyerType}</Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Sale Date</span>
@@ -89,15 +112,15 @@ export default async function WarrantySaleViewPage({
                 {format(new Date(sale.coverageEndDate), "PPP")}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Price</span>
-              <span className="font-medium">
-                {new Intl.NumberFormat("en-GB", {
-                  style: "currency",
-                  currency: "GBP",
-                }).format(Number(sale.warrantyPrice))}
-              </span>
-            </div>
+            {/* Only show price in summary for customers, not for dealers */}
+            {!isDealer && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Price</span>
+                <span className="font-medium">
+                  {formatCurrency(sale.warrantyPrice)}
+                </span>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">
                 Payment Method
@@ -117,28 +140,22 @@ export default async function WarrantySaleViewPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Assigned Package Details</CardTitle>
+            <CardTitle>Package Configuration</CardTitle>
             <CardDescription>
-              Effective values used for this assignment
+              Package settings for this assignment
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Excess</span>
               <span className="font-medium">
-                £{(sale.excess ?? sale.warrantyPackage?.excess ?? 0).toString()}
+                {formatCurrency(sale.excess ?? sale.warrantyPackage?.excess ?? 0)}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Labour Rate</span>
               <span className="font-medium">
-                £
-                {(
-                  sale.labourRatePerHour ??
-                  sale.warrantyPackage?.labourRatePerHour ??
-                  0
-                ).toString()}
-                /hr
+                {formatCurrency(sale.labourRatePerHour ?? sale.warrantyPackage?.labourRatePerHour ?? 0)}/hr
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -146,56 +163,88 @@ export default async function WarrantySaleViewPage({
                 Fixed Claim Limit
               </span>
               <span className="font-medium">
-                £
-                {(
-                  sale.fixedClaimLimit ??
-                  sale.warrantyPackage?.fixedClaimLimit ??
-                  0
-                ).toString()}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                12‑Month Price
-              </span>
-              <span className="font-medium">
-                £
-                {(
-                  sale.price12Months ??
-                  sale.warrantyPackage?.price12Months ??
-                  0
-                ).toString()}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                24‑Month Price
-              </span>
-              <span className="font-medium">
-                £
-                {(
-                  sale.price24Months ??
-                  sale.warrantyPackage?.price24Months ??
-                  0
-                ).toString()}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                36‑Month Price
-              </span>
-              <span className="font-medium">
-                £
-                {(
-                  sale.price36Months ??
-                  sale.warrantyPackage?.price36Months ??
-                  0
-                ).toString()}
+                {formatCurrency(sale.fixedClaimLimit ?? sale.warrantyPackage?.fixedClaimLimit ?? 0)}
               </span>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Pricing Details Card - Different view for dealer vs customer */}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {isDealer ? "Dealer Pricing Breakdown" : "Customer Pricing"}
+          </CardTitle>
+          <CardDescription>
+            {isDealer
+              ? "Shows customer prices, dealer costs, and margins for each duration"
+              : "Fixed customer prices for each warranty duration"
+            }
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isDealer ? (
+            // Dealer pricing table with customer price, dealer cost, and margin
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Duration</th>
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">Customer Price</th>
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">Dealer Cost (SA Price)</th>
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">Dealer Margin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b hover:bg-muted/50">
+                    <td className="py-3 px-4 font-medium">12 Months</td>
+                    <td className="py-3 px-4 text-right">{formatCurrency(customerPrice12)}</td>
+                    <td className="py-3 px-4 text-right">{formatCurrency(dealerCost12)}</td>
+                    <td className={`py-3 px-4 text-right font-semibold ${margin12 >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {formatCurrency(margin12)}
+                    </td>
+                  </tr>
+                  <tr className="border-b hover:bg-muted/50">
+                    <td className="py-3 px-4 font-medium">24 Months</td>
+                    <td className="py-3 px-4 text-right">{formatCurrency(customerPrice24)}</td>
+                    <td className="py-3 px-4 text-right">{formatCurrency(dealerCost24)}</td>
+                    <td className={`py-3 px-4 text-right font-semibold ${margin24 >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {formatCurrency(margin24)}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-muted/50">
+                    <td className="py-3 px-4 font-medium">36 Months</td>
+                    <td className="py-3 px-4 text-right">{formatCurrency(customerPrice36)}</td>
+                    <td className="py-3 px-4 text-right">{formatCurrency(dealerCost36)}</td>
+                    <td className={`py-3 px-4 text-right font-semibold ${margin36 >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {formatCurrency(margin36)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            // Customer pricing - simple list
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="p-4 rounded-lg border bg-muted/30">
+                <p className="text-sm text-muted-foreground">12-Month Price</p>
+                <p className="text-2xl font-bold mt-1">{formatCurrency(customerPrice12)}</p>
+              </div>
+              <div className="p-4 rounded-lg border bg-muted/30">
+                <p className="text-sm text-muted-foreground">24-Month Price</p>
+                <p className="text-2xl font-bold mt-1">{formatCurrency(customerPrice24)}</p>
+              </div>
+              <div className="p-4 rounded-lg border bg-muted/30">
+                <p className="text-sm text-muted-foreground">36-Month Price</p>
+                <p className="text-2xl font-bold mt-1">{formatCurrency(customerPrice36)}</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+     
     </div>
   );
 }

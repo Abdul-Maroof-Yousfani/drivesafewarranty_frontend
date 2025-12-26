@@ -115,6 +115,7 @@ export const dealerColumns: ColumnDef<DealerWarrantyPackageRow>[] = [
     size: 100,
   },
   {
+    accessorKey: "Actions", 
     id: "actions",
     cell: ({ row }) => {
       const pkg = row.original;
@@ -135,11 +136,7 @@ export const dealerColumns: ColumnDef<DealerWarrantyPackageRow>[] = [
             </Tooltip>
           </TooltipProvider>
 
-          <EditPackagePriceDialog 
-            packageId={pkg.id} 
-            currentPrice={pkg.price} 
-            packageName={pkg.name} 
-          />
+     
 
           <TooltipProvider>
             <Tooltip>

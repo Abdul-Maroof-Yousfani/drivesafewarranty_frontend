@@ -31,7 +31,8 @@ export async function getDealerWarrantySalesAction(): Promise<{
 export interface CreateDealerWarrantySalePayload {
   customerId: string;
   warrantyPackageId: string;
-  price: number;
+  // Price is optional - backend uses fixed customer price from package (SA controlled)
+  price?: number;
   duration?: number;
   excess?: number | null;
   labourRatePerHour?: number | null;

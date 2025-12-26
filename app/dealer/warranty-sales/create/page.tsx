@@ -36,53 +36,6 @@ import { getDealerWarrantyPackagesAction } from "@/lib/actions/warranty-package"
 import { createDealerWarrantySaleAction } from "@/lib/actions/dealer-warranty-sales";
 import { formatCurrency } from "@/lib/utils";
 
-// Reusable number input field component
-function NumberInputField({
-  control,
-  name,
-  label,
-  placeholder,
-  type = "number",
-  step = "0.01",
-  min = "0",
-}: FormControlProps) {
-  return (
-    <FormField
-      control={control}
-      name={name}
-      render={({ field }) => {
-        // Convert the value to a string for the input
-        const value =
-          field.value === null || field.value === undefined
-            ? ""
-            : field.value.toString();
-
-        return (
-          <FormItem>
-            <FormLabel>{label}</FormLabel>
-            <FormControl>
-              <Input
-                type={type}
-                step={step}
-                min={min}
-                placeholder={placeholder}
-                value={value}
-                onChange={(e) => {
-                  // Convert empty string to null, otherwise parse as number
-                  const newValue =
-                    e.target.value === "" ? null : Number(e.target.value);
-                  field.onChange(newValue);
-                }}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        );
-      }}
-    />
-  );
-}
-
 const dealerSaleSchema = z.object({
   customerId: z.string().min(1, "Please select a customer"),
   warrantyPackageId: z.string().min(1, "Please select a package"),
@@ -119,7 +72,7 @@ type DealerSaleFormValues = {
   price36Months?: number | null;
 };
 
-// Type for form control props
+// Update FormControlProps to include disabled
 type FormControlProps = {
   control: Control<DealerSaleFormValues>;
   name: keyof DealerSaleFormValues;
@@ -128,7 +81,58 @@ type FormControlProps = {
   type?: string;
   step?: string;
   min?: string | number;
+  disabled?: boolean;
 };
+
+// Update NumberInputField to use disabled prop
+function NumberInputField({
+  control,
+  name,
+  label,
+  placeholder,
+  type = "number",
+  step = "0.01",
+  min = "0",
+  disabled = false,
+}: FormControlProps) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => {
+        // Convert the value to a string for the input
+        const value =
+          field.value === null || field.value === undefined
+            ? ""
+            : field.value.toString();
+
+        return (
+          <FormItem>
+            <FormLabel>{label}</FormLabel>
+            <FormControl>
+              <Input
+                type={type}
+                step={step}
+                min={min}
+                placeholder={placeholder}
+                value={value}
+                disabled={disabled}
+                className={disabled ? "bg-muted" : ""}
+                onChange={(e) => {
+                  // Convert empty string to null, otherwise parse as number
+                  const newValue =
+                    e.target.value === "" ? null : Number(e.target.value);
+                  field.onChange(newValue);
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
+    />
+  );
+}
 
 export default function DealerCreateWarrantySalePage() {
   const router = useRouter();
@@ -260,17 +264,13 @@ export default function DealerCreateWarrantySalePage() {
   const onSubmit: SubmitHandler<DealerSaleFormValues> = async (data) => {
     setLoading(true);
     try {
+      // Note: Price is now fixed by SA and determined from package on backend
+      // We only need to send customerId, warrantyPackageId, and duration
       const res = await createDealerWarrantySaleAction({
         customerId: data.customerId,
         warrantyPackageId: data.warrantyPackageId,
-        price: data.price,
         duration: data.duration,
-        excess: data.excess,
-        labourRatePerHour: data.labourRatePerHour,
-        fixedClaimLimit: data.fixedClaimLimit,
-        price12Months: data.price12Months ?? null,
-        price24Months: data.price24Months ?? null,
-        price36Months: data.price36Months ?? null,
+        // Price fields are ignored by backend - SA controls all customer pricing
       });
       if (res.status) {
         router.push("/dealer/warranty-sales/list");
@@ -346,19 +346,22 @@ export default function DealerCreateWarrantySalePage() {
                       control={form.control}
                       name="excess"
                       label="Excess (£)"
-                      placeholder="Enter excess amount"
+                      placeholder="Fixed by package"
+                      disabled={true}
                     />
                     <NumberInputField
                       control={form.control}
                       name="labourRatePerHour"
                       label="Labour Rate (£/hr)"
-                      placeholder="Enter labour rate"
+                      placeholder="Fixed by package"
+                      disabled={true}
                     />
                     <NumberInputField
                       control={form.control}
                       name="fixedClaimLimit"
                       label="Fixed Claim Limit (£)"
-                      placeholder="Enter claim limit"
+                      placeholder="Fixed by package"
+                      disabled={true}
                     />
                   </div>
 
@@ -420,7 +423,8 @@ export default function DealerCreateWarrantySalePage() {
                     control={form.control}
                     name="price"
                     label="Plan Amount (£)"
-                    placeholder="Enter final plan amount"
+                    placeholder="Fixed by package"
+                    disabled={true}
                   />
                 </div>
               )}
