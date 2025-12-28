@@ -30,6 +30,7 @@ export async function getDealerWarrantySalesAction(): Promise<{
 
 export interface CreateDealerWarrantySalePayload {
   customerId: string;
+  vehicleId?: string | null;
   warrantyPackageId: string;
   // Price is optional - backend uses fixed customer price from package (SA controlled)
   price?: number;
@@ -40,6 +41,12 @@ export interface CreateDealerWarrantySalePayload {
   price12Months?: number | null;
   price24Months?: number | null;
   price36Months?: number | null;
+  customerConsent?: boolean;
+  customerSignature?: string | null;
+  mileageAtSale?: number | null;
+  salesRepresentativeName?: string | null;
+  paymentMethod?: string;
+  coverageStartDate?: string;
 }
 
 export async function createDealerWarrantySaleAction(

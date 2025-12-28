@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useTransition } from "react";
 import * as z from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updateCustomer } from "@/lib/actions/customer";
 import { toast } from "sonner";
@@ -124,52 +124,22 @@ export const columns: ColumnDef<CustomerRow>[] = [
   },
   {
     accessorKey: "vehicleMake",
-    header: "Vehicle",
+    header: "Vehicles",
     cell: ({ row }) => {
-      const make = row.getValue("vehicleMake") as string;
-      const model = row.original.vehicleModel;
-      const year = row.original.vehicleYear;
-      const vehicleText = `${make} ${model} (${year})`;
+      const vehicles = (row.original as any).vehicles;
+      const count = vehicles?.length || 0;
+      const vehicleText = `${count} Vehicle${count !== 1 ? "s" : ""}`;
+
       return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="truncate max-w-[200px]">{vehicleText}</div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{vehicleText}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    },
-    size: 250,
-    minSize: 180,
-    maxSize: 250,
-  },
-  {
-    accessorKey: "dealerName",
-    header: "Dealer",
-    cell: ({ row }) => {
-      const dealerName = row.getValue("dealerName") as string | null;
-      const displayText = dealerName || "N/A";
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="truncate max-w-[140px]">{displayText}</div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{displayText}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="font-medium">
+          {vehicleText}
+        </div>
       );
     },
     size: 150,
-    minSize: 130,
-    maxSize: 180,
   },
+
+
   {
     accessorKey: "Actions",
     id: "actions",
@@ -216,7 +186,7 @@ function CustomerActionsCell({ customer }: { customer: CustomerRow }) {
     },
   });
 
-  async function onSubmit(values: CustomerEditValues) {
+  const onSubmit: SubmitHandler<CustomerEditValues> = async (values) => {
     startTransition(async () => {
       const res = await updateCustomer(customer.id, {
         firstName: values.firstName,
@@ -239,7 +209,7 @@ function CustomerActionsCell({ customer }: { customer: CustomerRow }) {
         toast.error(res.message || "Failed to update customer");
       }
     });
-  }
+  };
 
   return (
     <div className="flex items-center ">
@@ -257,7 +227,7 @@ function CustomerActionsCell({ customer }: { customer: CustomerRow }) {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-     
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button variant="ghost" size="icon">
@@ -329,7 +299,7 @@ function CustomerActionsCell({ customer }: { customer: CustomerRow }) {
           </form>
         </DialogContent>
       </Dialog>
-       <TooltipProvider>
+      <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" asChild>

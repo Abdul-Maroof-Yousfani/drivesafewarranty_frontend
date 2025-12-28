@@ -89,6 +89,7 @@ export default async function WarrantySaleViewPage({
               <span className="text-sm text-muted-foreground">Package</span>
               <span className="font-medium">
                 {sale.warrantyPackage?.name || "N/A"}
+                {sale.warrantyPackage?.planLevel && ` (${sale.warrantyPackage.planLevel})`}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -135,6 +136,18 @@ export default async function WarrantySaleViewPage({
                 {sale.status}
               </Badge>
             </div>
+            {sale.mileageAtSale && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Mileage at Sale</span>
+                <span className="font-medium">{sale.mileageAtSale.toLocaleString()} miles</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Customer Consent</span>
+              <span className={`font-medium ${sale.customerConsent ? 'text-green-600' : 'text-red-600'}`}>
+                {sale.customerConsent ? "Agreed" : "Not Agreed"}
+              </span>
+            </div>
           </CardContent>
         </Card>
 
@@ -168,6 +181,33 @@ export default async function WarrantySaleViewPage({
             </div>
           </CardContent>
         </Card>
+
+        {sale.vehicle && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Vehicle Details</CardTitle>
+              <CardDescription>The vehicle covered by this warranty</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Make & Model</p>
+                <p className="font-semibold">{sale.vehicle.make} {sale.vehicle.model}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Year</p>
+                <p className="font-semibold">{sale.vehicle.year}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Registration Number</p>
+                <p className="font-semibold">{sale.vehicle.registrationNumber || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">VIN</p>
+                <p className="font-semibold uppercase truncate" title={sale.vehicle.vin || ""}>{sale.vehicle.vin || "N/A"}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Pricing Details Card - Different view for dealer vs customer */}
@@ -244,7 +284,7 @@ export default async function WarrantySaleViewPage({
         </CardContent>
       </Card>
 
-     
+
     </div>
   );
 }

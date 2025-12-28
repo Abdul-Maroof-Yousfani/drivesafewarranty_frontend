@@ -34,6 +34,13 @@ export interface InvoiceData {
     total: number;
     variant?: "customer" | "settlement";
     duration?: string;
+    vehicle?: {
+        make: string;
+        model: string;
+        year: number;
+        vin?: string | null;
+        registrationNumber?: string | null;
+    };
 }
 
 interface InvoiceRendererProps {
@@ -67,6 +74,7 @@ export function InvoiceRenderer({ settings, data }: InvoiceRendererProps) {
         total,
         variant = "customer",
         duration,
+        vehicle,
     } = data;
 
     const formatCurrency = (amount: number) => {
@@ -82,10 +90,10 @@ export function InvoiceRenderer({ settings, data }: InvoiceRendererProps) {
     const getAbsoluteUrl = (url?: string) => {
         if (!url) return undefined;
         if (url.startsWith("http") || url.startsWith("data:") || url.startsWith("blob:")) return url;
-        
+
         // For preview in browser, use relative paths for uploads to keep them on same-origin (satisfy CSP)
         // Next.js rewrites will handle the proxying to the backend.
-        if (url.startsWith("/uploads/") || url.startsWith("uploads/") || 
+        if (url.startsWith("/uploads/") || url.startsWith("uploads/") ||
             url.startsWith("/dealer-storage/") || url.startsWith("dealer-storage/") ||
             url.startsWith("/dealers/") || url.startsWith("dealers/")) {
             return url.startsWith("/") ? url : `/${url}`;
@@ -98,7 +106,7 @@ export function InvoiceRenderer({ settings, data }: InvoiceRendererProps) {
     const absoluteLogoUrl = getAbsoluteUrl(logoUrl);
 
     return (
-        <div 
+        <div
             className="bg-white text-sm min-h-[800px] flex flex-col h-full w-full relative print:min-h-0 print:h-auto print:shadow-none print:border-none print:m-0 text-slate-800"
             style={{ fontFamily: settings.font || "sans-serif" }}
         >
@@ -108,11 +116,10 @@ export function InvoiceRenderer({ settings, data }: InvoiceRendererProps) {
             <div className="px-10 py-4 flex-1 flex flex-col print:p-0 print:mx-8">
                 {/* Header Section */}
                 <div className="flex justify-between items-start mb-12">
-                    <div className={`flex flex-col gap-1 w-1/2 ${
-                        logoPosition === "center" ? "items-center text-center" : 
-                        logoPosition === "right" ? "items-end text-right" : 
-                        "items-start text-left"
-                    }`}>
+                    <div className={`flex flex-col gap-1 w-1/2 ${logoPosition === "center" ? "items-center text-center" :
+                        logoPosition === "right" ? "items-end text-right" :
+                            "items-start text-left"
+                        }`}>
                         {absoluteLogoUrl && (
                             <img src={absoluteLogoUrl} alt="Company Logo" className="h-32 w-auto object-contain mb-2" />
                         )}
@@ -148,6 +155,31 @@ export function InvoiceRenderer({ settings, data }: InvoiceRendererProps) {
                         )}
                     </div>
                 </div>
+
+                {/* Vehicle Details */}
+                {vehicle && (
+                    <div className="mb-10 p-5 rounded-lg border border-slate-200 bg-slate-50">
+                        <h3 className="font-bold mb-4 uppercase text-xs tracking-wider opacity-80" style={{ color: primaryColor }}>Vehicle Details</h3>
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                            <div className="flex justify-between border-b border-slate-200 pb-2">
+                                <span className="text-slate-500 font-medium">Vehicle</span>
+                                <span className="font-bold text-slate-800">{vehicle.make} {vehicle.model} ({vehicle.year})</span>
+                            </div>
+                            {vehicle.registrationNumber && (
+                                <div className="flex justify-between border-b border-slate-200 pb-2">
+                                    <span className="text-slate-500 font-medium">Registration</span>
+                                    <span className="font-bold text-slate-800">{vehicle.registrationNumber}</span>
+                                </div>
+                            )}
+                            {vehicle.vin && (
+                                <div className="flex justify-between border-b border-slate-200 pb-2">
+                                    <span className="text-slate-500 font-medium">VIN</span>
+                                    <span className="font-bold text-slate-800">{vehicle.vin}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Items Table */}
                 <div className="mb-10 p-2 border-2 rounded-lg border-slate-200">

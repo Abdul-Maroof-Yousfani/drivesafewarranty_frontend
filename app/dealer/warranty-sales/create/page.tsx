@@ -21,6 +21,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -38,6 +39,7 @@ import { formatCurrency } from "@/lib/utils";
 
 const dealerSaleSchema = z.object({
   customerId: z.string().min(1, "Please select a customer"),
+  vehicleId: z.string().min(1, "Please select a vehicle"),
   warrantyPackageId: z.string().min(1, "Please select a package"),
   price: z.coerce.number().min(0, "Price must be a non‑negative number"),
   duration: z.coerce.number().min(1, "Duration is required"),
@@ -57,10 +59,17 @@ const dealerSaleSchema = z.object({
   price12Months: z.coerce.number().min(0).nullable().optional(),
   price24Months: z.coerce.number().min(0).nullable().optional(),
   price36Months: z.coerce.number().min(0).nullable().optional(),
+  customerConsent: z.boolean().default(false),
+  customerSignature: z.string().optional().nullable(),
+  mileageAtSale: z.coerce.number().min(0).optional().nullable(),
+  salesRepresentativeName: z.string().optional().nullable(),
+  paymentMethod: z.string().min(1, "Please select a payment method"),
+  coverageStartDate: z.string().optional(), // We'll use string for date input
 });
 
 type DealerSaleFormValues = {
   customerId: string;
+  vehicleId: string;
   warrantyPackageId: string;
   price: number;
   duration: number;
@@ -70,6 +79,12 @@ type DealerSaleFormValues = {
   price12Months?: number | null;
   price24Months?: number | null;
   price36Months?: number | null;
+  customerConsent: boolean;
+  customerSignature?: string | null;
+  mileageAtSale?: number | null;
+  salesRepresentativeName?: string | null;
+  paymentMethod: string;
+  coverageStartDate?: string;
 };
 
 // Update FormControlProps to include disabled
@@ -147,6 +162,7 @@ export default function DealerCreateWarrantySalePage() {
     resolver: zodResolver(dealerSaleSchema) as any,
     defaultValues: {
       customerId: "",
+      vehicleId: "",
       warrantyPackageId: "",
       price: 0,
       duration: 12,
@@ -156,8 +172,18 @@ export default function DealerCreateWarrantySalePage() {
       price12Months: null,
       price24Months: null,
       price36Months: null,
+      customerConsent: false,
+      customerSignature: "",
+      mileageAtSale: null,
+      salesRepresentativeName: "",
+      paymentMethod: "cash",
+      coverageStartDate: new Date().toISOString().split('T')[0], // Default today
     },
   });
+
+  const selectedCustomerId = form.watch("customerId");
+  const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
+  const availableVehicles = selectedCustomer?.vehicles || [];
 
   const handlePackageSelect = (packageId: string) => {
     const selectedPkg = packages.find((p) => p.id === packageId);
@@ -268,8 +294,15 @@ export default function DealerCreateWarrantySalePage() {
       // We only need to send customerId, warrantyPackageId, and duration
       const res = await createDealerWarrantySaleAction({
         customerId: data.customerId,
+        vehicleId: data.vehicleId,
         warrantyPackageId: data.warrantyPackageId,
         duration: data.duration,
+        customerConsent: data.customerConsent,
+        customerSignature: data.customerSignature,
+        mileageAtSale: data.mileageAtSale,
+        salesRepresentativeName: data.salesRepresentativeName,
+        paymentMethod: data.paymentMethod,
+        coverageStartDate: data.coverageStartDate,
         // Price fields are ignored by backend - SA controls all customer pricing
       });
       if (res.status) {
@@ -338,6 +371,35 @@ export default function DealerCreateWarrantySalePage() {
                   </FormItem>
                 )}
               />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="salesRepresentativeName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sales Representative Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter name" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="coverageStartDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Coverage Start Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               {pkg && (
                 <div className="space-y-4 rounded-md border p-4 bg-muted/20">
@@ -426,6 +488,29 @@ export default function DealerCreateWarrantySalePage() {
                     placeholder="Fixed by package"
                     disabled={true}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="paymentMethod"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select payment method" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="cash">Cash</SelectItem>
+                            <SelectItem value="card">Card</SelectItem>
+                            <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               )}
 
@@ -436,7 +521,11 @@ export default function DealerCreateWarrantySalePage() {
                   <FormItem>
                     <FormLabel>Customer</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(val) => {
+                        field.onChange(val);
+                        // Reset vehicle when customer changes
+                        form.setValue("vehicleId", "");
+                      }}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -456,6 +545,44 @@ export default function DealerCreateWarrantySalePage() {
                   </FormItem>
                 )}
               />
+
+              {/* Vehicle Selection */}
+              {selectedCustomerId && (
+                <FormField
+                  control={form.control}
+                  name="vehicleId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Vehicle</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select vehicle" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableVehicles.length > 0 ? (
+                            availableVehicles.map((v: any) => (
+                              <SelectItem key={v.id} value={v.id}>
+                                {v.make} {v.model} ({v.year}) - {v.registrationNumber || "No Reg"}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-vehicle" disabled>
+                              No vehicles found for this customer
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <div className="flex gap-4">
                 <Button type="submit" disabled={loading || !pkg}>

@@ -27,9 +27,13 @@ export interface WarrantySale {
   coverageStartDate: string;
   coverageEndDate: string;
   paymentMethod: string;
+  customerConsent?: boolean;
+  mileageAtSale?: number | null;
+  vehicleId?: string | null;
   warrantyPackage: {
     id: string;
     name: string;
+    planLevel?: string | null;
     price12Months?: number | null;
     price24Months?: number | null;
     price36Months?: number | null;
@@ -59,6 +63,14 @@ export interface WarrantySale {
     id: string;
     firstName: string;
     lastName: string;
+  } | null;
+  vehicle?: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    vin?: string | null;
+    registrationNumber?: string | null;
   } | null;
 }
 
@@ -156,6 +168,11 @@ export async function createMasterWarrantySaleAction(payload: {
   price12Months?: number | null;
   price24Months?: number | null;
   price36Months?: number | null;
+  paymentMethod?: string;
+  customerConsent?: boolean;
+  mileageAtSale?: number | null;
+  coverageStartDate?: string;
+  vehicleId?: string;
 }): Promise<{ status: boolean; data?: WarrantySale; message?: string }> {
   try {
     const token = await getAccessToken();

@@ -67,10 +67,15 @@ const warrantySaleSchema = z.object({
   price12Months: z.coerce.number().min(0).nullable().optional(),
   price24Months: z.coerce.number().min(0).nullable().optional(),
   price36Months: z.coerce.number().min(0).nullable().optional(),
-  // Dealer internal prices (cost to dealer when assigning to dealer)
   dealerPrice12Months: z.coerce.number().min(0).nullable().optional(),
   dealerPrice24Months: z.coerce.number().min(0).nullable().optional(),
   dealerPrice36Months: z.coerce.number().min(0).nullable().optional(),
+  // New fields for Direct Sale
+  paymentMethod: z.string().optional(),
+  customerConsent: z.boolean().default(false),
+  mileageAtSale: z.coerce.number().min(0).optional().nullable(),
+  coverageStartDate: z.string().optional(),
+  vehicleId: z.string().optional(),
 });
 
 type WarrantySaleFormValues = z.infer<typeof warrantySaleSchema>;
@@ -98,12 +103,19 @@ export default function CreateWarrantySalePage() {
       price12Months: null,
       price24Months: null,
       price36Months: null,
-      // Dealer internal pricing defaults
       dealerPrice12Months: null,
       dealerPrice24Months: null,
       dealerPrice36Months: null,
+      paymentMethod: "cash",
+      customerConsent: false,
+      mileageAtSale: null,
+      coverageStartDate: new Date().toISOString().split('T')[0],
+      vehicleId: "",
     },
   });
+
+  const selectedCustomerId = form.watch("customerId");
+  const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
 
   const assignType = form.watch("assignTo");
   const duration = form.watch("duration");
@@ -249,6 +261,11 @@ export default function CreateWarrantySalePage() {
           price12Months: data.price12Months ?? null,
           price24Months: data.price24Months ?? null,
           price36Months: data.price36Months ?? null,
+          paymentMethod: data.paymentMethod,
+          customerConsent: data.customerConsent,
+          mileageAtSale: data.mileageAtSale,
+          coverageStartDate: data.coverageStartDate,
+          vehicleId: data.vehicleId,
         });
         if (result.status) {
           toast.success("Warranty package assigned to customer successfully");
@@ -307,7 +324,7 @@ export default function CreateWarrantySalePage() {
                             <RadioGroupItem value="customer" />
                           </FormControl>
                           <FormLabel className="font-normal">
-                            Assign to Customer
+                            Sell to Customer
                           </FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-2 space-y-0">
@@ -338,36 +355,68 @@ export default function CreateWarrantySalePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {form.watch("assignTo") === "customer" ? (
-                <FormField
-                  control={form.control}
-                  name="customerId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Customer</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select customer" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {customers.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.firstName} {c.lastName} — {c.email}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Only existing customers are shown here.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                <>
+                  <FormField
+                    control={form.control}
+                    name="customerId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Customer</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select customer" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {customers.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {c.firstName} {c.lastName} — {c.email}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Only existing customers are shown here.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {selectedCustomer && selectedCustomer.vehicles && selectedCustomer.vehicles.length > 0 && (
+                    <FormField
+                      control={form.control}
+                      name="vehicleId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Vehicle</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select vehicle" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {selectedCustomer.vehicles.map((v: any) => (
+                                <SelectItem key={v.id} value={v.id}>
+                                  {v.make} {v.model} ({v.registrationNumber || v.vin || v.year})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
+                </>
               ) : (
                 <FormField
                   control={form.control}
@@ -824,6 +873,92 @@ export default function CreateWarrantySalePage() {
                       )}
                     />
                   )}
+
+                  {assignType === "customer" && (
+                    <div className="space-y-4 pt-4 border-t mt-4">
+                      <h4 className="font-medium text-sm">Sale Details</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="paymentMethod"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Payment Method</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select payment method" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="cash">Cash</SelectItem>
+                                  <SelectItem value="card">Card</SelectItem>
+                                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="coverageStartDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Coverage Start Date</FormLabel>
+                              <FormControl>
+                                <Input type="date" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="mileageAtSale"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Mileage at Sale</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="Enter current mileage"
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  onChange={e => field.onChange(e.target.valueAsNumber)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="customerConsent"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-md col-span-1 md:col-span-2">
+                              <FormControl>
+                                <input
+                                  type="checkbox"
+                                  checked={field.value}
+                                  onChange={(e) => field.onChange(e.target.checked)}
+                                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary mt-1"
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                  Customer Agreement & Acceptance of Terms
+                                </FormLabel>
+                                <FormDescription>
+                                  I confirm that the customer has read and agreed to the terms and conditions.
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -843,6 +978,6 @@ export default function CreateWarrantySalePage() {
           </div>
         </form>
       </Form>
-    </div>
+    </div >
   );
 }

@@ -15,6 +15,7 @@ export interface User {
   mustChangePassword?: boolean;
   phone?: string;
   avatar?: string | null;
+  details?: any; // Role specific details (Dealer | Customer)
 }
 
 export interface AuthResponse {

@@ -25,6 +25,7 @@ export default function ProfileSettingsPage() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [details, setDetails] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function ProfileSettingsPage() {
             setLastName(res.data.lastName || user?.lastName || "");
             setPhone(res.data.phone || "");
             setAvatar(res.data.avatar || null);
+            setDetails(res.data.details || null);
           } else {
             setFirstName(user?.firstName || "");
             setLastName(user?.lastName || "");
@@ -115,8 +117,8 @@ export default function ProfileSettingsPage() {
     firstName && lastName
       ? `${firstName[0]}${lastName[0]}`.toUpperCase()
       : user
-      ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-      : "U";
+        ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+        : "U";
 
   return (
     <div className="space-y-6">
@@ -167,6 +169,78 @@ export default function ProfileSettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dealer Details Section */}
+      {user?.role === "dealer" && details && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Dealer Information</CardTitle>
+            <CardDescription>Your registered business details (Read-only)</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Business Legal Name</Label>
+              <Input value={details.businessNameLegal || ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Trading Name</Label>
+              <Input value={details.businessNameTrading || ""} disabled />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Business Address</Label>
+              <Input value={details.businessAddress || ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>License Number</Label>
+              <Input value={details.dealerLicenseNumber || ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Input value={details.status || ""} disabled />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Customer Details Section */}
+      {user?.role === "customer" && details && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Vehicle Information</CardTitle>
+            <CardDescription>Your registered vehicle details (Read-only)</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Vehicle Make</Label>
+              <Input value={details.vehicleMake || ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Vehicle Model</Label>
+              <Input value={details.vehicleModel || ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Year</Label>
+              <Input value={details.vehicleYear || ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Mileage</Label>
+              <Input value={details.mileage || ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>VIN</Label>
+              <Input value={details.vin || ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Registration Number</Label>
+              <Input value={details.registrationNumber || ""} disabled />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Address</Label>
+              <Input value={details.address || ""} disabled />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

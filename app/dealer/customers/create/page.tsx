@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -27,15 +27,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
-const customerSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().min(1, "Phone is required"),
-  address: z.string().min(1, "Address is required"),
-  vehicleMake: z.string().min(1, "Vehicle make is required"),
-  vehicleModel: z.string().min(1, "Vehicle model is required"),
-  vehicleYear: z
+const vehicleSchema = z.object({
+  make: z.string().min(1, "Vehicle make is required"),
+  model: z.string().min(1, "Vehicle model is required"),
+  year: z
     .number()
     .min(1900, "Year must be at least 1900")
     .max(
@@ -45,6 +40,15 @@ const customerSchema = z.object({
   vin: z.string().optional().or(z.literal("")),
   registrationNumber: z.string().optional().or(z.literal("")),
   mileage: z.number().min(0, "Mileage must be 0 or greater"),
+});
+
+const customerSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(1, "Phone is required"),
+  address: z.string().min(1, "Address is required"),
+  vehicles: z.array(vehicleSchema).min(1, "At least one vehicle is required"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
@@ -63,21 +67,39 @@ export default function CreateCustomerPage() {
       email: "",
       phone: "",
       address: "",
-      vehicleMake: "",
-      vehicleModel: "",
-      vehicleYear: new Date().getFullYear(),
-      vin: "",
-      registrationNumber: "",
-      mileage: 0,
+      vehicles: [
+        {
+          make: "",
+          model: "",
+          year: new Date().getFullYear(),
+          vin: "",
+          registrationNumber: "",
+          mileage: 0,
+        },
+      ],
       password: "",
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "vehicles",
   });
 
   const onSubmit = async (data: CustomerFormValues) => {
     setLoading(true);
     try {
-      const { createDealerCustomerAction } = await import("@/lib/actions/dealer-customer");
-      const result = await createDealerCustomerAction(data);
+      const { createDealerCustomerAction } = await import(
+        "@/lib/actions/dealer-customer"
+      );
+      // Map form data to action expected format
+      // We pass 'vehicles' array directly, avoiding flattened legacy fields
+      const result = await createDealerCustomerAction({
+        ...data,
+        vehicleMake: "", // Legacy fields (ignored by backend if vehicles present)
+        vehicleModel: "",
+        vehicleYear: 0,
+      });
       if (result.status) {
         toast.success(result.message || "Customer created successfully");
         router.push(`/dealer/customers/list?newItemId=${result.data?.id}`);
@@ -114,6 +136,7 @@ export default function CreateCustomerPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Customer Details */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -209,7 +232,7 @@ export default function CreateCustomerPage() {
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
-                          placeholder="Set initial password (customer must change on first login)"
+                          placeholder="Set initial password"
                           {...field}
                         />
                         <button
@@ -226,128 +249,173 @@ export default function CreateCustomerPage() {
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Customer will be prompted to change this password on their first login.
+                      Customer must change this on first login.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Vehicle Information */}
               <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4">
-                  Vehicle Information
-                </h3>
-              </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Vehicle Information</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      append({
+                        make: "",
+                        model: "",
+                        year: new Date().getFullYear(),
+                        vin: "",
+                        registrationNumber: "",
+                        mileage: 0,
+                      })
+                    }
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Vehicle
+                  </Button>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="vehicleMake"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vehicle Make</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Toyota" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-6">
+                  {fields.map((field, index) => (
+                    <Card key={field.id} className="relative">
+                      <CardContent className="pt-6">
+                        {fields.length > 1 && (
+                          <div className="absolute top-2 right-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive/90"
+                              onClick={() => remove(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                        <h4 className="text-sm font-medium mb-4 text-muted-foreground">
+                          Vehicle {index + 1}
+                        </h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`vehicles.${index}.make`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Make</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Toyota" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                <FormField
-                  control={form.control}
-                  name="vehicleModel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vehicle Model</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Camry" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                          <FormField
+                            control={form.control}
+                            name={`vehicles.${index}.model`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Model</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Camry" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="vehicleYear"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Year</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 0)
-                          }
-                          value={field.value}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                          <FormField
+                            control={form.control}
+                            name={`vehicles.${index}.year`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Year</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    {...field}
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        parseInt(e.target.value) || 0
+                                      )
+                                    }
+                                    value={field.value}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                <FormField
-                  control={form.control}
-                  name="mileage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Mileage</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Mileage"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 0)
-                          }
-                          value={field.value}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                          <FormField
+                            control={form.control}
+                            name={`vehicles.${index}.mileage`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Mileage</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    {...field}
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        parseInt(e.target.value) || 0
+                                      )
+                                    }
+                                    value={field.value}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="vin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>VIN Number (Optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Vehicle Identification Number"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                          <FormField
+                            control={form.control}
+                            name={`vehicles.${index}.vin`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>VIN (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="VIN..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                <FormField
-                  control={form.control}
-                  name="registrationNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Registration Number (Optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Vehicle registration number"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                          <FormField
+                            control={form.control}
+                            name={`vehicles.${index}.registrationNumber`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Reg Number (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Registration..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                {form.formState.errors.vehicles && (
+                  <p className="text-sm font-medium text-destructive mt-2">
+                    {form.formState.errors.vehicles.message}
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-4">

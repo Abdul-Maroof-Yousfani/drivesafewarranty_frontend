@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import DataTable from "@/components/common/data-table";
-import { columns } from "./columns";
+import { columns, dealerColumns } from "./columns";
 import type { WarrantySale } from "@/lib/actions/warranty-sales";
 import { deleteWarrantySaleAction } from "@/lib/actions/warranty-sales";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function WarrantySalesList({ initialSales }: { initialSales: WarrantySale[] }) {
   const router = useRouter();
@@ -30,18 +31,45 @@ export function WarrantySalesList({ initialSales }: { initialSales: WarrantySale
     });
   };
 
+  const customerSales = initialSales.filter((sale) => !!sale.customer);
+  const dealerSales = initialSales.filter((sale) => !!sale.dealer);
+
   return (
-    <DataTable
-      columns={columns}
-      data={initialSales}
-      actionText="Add"
-      toggleAction={handleToggle}
-      onMultiDelete={handleMultiDelete}
-      searchFields={[
-        { key: "policyNumber", label: "id" },
-        { key: "warrantyPackage.name", label: "Package Name" },
-        { key: "buyerType", label: "Type" },
-      ]}
-    />
+    <Tabs defaultValue="customer" className="w-full">
+      <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+        <TabsTrigger value="customer">Customer Sales</TabsTrigger>
+        <TabsTrigger value="dealer">Dealer Assignments</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="customer" className="mt-6">
+        <DataTable
+          columns={columns}
+          data={customerSales}
+          actionText="Add"
+          toggleAction={handleToggle}
+          onMultiDelete={handleMultiDelete}
+          searchFields={[
+            { key: "policyNumber", label: "id" },
+            { key: "warrantyPackage.name", label: "Package Name" },
+            { key: "customer.firstName", label: "Customer Name" },
+          ]}
+        />
+      </TabsContent>
+
+      <TabsContent value="dealer" className="mt-6">
+        <DataTable
+          columns={dealerColumns}
+          data={dealerSales}
+          actionText="Add"
+          toggleAction={handleToggle}
+          onMultiDelete={handleMultiDelete}
+          searchFields={[
+            { key: "policyNumber", label: "id" },
+            { key: "warrantyPackage.name", label: "Package Name" },
+            { key: "dealer.businessNameLegal", label: "Dealer Name" },
+          ]}
+        />
+      </TabsContent>
+    </Tabs>
   );
 }

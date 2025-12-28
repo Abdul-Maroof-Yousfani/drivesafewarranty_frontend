@@ -97,29 +97,20 @@ export const columns: ColumnDef<CustomerRow>[] = [
     header: "Phone",
   },
   {
-    accessorKey: "vehicleMake",
-    header: "Vehicle",
+    accessorKey: "vehicleMake", // Keep accessorKey for potential sorting/filtering keys, though we are changing display
+    header: "Vehicles",
     cell: ({ row }) => {
-      const make = row.getValue("vehicleMake") as string;
-      const model = row.original.vehicleModel;
-      const year = row.original.vehicleYear;
-      const vehicleText = `${make} ${model} (${year})`;
+      const vehicles = (row.original as any).vehicles;
+      const count = vehicles?.length || 0;
+      const vehicleText = `${count} Vehicle${count !== 1 ? "s" : ""}`;
+
       return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="truncate max-w-[200px]">{vehicleText}</div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{vehicleText}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="font-medium">
+          {vehicleText}
+        </div>
       );
     },
-    size: 250,
-    minSize: 180,
-    maxSize: 250,
+    size: 150,
   },
   {
     accessorKey: "Actions",

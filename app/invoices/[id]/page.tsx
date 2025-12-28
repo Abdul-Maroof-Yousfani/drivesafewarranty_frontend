@@ -61,7 +61,7 @@ export default function InvoicePage() {
                 const end = new Date(sale.coverageEndDate);
                 const diffTime = Math.abs(end.getTime() - start.getTime());
                 const durationMonths = Math.round(diffTime / (1000 * 60 * 60 * 24 * 30.44)); // Use 30.44 for better average month accuracy
-                
+
                 // Pick the correct dealer cost based on duration
                 let correctDealerCost = Number(sale.warrantyPrice); // Fallback
                 if (durationMonths <= 12) {
@@ -71,7 +71,7 @@ export default function InvoicePage() {
                 } else if (durationMonths <= 36) {
                     correctDealerCost = Number(sale.dealerCost36Months || correctDealerCost);
                 }
-                
+
                 // If settlement, we always use Drive Safe (master) branding.
                 // Otherwise, use the dealer's branding.
                 const settingsRes = await getInvoiceSettingsAction(isSettlement ? undefined : sale.dealer?.id);
@@ -80,13 +80,13 @@ export default function InvoicePage() {
                     invoiceNumber: sale.policyNumber,
                     variant: variant as any,
                     date: new Date(sale.saleDate).toLocaleDateString(),
-                    dueDate: new Date(sale.saleDate).toLocaleDateString(), 
-                    billToName: isSettlement 
+                    dueDate: new Date(sale.saleDate).toLocaleDateString(),
+                    billToName: isSettlement
                         ? (sale.dealer?.businessNameLegal || "The Dealer")
                         : (sale.customer ? `${sale.customer.firstName} ${sale.customer.lastName}` : "Valued Customer"),
                     billToAddress: isSettlement
-                         ? sale.dealer?.businessAddress || ""
-                         : sale.customer?.address || "",
+                        ? sale.dealer?.businessAddress || ""
+                        : sale.customer?.address || "",
                     billToEmail: isSettlement ? sale.dealer?.email : sale.customer?.email,
                     items: [
                         {
@@ -99,14 +99,42 @@ export default function InvoicePage() {
                     subtotal: isSettlement ? correctDealerCost : Number(sale.warrantyPrice),
                     total: isSettlement ? correctDealerCost : Number(sale.warrantyPrice),
                     duration: `${durationMonths} months`,
+                    duration: `${durationMonths} months`,
+                    vehicle: sale.vehicle ? {
+                        make: sale.vehicle.make,
+                        model: sale.vehicle.model,
+                        year: Number(sale.vehicle.year),
+                        vin: sale.vehicle.vin,
+                        registrationNumber: sale.vehicle.registrationNumber,
+                    } : undefined,
                 };
 
                 setData(saleData);
+
+                // Process Settings (Default Fallback)
                 if (settingsRes.status && settingsRes.data) {
                     setSettings(settingsRes.data);
                 } else {
-                    // Fallback default
-                    setSettings({});
+                    // Fallback to Dealer's Business Info if no custom settings exist
+                    // This creates a "default template" using the dealer's profile
+                    if (!isSettlement && sale.dealer) {
+                        setSettings({
+                            companyName: sale.dealer.businessNameTrading || sale.dealer.businessNameLegal || "Company Name",
+                            companyAddress: `${sale.dealer.businessAddress || ""}\n${sale.dealer.email || ""}\n${sale.dealer.phone || ""}`,
+                            primaryColor: "#0f172a", // Default Slate-900
+                            accentColor: "#f1f5f9", // Default Slate-100
+                            headerText: "INVOICE",
+                            billToTitle: "Bill To:",
+                            footerText: "Thank you for your business!",
+                            // logoUrl: sale.dealer.logoUrl // If we had this on dealer model
+                        });
+                    } else {
+                        // Minimal default
+                        setSettings({
+                            companyName: "Drive Safe",
+                            headerText: "INVOICE"
+                        });
+                    }
                 }
 
             } catch (err) {
@@ -130,7 +158,7 @@ export default function InvoicePage() {
 
             const blob = await pdf(<InvoicePDF settings={settings} data={data} />).toBlob();
             const url = URL.createObjectURL(blob);
-            
+
             const link = document.createElement("a");
             link.href = url;
             link.download = `Invoice_${data.invoiceNumber}.pdf`;
@@ -138,7 +166,7 @@ export default function InvoicePage() {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            
+
             toast.success("PDF Downloaded successfully");
         } catch (error) {
             console.error("PDF generation failed", error);

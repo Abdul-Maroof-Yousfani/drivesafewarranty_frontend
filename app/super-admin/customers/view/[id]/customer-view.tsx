@@ -130,36 +130,81 @@ export function CustomerView({ customer }: CustomerViewProps) {
               Vehicle details and specifications
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-3">
-              <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Vehicle</p>
-                <p className="text-sm text-muted-foreground">
-                  {customer.vehicleMake} {customer.vehicleModel} (
-                  {customer.vehicleYear})
-                </p>
-              </div>
-            </div>
-            {customer.vin && (
-              <div>
-                <p className="text-sm font-medium">VIN Number</p>
-                <p className="text-sm text-muted-foreground">{customer.vin}</p>
-              </div>
-            )}
-            {customer.registrationNumber && (
-              <div>
-                <p className="text-sm font-medium">Registration Number</p>
-                <p className="text-sm text-muted-foreground">
-                  {customer.registrationNumber}
-                </p>
-              </div>
-            )}
-            <div>
-              <p className="text-sm font-medium">Current Mileage</p>
-              <p className="text-sm text-muted-foreground">
-                {customer.mileage.toLocaleString()} km
-              </p>
+          <CardContent>
+            <div className="h-[300px] overflow-y-auto pr-4 space-y-6">
+              {customer.vehicles && customer.vehicles.length > 0 ? (
+                customer.vehicles.map((vehicle, index) => (
+                  <div key={vehicle.id || index} className="space-y-4 pt-4 first:pt-0 border-t first:border-t-0">
+                    <div className="flex items-start gap-3">
+                      <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Vehicle {index + 1}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {vehicle.make} {vehicle.model} ({vehicle.year})
+                        </p>
+                      </div>
+                    </div>
+                    {vehicle.vin && (
+                      <div className="pl-8">
+                        <p className="text-sm font-medium">VIN Number</p>
+                        <p className="text-sm text-muted-foreground">{vehicle.vin}</p>
+                      </div>
+                    )}
+                    {vehicle.registrationNumber && (
+                      <div className="pl-8">
+                        <p className="text-sm font-medium">Registration Number</p>
+                        <p className="text-sm text-muted-foreground">
+                          {vehicle.registrationNumber}
+                        </p>
+                      </div>
+                    )}
+                    <div className="pl-8">
+                      <p className="text-sm font-medium">Current Mileage</p>
+                      <p className="text-sm text-muted-foreground">
+                        {vehicle.mileage ? vehicle.mileage.toLocaleString() : 0} km
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="space-y-4">
+                  {(customer.vehicleMake || customer.vehicleModel) ? (
+                    <>
+                      <div className="flex items-start gap-3">
+                        <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium">Vehicle</p>
+                          <p className="text-sm text-muted-foreground">
+                            {customer.vehicleMake} {customer.vehicleModel} ({customer.vehicleYear})
+                          </p>
+                        </div>
+                      </div>
+                      {customer.vin && (
+                        <div>
+                          <p className="text-sm font-medium">VIN Number</p>
+                          <p className="text-sm text-muted-foreground">{customer.vin}</p>
+                        </div>
+                      )}
+                      {customer.registrationNumber && (
+                        <div>
+                          <p className="text-sm font-medium">Registration Number</p>
+                          <p className="text-sm text-muted-foreground">
+                            {customer.registrationNumber}
+                          </p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-medium">Current Mileage</p>
+                        <p className="text-sm text-muted-foreground">
+                          {customer.mileage ? customer.mileage.toLocaleString() : 0} km
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">No vehicle information available.</p>
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -181,9 +226,21 @@ export function CustomerView({ customer }: CustomerViewProps) {
                   <p className="text-sm font-medium">Package</p>
                   <p className="text-sm text-muted-foreground">
                     {customer.currentWarranty.warrantyPackage.name}
+                    {customer.currentWarranty.warrantyPackage.planLevel && ` (${customer.currentWarranty.warrantyPackage.planLevel})`}
                   </p>
                 </div>
               </div>
+              {customer.currentWarranty.vehicle && (
+                <div className="flex items-start gap-3">
+                  <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Covered Vehicle</p>
+                    <p className="text-sm text-muted-foreground">
+                      {customer.currentWarranty.vehicle.make} {customer.currentWarranty.vehicle.model} ({customer.currentWarranty.vehicle.year})
+                    </p>
+                  </div>
+                </div>
+              )}
               <div>
                 <p className="text-sm font-medium">Warranty Number</p>
                 <p className="text-sm text-muted-foreground">

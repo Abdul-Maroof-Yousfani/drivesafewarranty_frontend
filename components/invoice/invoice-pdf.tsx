@@ -3,53 +3,53 @@ import { Page, Text, View, Document, StyleSheet, Image, Font } from "@react-pdf/
 import { InvoiceData, InvoiceSettings } from "./invoice-renderer";
 
 Font.register({
-  family: 'Roboto',
-  fonts: [
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf' },
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', fontWeight: 'bold' }
-  ]
+    family: 'Roboto',
+    fonts: [
+        { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf' },
+        { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', fontWeight: 'bold' }
+    ]
 });
 
 Font.register({
-  family: 'Open Sans',
-  fonts: [
-    { src: 'https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-regular.ttf' },
-    { src: 'https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-700.ttf', fontWeight: 'bold' }
-  ]
+    family: 'Open Sans',
+    fonts: [
+        { src: 'https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-regular.ttf' },
+        { src: 'https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-700.ttf', fontWeight: 'bold' }
+    ]
 });
 
 Font.register({
-  family: 'Arial', // Using Roboto as a very close free alternative
-  fonts: [
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf' },
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', fontWeight: 'bold' }
-  ]
+    family: 'Arial', // Using Roboto as a very close free alternative
+    fonts: [
+        { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf' },
+        { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', fontWeight: 'bold' }
+    ]
 });
 
 Font.register({
-  family: 'Verdana',
-  src: 'https://github.com/itfoundry/verdana-font/blob/master/Verdana.ttf?raw=true'
+    family: 'Verdana',
+    src: 'https://github.com/itfoundry/verdana-font/blob/master/Verdana.ttf?raw=true'
 });
 
 Font.register({
-  family: 'Georgia',
-  src: 'https://github.com/Stonelinks/georgia-font/blob/master/georgia.ttf?raw=true'
+    family: 'Georgia',
+    src: 'https://github.com/Stonelinks/georgia-font/blob/master/georgia.ttf?raw=true'
 });
 
 Font.register({
-  family: 'Gill Sans',
-  src: 'https://github.com/TheRealVampire/Gill-Sans-Font/blob/master/Gill%20Sans.ttf?raw=true'
+    family: 'Gill Sans',
+    src: 'https://github.com/TheRealVampire/Gill-Sans-Font/blob/master/Gill%20Sans.ttf?raw=true'
 });
 
 Font.register({
-  family: 'Trebuchet MS',
-  src: 'https://github.com/Stonelinks/trebuchet-ms-font/blob/master/trebuc.ttf?raw=true'
+    family: 'Trebuchet MS',
+    src: 'https://github.com/Stonelinks/trebuchet-ms-font/blob/master/trebuc.ttf?raw=true'
 });
 
 const createStyles = (settings: InvoiceSettings) => {
     const primaryColor = settings.primaryColor || "#000000";
     const accentColor = settings.accentColor || "#f1f5f9";
-    
+
     return StyleSheet.create({
         page: {
             flexDirection: "column",
@@ -78,19 +78,19 @@ const createStyles = (settings: InvoiceSettings) => {
             flex: 1,
         },
         logo: {
-            height: 90, 
+            height: 90,
             objectFit: "contain",
             width: 200,
             marginBottom: 8,
         },
         companyName: {
-            fontSize: 18, 
+            fontSize: 18,
             fontWeight: "bold",
             color: primaryColor,
             marginBottom: 3,
         },
         companyAddress: {
-            fontSize: 9, 
+            fontSize: 9,
             color: "#64748b",
             lineHeight: 1.4,
             maxWidth: 200,
@@ -192,6 +192,46 @@ const createStyles = (settings: InvoiceSettings) => {
             fontSize: 10,
             fontWeight: "bold",
             color: "#334155",
+        },
+        vehicleCard: {
+            backgroundColor: "#f8fafc", // slate-50
+            padding: 15,
+            borderRadius: 4,
+            marginBottom: 20,
+            borderWidth: 1,
+            borderColor: "#e2e8f0",
+        },
+        vehicleTitle: {
+            fontSize: 10,
+            fontWeight: "bold",
+            textTransform: "uppercase",
+            color: primaryColor,
+            marginBottom: 10,
+            opacity: 0.8,
+        },
+        vehicleGrid: {
+            flexDirection: "row",
+            flexWrap: "wrap",
+            gap: 20,
+        },
+        vehicleRow: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            width: "45%",
+            borderBottomWidth: 1,
+            borderBottomColor: "#e2e8f0",
+            paddingBottom: 4,
+            marginBottom: 4,
+        },
+        vehicleLabel: {
+            fontSize: 10,
+            color: "#64748b",
+            fontWeight: "medium",
+        },
+        vehicleValue: {
+            fontSize: 10,
+            fontWeight: "bold",
+            color: "#1e293b",
         },
         tableContainer: {
             borderWidth: 2,
@@ -355,10 +395,10 @@ export const InvoicePDF = ({ settings, data }: InvoicePDFProps) => {
     const getAbsoluteUrl = (url?: string) => {
         if (!url) return undefined;
         if (url.startsWith("http") || url.startsWith("data:") || url.startsWith("blob:")) return url;
-        
+
         // In browser, use relative paths for uploads to leverage Next.js proxy (satisfies browser context)
         if (typeof window !== "undefined") {
-            if (url.startsWith("/uploads/") || url.startsWith("uploads/") || 
+            if (url.startsWith("/uploads/") || url.startsWith("uploads/") ||
                 url.startsWith("/dealer-storage/") || url.startsWith("dealer-storage/") ||
                 url.startsWith("/dealers/") || url.startsWith("dealers/")) {
                 return url.startsWith("/") ? url : `/${url}`;
@@ -367,18 +407,18 @@ export const InvoicePDF = ({ settings, data }: InvoicePDFProps) => {
         }
 
         // Outside browser (e.g. server-side), use direct backend URL
-        if (url.startsWith("/uploads/") || url.startsWith("uploads/") || 
+        if (url.startsWith("/uploads/") || url.startsWith("uploads/") ||
             url.startsWith("/dealer-storage/") || url.startsWith("dealer-storage/") ||
             url.startsWith("/dealers/") || url.startsWith("dealers/")) {
             const backendBase = "http://localhost:8080";
             return `${backendBase}${url.startsWith("/") ? "" : "/"}${url}`;
         }
-        
+
         return url;
     };
 
     const absoluteLogoUrl = getAbsoluteUrl(settings.logoUrl);
-    
+
     // Determine logo alignment style
     const logoPositionStyle: any = {};
     if (settings.logoPosition === "center") {
@@ -399,9 +439,9 @@ export const InvoicePDF = ({ settings, data }: InvoicePDFProps) => {
                     <View style={styles.headerSection}>
                         <View style={styles.companyInfo}>
                             {absoluteLogoUrl && (
-                                <Image 
-                                    src={absoluteLogoUrl} 
-                                    style={[styles.logo, logoPositionStyle]} 
+                                <Image
+                                    src={absoluteLogoUrl}
+                                    style={[styles.logo, logoPositionStyle]}
                                     cache={false}
                                 />
                             )}
@@ -433,6 +473,31 @@ export const InvoicePDF = ({ settings, data }: InvoicePDFProps) => {
                             </View>
                         )}
                     </View>
+
+                    {/* Vehicle Details */}
+                    {data.vehicle && (
+                        <View style={styles.vehicleCard}>
+                            <Text style={styles.vehicleTitle}>Vehicle Details</Text>
+                            <View style={styles.vehicleGrid}>
+                                <View style={styles.vehicleRow}>
+                                    <Text style={styles.vehicleLabel}>Vehicle</Text>
+                                    <Text style={styles.vehicleValue}>{data.vehicle.make} {data.vehicle.model} ({data.vehicle.year})</Text>
+                                </View>
+                                {data.vehicle.registrationNumber && (
+                                    <View style={styles.vehicleRow}>
+                                        <Text style={styles.vehicleLabel}>Registration</Text>
+                                        <Text style={styles.vehicleValue}>{data.vehicle.registrationNumber}</Text>
+                                    </View>
+                                )}
+                                {data.vehicle.vin && (
+                                    <View style={styles.vehicleRow}>
+                                        <Text style={styles.vehicleLabel}>VIN</Text>
+                                        <Text style={styles.vehicleValue}>{data.vehicle.vin}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        </View>
+                    )}
 
                     {/* Items Table */}
                     <View style={styles.tableContainer}>

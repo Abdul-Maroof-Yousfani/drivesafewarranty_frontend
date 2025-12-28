@@ -40,7 +40,11 @@ export const columns: ColumnDef<WarrantySale>[] = [
   },
   {
     id: "warrantyPackage.name",
-    accessorFn: (row) => row.warrantyPackage?.name ?? "",
+    accessorFn: (row) => {
+      const pkg = row.warrantyPackage;
+      if (!pkg) return "";
+      return pkg.planLevel ? `${pkg.name} (${pkg.planLevel})` : pkg.name;
+    },
     header: "Package",
     size: 220,
   },
@@ -56,6 +60,31 @@ export const columns: ColumnDef<WarrantySale>[] = [
       }
       const customer = row.original.customer;
       return customer ? `${customer.firstName} ${customer.lastName}` : "N/A";
+    },
+  },
+  {
+    id: "vehicle",
+    header: "Vehicle",
+    size: 200,
+    cell: ({ row }) => {
+      const vehicle = row.original.vehicle;
+      const vehicleId = row.original.vehicleId;
+      const customer = row.original.customer as any; // Cast for legacy fields
+      let text = "N/A";
+
+      if (vehicle) {
+        text = `${vehicle.make} ${vehicle.model} (${vehicle.year})`;
+      } else if (vehicleId) {
+        text = `Vehicle ID: ${vehicleId.slice(0, 8)}`;
+      } else if (customer && customer.vehicleMake) {
+        text = `${customer.vehicleMake} ${customer.vehicleModel} (${customer.vehicleYear})`;
+      }
+
+      return (
+        <div className="truncate max-w-[200px]" title={text}>
+          {text}
+        </div>
+      );
     },
   },
   {
@@ -116,3 +145,6 @@ export const columns: ColumnDef<WarrantySale>[] = [
     },
   },
 ];
+export const dealerColumns: ColumnDef<WarrantySale>[] = columns.filter(
+  (col) => col.id !== "vehicle"
+);
