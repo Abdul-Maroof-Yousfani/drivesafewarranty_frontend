@@ -212,9 +212,9 @@ export default function SuperAdminDashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {stats.recentCustomers.map((customer: any) => (
+                {stats.recentCustomers.map((customer: any, idx: number) => (
                   <div 
-                    key={customer.id} 
+                    key={`${customer.id}-${customer.email || ""}-${customer.date || ""}-${idx}`} 
                     className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">

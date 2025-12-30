@@ -158,7 +158,7 @@ const createStyles = (settings: InvoiceSettings) => {
       backgroundColor: accentColor,
       padding: 20,
       borderRadius: 4,
-      marginBottom: 40,
+      marginBottom: 18,
       flexDirection: "row",
     },
     billToLeft: {
@@ -220,7 +220,7 @@ const createStyles = (settings: InvoiceSettings) => {
       backgroundColor: "#f8fafc", // slate-50
       padding: 15,
       borderRadius: 4,
-      marginBottom: 20,
+      marginBottom: 12,
       borderWidth: 1,
       borderColor: "#e2e8f0",
     },
@@ -261,7 +261,7 @@ const createStyles = (settings: InvoiceSettings) => {
       borderColor: "#e2e8f0",
       borderRadius: 8,
       padding: 8,
-      marginBottom: 20,
+      marginBottom: 12,
     },
     tableHeader: {
       flexDirection: "row",
@@ -321,7 +321,7 @@ const createStyles = (settings: InvoiceSettings) => {
       flexDirection: "row",
       justifyContent: "flex-end",
       marginTop: 20,
-      marginBottom: 60,
+      marginBottom: 45,
     },
     totalsContainer: {
       width: "45%",
@@ -384,7 +384,7 @@ const createStyles = (settings: InvoiceSettings) => {
       fontSize: 10,
       color: "#94a3b8",
       textAlign: "center",
-      paddingTop: 15,
+      paddingTop: 10,
       borderTopWidth: 1,
       borderTopColor: "#f1f5f9",
     },

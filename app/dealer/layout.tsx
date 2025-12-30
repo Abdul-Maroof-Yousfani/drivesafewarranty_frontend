@@ -63,7 +63,7 @@ export default function DealerLayout({
       {/* For dealer, ERP mode controls whether they see ERP (HR) or Warranty menu */}
       <AppSidebar erpMode={erpMode} />
       <SidebarInset>
-        <header className="flex h-[3.95rem] items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-6 sticky top-0 z-30 w-full justify-between">
+        <header className="flex h-[3.8rem] items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-6 sticky top-0 z-30 w-full justify-between">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
             {/* Desktop Search */}

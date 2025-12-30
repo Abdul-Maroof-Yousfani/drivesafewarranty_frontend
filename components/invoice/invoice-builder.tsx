@@ -37,8 +37,8 @@ import { Separator } from "@/components/ui/separator";
 
 // Schema for invoice settings
 const invoiceSettingsSchema = z.object({
-  companyName: z.string().default(""),
-  companyAddress: z.string().default(""),
+  companyName: z.string().trim().min(1, "Company name is required"),
+  companyAddress: z.string().trim().min(1, "Company address is required"),
   logoUrl: z.string().default(""),
   logoOffsetX: z.number().default(0),
   logoOffsetY: z.number().default(0),
@@ -46,16 +46,24 @@ const invoiceSettingsSchema = z.object({
   invoiceInfoOffsetY: z.number().default(0),
   companyInfoOffsetX: z.number().default(0),
   companyInfoOffsetY: z.number().default(0),
-  primaryColor: z.string().default("#0f172a"),
-  accentColor: z.string().default("#f1f5f9"),
-  headerText: z.string().default("INVOICE"),
-  billToTitle: z.string().default("Bill To:"),
+  primaryColor: z
+    .string()
+    .trim()
+    .min(1, "Primary color is required")
+    .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Invalid hex color"),
+  accentColor: z
+    .string()
+    .trim()
+    .min(1, "Accent color is required")
+    .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Invalid hex color"),
+  headerText: z.string().trim().min(1, "Header text is required"),
+  billToTitle: z.string().trim().min(1, "Bill-to title is required"),
   billToOffsetX: z.number().default(0),
   billToOffsetY: z.number().default(0),
   durationOffsetX: z.number().default(0),
   durationOffsetY: z.number().default(0),
-  footerText: z.string().default("Thank you for your business!"),
-  notes: z.string().default("Payment is due immediately upon receipt."),
+  footerText: z.string().trim().min(1, "Footer text is required"),
+  notes: z.string().trim().min(1, "Notes are required"),
   font: z
     .enum([
       "Helvetica",

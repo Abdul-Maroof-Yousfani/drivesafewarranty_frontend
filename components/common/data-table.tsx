@@ -274,7 +274,8 @@ export default function DataTable<TData extends DataTableRow>({
 
   return (
     <SearchHighlightContext.Provider value={search}>
-      <div className="space-y-4">
+      <TooltipProvider>
+        <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-wrap">
             {searchFields?.length && (
@@ -532,28 +533,25 @@ export default function DataTable<TData extends DataTableRow>({
                             ) : isSpecialColumn ? (
                               flexRender(
                                 cell.column.columnDef.cell,
-                                cell.getContext()
-                              )
+                                  cell.getContext()
+                                )
                             ) : (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="truncate">
-                                      {flexRender(
-                                        cell.column.columnDef.cell,
-                                        cell.getContext()
-                                      )}
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    {/* Try to render content, might be complex object */}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="truncate">
                                     {flexRender(
                                       cell.column.columnDef.cell,
                                       cell.getContext()
                                     )}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext()
+                                  )}
+                                </TooltipContent>
+                              </Tooltip>
                             )}
                           </TableCell>
                         );
@@ -703,8 +701,9 @@ export default function DataTable<TData extends DataTableRow>({
               </Pagination>
             </div>
           </div>
+          </div>
         </div>
-      </div>
+      </TooltipProvider>
     </SearchHighlightContext.Provider>
   );
 }

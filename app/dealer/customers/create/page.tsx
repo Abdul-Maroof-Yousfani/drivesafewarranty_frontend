@@ -30,24 +30,25 @@ import { toast } from "sonner";
 const vehicleSchema = z.object({
   make: z.string().min(1, "Vehicle make is required"),
   model: z.string().min(1, "Vehicle model is required"),
-  year: z
-    .number()
-    .min(1900, "Year must be at least 1900")
-    .max(
-      new Date().getFullYear() + 1,
-      `Year cannot exceed ${new Date().getFullYear() + 1}`
-    ),
-  vin: z.string().optional().or(z.literal("")),
+  year: z.coerce.number().min(1900, "Year must be 1900 or later").max(new Date().getFullYear() + 1, "Year is too far in future"),
+  vin: z.string().optional().or(z.literal("")).superRefine((val, ctx) => {
+    if (val && val.length > 0 && val.length < 11) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "VIN must be at least 11 characters if provided",
+      });
+    }
+  }),
   registrationNumber: z.string().optional().or(z.literal("")),
-  mileage: z.number().min(0, "Mileage must be 0 or greater"),
+  mileage: z.coerce.number().min(0, "Mileage must be a non-negative number").max(1000000, "Mileage is too high"),
 });
 
 const customerSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  firstName: z.string().min(2, "First name must be at least 2 characters").max(50, "First name is too long"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters").max(50, "Last name is too long"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().min(1, "Phone is required"),
-  address: z.string().min(1, "Address is required"),
+  phone: z.string().min(10, "Phone number must be at least 10 characters").max(15, "Phone number is too long"),
+  address: z.string().min(5, "Address must be at least 5 characters").max(255, "Address is too long"),
   vehicles: z.array(vehicleSchema).min(1, "At least one vehicle is required"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
@@ -60,7 +61,7 @@ export default function CreateCustomerPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<CustomerFormValues>({
-    resolver: zodResolver(customerSchema),
+    resolver: zodResolver(customerSchema) as any,
     defaultValues: {
       firstName: "",
       lastName: "",

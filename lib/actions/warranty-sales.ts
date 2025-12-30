@@ -53,6 +53,7 @@ export interface WarrantySale {
     address?: string; // Added
   } | null;
   dealer?: {
+    phone: string;
     id: string;
     businessNameTrading: string | null;
     businessNameLegal: string;

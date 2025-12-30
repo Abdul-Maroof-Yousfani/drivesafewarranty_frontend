@@ -36,7 +36,9 @@ export default function InvoicePage() {
           invoice = invoiceRes.data;
           // Fetch the warranty sale associated with this invoice
           if (invoice.warrantySaleId) {
-            const saleRes = await getWarrantySaleByIdAction(invoice.warrantySaleId);
+            const saleRes = await getWarrantySaleByIdAction(
+              invoice.warrantySaleId
+            );
             if (saleRes.status && saleRes.data) {
               sale = saleRes.data;
             }
@@ -114,6 +116,22 @@ export default function InvoicePage() {
           isDealerInvoice || isSettlement ? undefined : sale.dealer?.id
         );
 
+        const planLevelRaw = sale.warrantyPackage?.planLevel?.trim();
+        const planLevel = planLevelRaw
+          ? planLevelRaw
+              .split(/\s+/)
+              .filter(Boolean)
+              .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+              .join(" ")
+          : null;
+        const planSuffix = planLevel
+          ? ` - ${
+              planLevel.toLowerCase().includes("plan")
+                ? planLevel
+                : `${planLevel} Plan`
+            }`
+          : "";
+
         const saleData: InvoiceData = {
           invoiceNumber: invoice?.invoiceNumber || sale.policyNumber,
           variant: (isDealerInvoice ? "settlement" : variant) as any,
@@ -123,20 +141,27 @@ export default function InvoicePage() {
           dueDate: invoice
             ? new Date(invoice.dueDate).toLocaleDateString()
             : new Date(sale.saleDate).toLocaleDateString(),
-          billToName: isDealerInvoice || isSettlement
-            ? invoice?.dealer?.businessNameLegal || sale.dealer?.businessNameLegal || "The Dealer"
-            : sale.customer
-            ? `${sale.customer.firstName} ${sale.customer.lastName}`
-            : "Valued Customer",
-          billToAddress: isDealerInvoice || isSettlement
-            ? invoice?.dealer?.businessAddress || sale.dealer?.businessAddress || ""
-            : sale.customer?.address || "",
-          billToEmail: isDealerInvoice || isSettlement
-            ? invoice?.dealer?.email || sale.dealer?.email
-            : sale.customer?.email,
+          billToName:
+            isDealerInvoice || isSettlement
+              ? invoice?.dealer?.businessNameLegal ||
+                sale.dealer?.businessNameLegal ||
+                "The Dealer"
+              : sale.customer
+              ? `${sale.customer.firstName} ${sale.customer.lastName}`
+              : "Valued Customer",
+          billToAddress:
+            isDealerInvoice || isSettlement
+              ? invoice?.dealer?.businessAddress ||
+                sale.dealer?.businessAddress ||
+                ""
+              : sale.customer?.address || "",
+          billToEmail:
+            isDealerInvoice || isSettlement
+              ? invoice?.dealer?.email || sale.dealer?.email
+              : sale.customer?.email,
           items: [
             {
-              description: `Warranty Package - ${sale.warrantyPackage.name}`,
+              description: `Warranty Package - ${sale.warrantyPackage.name}${planSuffix}`,
               quantity: 1,
               amount: invoice
                 ? Number(invoice.amount)
@@ -322,17 +347,17 @@ export default function InvoicePage() {
           const ctx = clonedDoc.createElement("canvas").getContext("2d");
           if (!ctx) return;
 
-          const needsNormalize = (value: string) =>
+          const isUnsupported = (value: string) =>
             /lab\(|oklab\(|oklch\(|color-mix\(|color\(/i.test(value);
 
-          const normalizeColor = (value: string) => {
-            if (!value || !needsNormalize(value)) return null;
+          const normalize = (value: string) => {
+            if (!value || !isUnsupported(value)) return null;
             try {
               ctx.fillStyle = "#000000";
               ctx.fillStyle = value as any;
               const out = ctx.fillStyle;
               if (!out || typeof out !== "string") return "#000000";
-              return needsNormalize(out) ? "#000000" : out;
+              return isUnsupported(out) ? "#000000" : out;
             } catch {
               return "#000000";
             }
@@ -348,6 +373,11 @@ export default function InvoicePage() {
             ["borderBottomColor", "borderBottomColor"],
             ["borderLeftColor", "borderLeftColor"],
             ["outlineColor", "outlineColor"],
+            ["caretColor", "caretColor"],
+            ["fill", "fill"],
+            ["stroke", "stroke"],
+            ["textDecorationColor", "textDecorationColor"],
+            ["columnRuleColor", "columnRuleColor"],
           ];
 
           const elementSet = new Set<HTMLElement>();
@@ -369,14 +399,14 @@ export default function InvoicePage() {
             const cs = view.getComputedStyle(el);
             for (const [computedKey, styleKey] of props) {
               const val = (cs as any)[computedKey] as string;
-              const normalized = normalizeColor(val);
+              const normalized = normalize(val);
               if (normalized) (el.style as any)[styleKey] = normalized;
             }
             const boxShadow = cs.boxShadow;
-            if (boxShadow && needsNormalize(boxShadow))
+            if (boxShadow && isUnsupported(boxShadow))
               el.style.boxShadow = "none";
             const textShadow = (cs as any).textShadow as string | undefined;
-            if (textShadow && needsNormalize(textShadow))
+            if (textShadow && isUnsupported(textShadow))
               (el.style as any).textShadow = "none";
           }
         },
@@ -391,7 +421,7 @@ export default function InvoicePage() {
         canvas = await renderCanvas();
       } catch (e: any) {
         const msg = String(e?.message || e || "");
-        if (/unsupported color function/i.test(msg)) {
+        if (/unsupported color function|lab\(/i.test(msg)) {
           canvas = await renderCanvas({ foreignObjectRendering: true });
         } else {
           throw e;
@@ -408,7 +438,7 @@ export default function InvoicePage() {
       const contentWidthPt = pxToPt(rect.width);
       const contentHeightPt = pxToPt(rect.height);
 
-      const margin = 24;
+      const margin = 0;
       const usablePageWidth = pageWidth - margin * 2;
       const usablePageHeight = pageHeight - margin * 2;
 
@@ -490,7 +520,7 @@ export default function InvoicePage() {
 
         <div
           id="invoice-content"
-          className="shadow-lg print:shadow-none bg-white"
+          className="shadow-lg print:shadow-none bg-white w-[210mm] min-h-[297mm] mx-auto"
         >
           <InvoiceRenderer settings={settings || {}} data={data} />
         </div>

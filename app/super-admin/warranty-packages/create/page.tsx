@@ -37,17 +37,19 @@ import { Plus, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const packageSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
+  name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters").max(500, "Description is too long"),
   planLevel: z.enum(["Silver", "Gold", "Platinum"]),
-  eligibility: z.string().min(1, "Eligibility is required"),
-  excess: z.coerce.number().min(0, "Excess must be non‑negative"),
+  eligibility: z.string().min(5, "Eligibility criteria must be at least 5 characters"),
+  excess: z.coerce.number().min(0, "Excess must be non‑negative").max(1000, "Excess is too high"),
   labourRatePerHour: z.coerce
     .number()
-    .min(0, "Labour rate must be non‑negative"),
+    .min(0, "Labour rate must be non‑negative")
+    .max(500, "Labour rate is too high"),
   fixedClaimLimit: z.coerce
     .number()
-    .min(0, "Fixed claim limit must be non‑negative"),
+    .min(0, "Fixed claim limit must be non‑negative")
+    .max(100000, "Fixed claim limit is too high"),
   price12Months: z.coerce
     .number()
     .min(0, "12‑month price must be non‑negative"),
@@ -57,7 +59,7 @@ const packageSchema = z.object({
   price36Months: z.coerce
     .number()
     .min(0, "36‑month price must be non‑negative"),
-  includedFeatures: z.array(z.string()).optional().default([]),
+  includedFeatures: z.array(z.string()).default([]),
   keyBenefits: z.array(z.string()).min(1, "Select at least one benefit"),
 });
 
@@ -68,7 +70,7 @@ export default function CreateWarrantyPackagePage() {
   const [loading, setLoading] = useState(false);
 
   const form = useForm<PackageFormValues>({
-    resolver: zodResolver(packageSchema),
+    resolver: zodResolver(packageSchema) as any,
     defaultValues: {
       name: "",
       description: "",

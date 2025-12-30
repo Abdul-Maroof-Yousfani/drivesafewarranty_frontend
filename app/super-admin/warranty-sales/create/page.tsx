@@ -46,8 +46,8 @@ const warrantySaleSchema = z.object({
   customerId: z.string().optional(),
   dealerId: z.string().optional(),
   warrantyPackageId: z.string().min(1, "Please select a warranty package"),
-  price: z.coerce.number().min(0, "Price must be a non‑negative number"),
-  duration: z.coerce.number().min(1, "Duration is required"),
+  price: z.coerce.number().min(0, "Price must be a non‑negative number").max(50000, "Price is too high"),
+  duration: z.coerce.number().min(1, "Duration is required").max(120, "Duration is too long"),
   excess: z.coerce
     .number()
     .min(0, "Excess must be a non‑negative number")
@@ -71,11 +71,31 @@ const warrantySaleSchema = z.object({
   dealerPrice24Months: z.coerce.number().min(0).nullable().optional(),
   dealerPrice36Months: z.coerce.number().min(0).nullable().optional(),
   // New fields for Direct Sale
-  paymentMethod: z.string().optional(),
-  customerConsent: z.boolean().default(false),
-  mileageAtSale: z.coerce.number().min(0).optional().nullable(),
-  coverageStartDate: z.string().optional(),
+  paymentMethod: z.enum(["cash", "card", "bank_transfer", "finance"]),
+  customerConsent: z.boolean().refine(val => val === true, {
+    message: "Customer consent is required for direct sale",
+  }),
+  mileageAtSale: z.coerce.number().min(0, "Mileage must be non-negative").max(500000, "Mileage is too high").nullable().optional(),
+  coverageStartDate: z.string().min(1, "Coverage start date is required"),
   vehicleId: z.string().optional(),
+}).refine(data => {
+  if (data.assignTo === "customer") return !!data.customerId;
+  return true;
+}, {
+  message: "Please select a customer",
+  path: ["customerId"]
+}).refine(data => {
+  if (data.assignTo === "dealer") return !!data.dealerId;
+  return true;
+}, {
+  message: "Please select a dealer",
+  path: ["dealerId"]
+}).refine(data => {
+  if (data.assignTo === "customer") return !!data.vehicleId;
+  return true;
+}, {
+  message: "Please select a vehicle",
+  path: ["vehicleId"]
 });
 
 type WarrantySaleFormValues = z.infer<typeof warrantySaleSchema>;
@@ -89,7 +109,7 @@ export default function CreateWarrantySalePage() {
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
 
   const form = useForm<WarrantySaleFormValues>({
-    resolver: zodResolver(warrantySaleSchema),
+    resolver: zodResolver(warrantySaleSchema) as any,
     defaultValues: {
       assignTo: "customer",
       customerId: "",
@@ -276,7 +296,8 @@ export default function CreateWarrantySalePage() {
         }
       }
 
-      router.push("/super-admin/warranty-sales/list");
+      const redirectTab = data.assignTo === "customer" ? "customer" : "dealer";
+      router.push(`/super-admin/warranty-sales/list?tab=${redirectTab}`);
     } catch (error) {
       console.error("Error creating warranty sale:", error);
       toast.error("Failed to create warranty assignment");
@@ -400,7 +421,11 @@ export default function CreateWarrantySalePage() {
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select vehicle" />
+                                <SelectValue>
+                                  {form.watch("vehicleId") 
+                                    ? selectedCustomer.vehicles.find((v: any) => v.id === form.watch("vehicleId"))?.make + " " + selectedCustomer.vehicles.find((v: any) => v.id === form.watch("vehicleId"))?.model
+                                    : "Select vehicle"}
+                                </SelectValue>
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>

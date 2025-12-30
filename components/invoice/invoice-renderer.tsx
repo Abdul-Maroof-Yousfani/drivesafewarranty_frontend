@@ -1,8 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
 
-import { Separator } from "@/components/ui/separator";
-
 // Types
 export interface InvoiceSettings {
   companyName?: string;
@@ -67,6 +65,18 @@ export function InvoiceRenderer({
   editable = false,
   onLayoutChange,
 }: InvoiceRendererProps) {
+  const slate = {
+    50: "#f8fafc",
+    200: "#e2e8f0",
+    300: "#cbd5e1",
+    400: "#94a3b8",
+    500: "#64748b",
+    600: "#475569",
+    700: "#334155",
+    800: "#1e293b",
+    900: "#0f172a",
+  } as const;
+
   const {
     companyName,
     companyAddress,
@@ -144,8 +154,11 @@ export function InvoiceRenderer({
 
   return (
     <div
-      className="bg-white text-sm min-h-[800px] flex flex-col h-full w-full relative print:min-h-0 print:h-auto print:shadow-none print:border-none print:m-0 text-slate-800"
-      style={{ fontFamily: settings.font || "sans-serif" }}
+      className="bg-white text-sm min-h-[800px] flex flex-col h-full w-full relative print:min-h-0 print:h-auto print:shadow-none print:border-none print:m-0"
+      style={{
+        fontFamily: settings.font || "sans-serif",
+        color: slate[800],
+      }}
     >
       {/* Header Bar */}
       <div
@@ -194,7 +207,10 @@ export function InvoiceRenderer({
               >
                 {companyName}
               </h1>
-              <p className="text-slate-500 whitespace-pre-line text-sm max-w-[280px]">
+              <p
+                className="whitespace-pre-line text-sm max-w-[280px]"
+                style={{ color: slate[500] }}
+              >
                 {companyAddress}
               </p>
             </motion.div>
@@ -218,23 +234,27 @@ export function InvoiceRenderer({
             }}
           >
             <h2
-              className="text-3xl font-light tracking-tight text-slate-900 uppercase mb-2"
+              className="text-3xl font-light tracking-tight uppercase mb-2"
               style={{ color: primaryColor }}
             >
               {headerText}
             </h2>
             <div className="space-y-1 text-sm">
               <p>
-                <span className="font-semibold text-slate-700">Invoice #:</span>{" "}
+                <span className="font-semibold" style={{ color: slate[700] }}>
+                  Invoice #:
+                </span>{" "}
                 {invoiceNumber}
               </p>
               <p>
-                <span className="font-semibold text-slate-700">Date:</span>{" "}
+                <span className="font-semibold" style={{ color: slate[700] }}>
+                  Date:
+                </span>{" "}
                 {date}
               </p>
               {dueDate && (
                 <p>
-                  <span className="font-semibold text-slate-700">
+                  <span className="font-semibold" style={{ color: slate[700] }}>
                     Due Date:
                   </span>{" "}
                   {dueDate}
@@ -246,7 +266,7 @@ export function InvoiceRenderer({
 
         {/* Bill To Section with Accent Background */}
         <div
-          className="mb-8 p-5 rounded-lg print:border print:border-slate-200"
+          className="mb-4 p-5 rounded-lg print:border"
           style={{ backgroundColor: accentColor }}
         >
           <div className="grid grid-cols-2 gap-4">
@@ -266,14 +286,21 @@ export function InvoiceRenderer({
               >
                 {isSettlement ? "Dealer (Bill To):" : billToTitle}
               </h3>
-              <p className="font-bold text-lg text-slate-900">{billToName}</p>
+              <p className="font-bold text-lg" style={{ color: slate[900] }}>
+                {billToName}
+              </p>
               {billToAddress && (
-                <p className="text-slate-600 whitespace-pre-line mt-1">
+                <p
+                  className="whitespace-pre-line mt-1"
+                  style={{ color: slate[600] }}
+                >
                   {billToAddress}
                 </p>
               )}
               {billToEmail && (
-                <p className="text-slate-600 mt-1">{billToEmail}</p>
+                <p className="mt-1" style={{ color: slate[600] }}>
+                  {billToEmail}
+                </p>
               )}
             </motion.div>
             {duration && (
@@ -295,8 +322,12 @@ export function InvoiceRenderer({
                 }}
               >
                 <span
-                  className="inline-block px-4 py-2 rounded-full border shadow-sm font-semibold text-slate-700"
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.7)" }}
+                  className="inline-block px-4 py-2 rounded-full border shadow-sm font-semibold"
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.7)",
+                    color: slate[700],
+                    borderColor: slate[200],
+                  }}
                 >
                   Plan Duration: {duration}
                 </span>
@@ -307,7 +338,10 @@ export function InvoiceRenderer({
 
         {/* Vehicle Details */}
         {vehicle && (
-          <div className="mb-10 p-5 rounded-lg border border-slate-200 bg-slate-50">
+          <div
+            className="mb-6 p-5 rounded-lg border"
+            style={{ borderColor: slate[200], backgroundColor: slate[50] }}
+          >
             <h3
               className="font-bold mb-4 uppercase text-xs tracking-wider opacity-80"
               style={{ color: primaryColor }}
@@ -315,26 +349,39 @@ export function InvoiceRenderer({
               Vehicle Details
             </h3>
             <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
-              <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500 font-medium">Vehicle</span>
-                <span className="font-bold text-slate-800">
+              <div
+                className="flex justify-between border-b pb-2"
+                style={{ borderColor: slate[200] }}
+              >
+                <span className="font-medium" style={{ color: slate[500] }}>
+                  Vehicle
+                </span>
+                <span className="font-bold" style={{ color: slate[800] }}>
                   {vehicle.make} {vehicle.model} ({vehicle.year})
                 </span>
               </div>
               {vehicle.registrationNumber && (
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">
+                <div
+                  className="flex justify-between border-b pb-2"
+                  style={{ borderColor: slate[200] }}
+                >
+                  <span className="font-medium" style={{ color: slate[500] }}>
                     Registration
                   </span>
-                  <span className="font-bold text-slate-800">
+                  <span className="font-bold" style={{ color: slate[800] }}>
                     {vehicle.registrationNumber}
                   </span>
                 </div>
               )}
               {vehicle.vin && (
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">VIN</span>
-                  <span className="font-bold text-slate-800">
+                <div
+                  className="flex justify-between border-b pb-2"
+                  style={{ borderColor: slate[200] }}
+                >
+                  <span className="font-medium" style={{ color: slate[500] }}>
+                    VIN
+                  </span>
+                  <span className="font-bold" style={{ color: slate[800] }}>
                     {vehicle.vin}
                   </span>
                 </div>
@@ -344,7 +391,10 @@ export function InvoiceRenderer({
         )}
 
         {/* Items Table */}
-        <div className="mb-10 p-2 border-2 rounded-lg border-slate-200">
+        <div
+          className="mb-6 p-2 border-2 rounded-lg"
+          style={{ borderColor: slate[200] }}
+        >
           <table className="w-full text-left  ">
             <thead>
               <tr
@@ -375,20 +425,30 @@ export function InvoiceRenderer({
               {items.map((item, index) => (
                 <tr
                   key={index}
-                  className="border-b border-slate-300 last:border-0"
+                  className="border-b last:border-0"
+                  style={{ borderColor: slate[300] }}
                 >
-                  <td className="py-2 font-medium text-slate-800">
+                  <td
+                    className="py-2 font-medium"
+                    style={{ color: slate[800] }}
+                  >
                     {item.description}
                     {isSettlement && (
-                      <div className="text-xs text-slate-400 mt-1 italic">
+                      <div
+                        className="text-xs mt-1 italic"
+                        style={{ color: slate[400] }}
+                      >
                         Dealer Settlement Rate
                       </div>
                     )}
                   </td>
-                  <td className="py-3 text-right text-slate-600">
+                  <td className="py-3 text-right" style={{ color: slate[600] }}>
                     {item.quantity}
                   </td>
-                  <td className="py-3 text-right font-bold text-slate-900">
+                  <td
+                    className="py-3 text-right font-bold"
+                    style={{ color: slate[900] }}
+                  >
                     {formatCurrency(
                       isSettlement ? item.cost ?? item.amount : item.amount
                     )}
@@ -402,7 +462,10 @@ export function InvoiceRenderer({
         {/* Totals */}
         <div className="flex justify-end mb-16">
           <div className="w-5/12 space-y-3">
-            <div className="flex justify-between text-slate-500 font-medium">
+            <div
+              className="flex justify-between font-medium"
+              style={{ color: slate[500] }}
+            >
               <span>Subtotal</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
@@ -411,7 +474,10 @@ export function InvoiceRenderer({
                             <span>Tax (0%)</span>
                             <span>£0.00</span>
                         </div> */}
-            <div className="h-px bg-slate-200 my-2"></div>
+            <div
+              className="h-px my-2"
+              style={{ backgroundColor: slate[200] }}
+            ></div>
             <div
               className="flex justify-between items-center py-2 px-3 rounded"
               style={{ backgroundColor: primaryColor, color: "#ffffff" }}
@@ -426,14 +492,25 @@ export function InvoiceRenderer({
         <div className="mt-auto avoid-break-inside">
           {notes && (
             <div className="mb-8">
-              <h4 className="font-bold text-xs uppercase tracking-wider mb-2 text-slate-500">
+              <h4
+                className="font-bold text-xs uppercase tracking-wider mb-2"
+                style={{ color: slate[500] }}
+              >
                 Notes & Terms
               </h4>
-              <p className="text-slate-600 text-sm leading-relaxed">{notes}</p>
+              <p
+                className="text-sm leading-relaxed"
+                style={{ color: slate[600] }}
+              >
+                {notes}
+              </p>
             </div>
           )}
 
-          <div className="border-t pt-6 text-center text-slate-400 text-xs">
+          <div
+            className="border-t pt-6 text-center text-xs"
+            style={{ color: slate[400], borderColor: slate[200] }}
+          >
             <p>
               {isSettlement
                 ? "Official Drive Safe Settlement Statement"

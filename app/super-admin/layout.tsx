@@ -67,20 +67,9 @@ export default function SuperAdminLayout({
       <SessionChecker />
       <AppSidebar erpMode={isSuperAdmin && erpMode} />
       <SidebarInset>
-        <header className="flex h-[3.95rem] items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-6 sticky top-0 z-40 w-full justify-between">
+        <header className="flex h-[3.9rem] items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-6 sticky top-0 z-0 w-full justify-between">
           <div className="flex items-center gap-2">
-            {/* Left corner logo */}
-            <Avatar className="h-8 w-8">
-              {user?.avatar ? (
-                <AvatarImage src={user.avatar} alt="Logo" />
-              ) : (
-                <AvatarFallback className="text-xs">
-                  {user?.firstName && user?.lastName
-                    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-                    : "DS"}
-                </AvatarFallback>
-              )}
-            </Avatar>
+            
             <SidebarTrigger />
 
             <div className="hidden sm:block flex-1 max-w-xs lg:max-w-sm">

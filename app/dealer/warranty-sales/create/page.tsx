@@ -41,8 +41,8 @@ const dealerSaleSchema = z.object({
   customerId: z.string().min(1, "Please select a customer"),
   vehicleId: z.string().min(1, "Please select a vehicle"),
   warrantyPackageId: z.string().min(1, "Please select a package"),
-  price: z.coerce.number().min(0, "Price must be a non‑negative number"),
-  duration: z.coerce.number().min(1, "Duration is required"),
+  price: z.coerce.number().min(0, "Price must be a non‑negative number").max(50000, "Price is too high"),
+  duration: z.coerce.number().min(1, "Duration is required").max(120, "Duration is too long"),
   // New fields for package assignment
   excess: z.coerce
     .number()
@@ -59,33 +59,17 @@ const dealerSaleSchema = z.object({
   price12Months: z.coerce.number().min(0).nullable().optional(),
   price24Months: z.coerce.number().min(0).nullable().optional(),
   price36Months: z.coerce.number().min(0).nullable().optional(),
-  customerConsent: z.boolean().default(false),
+  customerConsent: z.boolean().refine(val => val === true, {
+    message: "Customer consent is required",
+  }),
   customerSignature: z.string().optional().nullable(),
-  mileageAtSale: z.coerce.number().min(0).optional().nullable(),
+  mileageAtSale: z.coerce.number().min(0, "Mileage must be non-negative").max(500000, "Mileage is too high").nullable().optional(),
   salesRepresentativeName: z.string().optional().nullable(),
-  paymentMethod: z.string().min(1, "Please select a payment method"),
-  coverageStartDate: z.string().optional(), // We'll use string for date input
+  paymentMethod: z.enum(["cash", "card", "bank_transfer", "finance"]),
+  coverageStartDate: z.string().min(1, "Coverage start date is required"),
 });
 
-type DealerSaleFormValues = {
-  customerId: string;
-  vehicleId: string;
-  warrantyPackageId: string;
-  price: number;
-  duration: number;
-  excess: number | null;
-  labourRatePerHour: number | null;
-  fixedClaimLimit: number | null;
-  price12Months?: number | null;
-  price24Months?: number | null;
-  price36Months?: number | null;
-  customerConsent: boolean;
-  customerSignature?: string | null;
-  mileageAtSale?: number | null;
-  salesRepresentativeName?: string | null;
-  paymentMethod: string;
-  coverageStartDate?: string;
-};
+type DealerSaleFormValues = z.infer<typeof dealerSaleSchema>;
 
 // Update FormControlProps to include disabled
 type FormControlProps = {
@@ -505,6 +489,7 @@ export default function DealerCreateWarrantySalePage() {
                             <SelectItem value="cash">Cash</SelectItem>
                             <SelectItem value="card">Card</SelectItem>
                             <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                            <SelectItem value="finance">Finance</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

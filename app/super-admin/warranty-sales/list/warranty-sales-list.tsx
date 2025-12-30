@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import DataTable from "@/components/common/data-table";
@@ -11,10 +11,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function WarrantySalesList({ initialSales }: { initialSales: WarrantySale[] }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+
+  const activeTab = searchParams.get("tab") || "customer";
 
   const handleToggle = () => {
     router.push("/super-admin/warranty-sales/create");
+  };
+
+  const handleTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", value);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleMultiDelete = (ids: string[]) => {
@@ -35,7 +45,7 @@ export function WarrantySalesList({ initialSales }: { initialSales: WarrantySale
   const dealerSales = initialSales.filter((sale) => !!sale.dealer);
 
   return (
-    <Tabs defaultValue="customer" className="w-full">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
       <TabsList className="grid w-full max-w-[400px] grid-cols-2">
         <TabsTrigger value="customer">Customer Sales</TabsTrigger>
         <TabsTrigger value="dealer">Dealer Assignments</TabsTrigger>
