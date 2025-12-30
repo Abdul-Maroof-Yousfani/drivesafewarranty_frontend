@@ -36,14 +36,14 @@ export default function ProfileSettingsPage() {
         const res = await mod.getMe();
         if (!cancelled) {
           if (res.status && res.data) {
-            setFirstName(res.data.firstName || user?.firstName || "");
-            setLastName(res.data.lastName || user?.lastName || "");
-            setPhone(res.data.phone || "");
+            setFirstName(sanitizeStr(res.data.firstName) || sanitizeStr(user?.firstName) || "");
+            setLastName(sanitizeStr(res.data.lastName) || sanitizeStr(user?.lastName) || "");
+            setPhone(sanitizeStr(res.data.phone) || "");
             setAvatar(res.data.avatar || null);
             setDetails(res.data.details || null);
           } else {
-            setFirstName(user?.firstName || "");
-            setLastName(user?.lastName || "");
+            setFirstName(sanitizeStr(user?.firstName) || "");
+            setLastName(sanitizeStr(user?.lastName) || "");
           }
         }
       } catch (error) {
@@ -99,9 +99,14 @@ export default function ProfileSettingsPage() {
         lastName,
         phone: phone || undefined,
         avatar: avatar ?? null,
+        ...details,
       });
       if (res.status) {
         toast.success(res.message || "Profile updated");
+        // Notify other components (like sidebar) to refresh user data
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event("auth-change"));
+        }
       } else {
         toast.error(res.message || "Failed to update profile");
       }
@@ -113,12 +118,12 @@ export default function ProfileSettingsPage() {
     }
   };
 
-  const initials =
-    firstName && lastName
-      ? `${firstName[0]}${lastName[0]}`.toUpperCase()
-      : user
-        ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-        : "U";
+  const sanitizeStr = (s: any) => (s === "undefined" || !s) ? "" : s;
+
+  const initials = (
+    (sanitizeStr(firstName)[0] || user?.firstName?.[0] || "U") +
+    (sanitizeStr(lastName)[0] || user?.lastName?.[0] || "")
+  ).toUpperCase();
 
   return (
     <div className="space-y-6">
@@ -170,73 +175,133 @@ export default function ProfileSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Dealer Details Section */}
-      {user?.role === "dealer" && details && (
+      {/* Dealer Details Section - Read Only as requested */}
+      {user?.role === "dealer" && (
         <Card>
           <CardHeader>
             <CardTitle>Dealer Information</CardTitle>
-            <CardDescription>Your registered business details (Read-only)</CardDescription>
+            <CardDescription>Your business details (Read-only)</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>Business Legal Name</Label>
-              <Input value={details.businessNameLegal || ""} disabled />
+              <Label htmlFor="businessNameLegal">Business Legal Name</Label>
+              <Input 
+                id="businessNameLegal"
+                value={details?.businessNameLegal || ""} 
+                disabled
+                className="bg-muted"
+              />
             </div>
             <div className="space-y-2">
-              <Label>Trading Name</Label>
-              <Input value={details.businessNameTrading || ""} disabled />
+              <Label htmlFor="businessNameTrading">Trading Name</Label>
+              <Input 
+                id="businessNameTrading"
+                value={details?.businessNameTrading || ""} 
+                disabled
+                className="bg-muted"
+              />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label>Business Address</Label>
-              <Input value={details.businessAddress || ""} disabled />
+              <Label htmlFor="businessAddress">Business Address</Label>
+              <Input 
+                id="businessAddress"
+                value={details?.businessAddress || ""} 
+                disabled
+                className="bg-muted"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="businessRegistrationNumber">Registration Number</Label>
+              <Input 
+                id="businessRegistrationNumber"
+                value={details?.businessRegistrationNumber || ""} 
+                disabled
+                className="bg-muted"
+              />
             </div>
             <div className="space-y-2">
               <Label>License Number</Label>
-              <Input value={details.dealerLicenseNumber || ""} disabled />
+              <Input value={details?.dealerLicenseNumber || ""} disabled className="bg-muted" />
             </div>
+
+            {/* Bank Details Breakdown */}
+            <div className="md:col-span-2 pt-2 border-t">
+              <h3 className="text-sm font-semibold mb-3">Bank Details</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Bank Name</Label>
+                  <Input value={details?.bankDetails?.bankName || ""} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Number</Label>
+                  <Input value={details?.bankDetails?.accountNumber || ""} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Holder</Label>
+                  <Input value={details?.bankDetails?.accountHolderName || ""} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Routing Number</Label>
+                  <Input value={details?.bankDetails?.routingNumber || ""} disabled className="bg-muted" />
+                </div>
+              </div>
+            </div>
+
+            {/* Authorized Signatory Breakdown */}
+            <div className="md:col-span-2 pt-2 border-t">
+              <h3 className="text-sm font-semibold mb-3">Authorized Signatory</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Signatory Name</Label>
+                  <Input value={details?.authorizedSignatory?.name || ""} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Title/Designation</Label>
+                  <Input value={details?.authorizedSignatory?.title || ""} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input value={details?.authorizedSignatory?.email || ""} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone</Label>
+                  <Input value={details?.authorizedSignatory?.phone || ""} disabled className="bg-muted" />
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label>Status</Label>
-              <Input value={details.status || ""} disabled />
+              <Input value={details?.status || ""} disabled className="bg-muted" />
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Customer Details Section */}
-      {user?.role === "customer" && details && (
+      {/* Customer Details Section - Now Editable, No Vehicles */}
+      {user?.role === "customer" && (
         <Card>
           <CardHeader>
-            <CardTitle>Vehicle Information</CardTitle>
-            <CardDescription>Your registered vehicle details (Read-only)</CardDescription>
+            <CardTitle>Personal Information</CardTitle>
+            <CardDescription>Update your contact and address details</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Vehicle Make</Label>
-              <Input value={details.vehicleMake || ""} disabled />
-            </div>
-            <div className="space-y-2">
-              <Label>Vehicle Model</Label>
-              <Input value={details.vehicleModel || ""} disabled />
-            </div>
-            <div className="space-y-2">
-              <Label>Year</Label>
-              <Input value={details.vehicleYear || ""} disabled />
-            </div>
-            <div className="space-y-2">
-              <Label>Mileage</Label>
-              <Input value={details.mileage || ""} disabled />
-            </div>
-            <div className="space-y-2">
-              <Label>VIN</Label>
-              <Input value={details.vin || ""} disabled />
-            </div>
-            <div className="space-y-2">
-              <Label>Registration Number</Label>
-              <Input value={details.registrationNumber || ""} disabled />
-            </div>
             <div className="space-y-2 md:col-span-2">
-              <Label>Address</Label>
-              <Input value={details.address || ""} disabled />
+              <Label htmlFor="address">Address</Label>
+              <Input 
+                id="address"
+                value={details?.address || ""} 
+                onChange={(e) => setDetails({ ...details, address: e.target.value })}
+                disabled={loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={user?.email || ""} disabled className="bg-muted" />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Input value={details?.status || ""} disabled className="bg-muted" />
             </div>
           </CardContent>
         </Card>

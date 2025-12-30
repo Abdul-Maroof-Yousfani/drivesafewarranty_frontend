@@ -97,6 +97,8 @@ export async function login(
           lastName: data.data.user.lastName,
           role: data.data.user.role,
           permissions: data.data.user.permissions,
+          avatar: data.data.user.avatar,
+          details: data.data.user.details,
         }),
         {
           httpOnly: false,
@@ -337,7 +339,27 @@ export async function updateMe(data: {
       method: "PUT",
       body: JSON.stringify(data),
     });
-    return await response.json();
+    const result = await response.json();
+    
+    if (result.status && result.data) {
+      const cookieStore = await cookies();
+      const existingUser = JSON.parse(cookieStore.get("user")?.value || "{}");
+      cookieStore.set("user", JSON.stringify({
+        ...existingUser,
+        firstName: result.data.firstName || existingUser.firstName,
+        lastName: result.data.lastName || existingUser.lastName,
+        avatar: result.data.avatar !== undefined ? result.data.avatar : existingUser.avatar,
+        details: result.data.details || existingUser.details,
+      }), {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60,
+        path: "/",
+      });
+    }
+    
+    return result;
   } catch (error) {
     console.error("Update me error:", error);
     return { status: false, message: "Failed to update profile" };

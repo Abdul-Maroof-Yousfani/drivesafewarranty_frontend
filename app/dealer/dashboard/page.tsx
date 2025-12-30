@@ -1,18 +1,37 @@
 "use client";
-
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, ShieldCheck, DollarSign, Receipt, Car, PlusCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { getDealerDashboardStatsAction } from "@/lib/actions/dashboard";
 
 export default function DealerDashboard() {
-  // TODO: Fetch dealer-specific data
-  const stats = {
+  const [stats, setStats] = useState({
     totalCustomers: 0,
     totalWarranties: 0,
     totalEarnings: 0,
     pendingInvoices: 0,
-  };
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const res = await getDealerDashboardStatsAction();
+      if (!mounted) return;
+      if (res.status && res.data) {
+        setStats({
+          totalCustomers: res.data.totalCustomers,
+          totalWarranties: res.data.totalWarranties,
+          totalEarnings: res.data.totalEarnings,
+          pendingInvoices: res.data.pendingInvoices,
+        });
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-6">

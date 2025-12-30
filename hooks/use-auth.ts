@@ -13,6 +13,7 @@ export interface User {
   permissions: string[];
   phone?: string;
   avatar?: string | null;
+  details?: any;
 }
 
 export function useAuth() {
@@ -20,17 +21,29 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const refreshUser = useCallback(() => {
     const userCookie = Cookies.get("user");
     if (userCookie) {
       try {
-        setUser(JSON.parse(userCookie));
+        const parsed = JSON.parse(userCookie);
+        setUser(parsed);
       } catch {
         setUser(null);
       }
+    } else {
+      setUser(null);
     }
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    refreshUser();
+    
+    // Listen for custom events to refresh user state across components
+    const handleAuthChange = () => refreshUser();
+    window.addEventListener("auth-change", handleAuthChange);
+    return () => window.removeEventListener("auth-change", handleAuthChange);
+  }, [refreshUser]);
 
   const hasPermission = useCallback(
     (permission: string): boolean => {

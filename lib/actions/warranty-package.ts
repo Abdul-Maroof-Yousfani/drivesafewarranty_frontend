@@ -227,6 +227,54 @@ export async function getWarrantyPackageByIdAction(
   }
 }
 
+export async function updateWarrantyPackageAction(
+  id: string,
+  payload: Partial<
+    Omit<
+      WarrantyPackage,
+      | "id"
+      | "createdAt"
+      | "updatedAt"
+      | "status"
+      | "dealerPrice12Months"
+      | "dealerPrice24Months"
+      | "dealerPrice36Months"
+    >
+  >
+): Promise<ApiResponse<WarrantyPackage>> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/warranty-packages/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: err.message || `Failed with status ${res.status}`,
+      };
+    }
+
+    const json = await res.json();
+    return json;
+  } catch (error) {
+    return { status: false, message: "Network error" };
+  }
+}
+
 // Assign an existing warranty package to a dealer (copies into dealer's tenant DB)
 export async function assignWarrantyPackageToDealer(params: {
   dealerId: string;

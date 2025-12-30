@@ -95,7 +95,20 @@ export async function createDealerCustomerAction(data: {
       },
       body: JSON.stringify(data),
     });
+    
     const result = await res.json();
+    
+    // Always return the result, even if status is not ok
+    // The frontend will check result.status to determine success/failure
+    if (!res.ok) {
+      // If response is not ok, ensure status is false
+      return {
+        status: false,
+        message: result.message || `Failed with status ${res.status}`,
+        ...result,
+      };
+    }
+    
     if (result.status) {
       import("next/cache").then(({ revalidatePath }) => {
         revalidatePath("/dealer/customers/list");

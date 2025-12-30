@@ -165,7 +165,7 @@ export default function SuperAdminInvoicesPage() {
                                             <TableHead>Package</TableHead>
                                             <TableHead>Duration</TableHead>
                                             <TableHead>Dealer Cost</TableHead>
-                                            <TableHead>Your Margin</TableHead>
+                                         
                                             <TableHead>Status</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
@@ -212,7 +212,6 @@ export default function SuperAdminInvoicesPage() {
                                                         <Badge variant="outline">{durationMonths} months</Badge>
                                                     </TableCell>
                                                     <TableCell className="font-bold text-slate-900">{formatCurrency(dealerCost)}</TableCell>
-                                                    <TableCell className="text-emerald-600 font-medium">+{formatCurrency(profit)}</TableCell>
                                                     <TableCell>
                                                         <Badge className={isPaid ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : "bg-amber-100 text-amber-700 hover:bg-amber-100"}>
                                                             {isPaid ? "Paid" : "Owed"}

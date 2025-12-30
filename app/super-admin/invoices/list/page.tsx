@@ -5,15 +5,32 @@ import { useRouter } from "next/navigation";
 import DataTable from "@/components/common/data-table";
 import { columns } from "./columns";
 import { ListSkeleton } from "@/components/dashboard/list-skeleton";
+import { getAllInvoicesAction, Invoice } from "@/lib/actions/invoices";
+import { toast } from "sonner";
 
 export default function InvoicesListPage() {
   const router = useRouter();
-  const [invoices, setInvoices] = useState([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch invoices from API
-    setLoading(false);
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await getAllInvoicesAction({ page: 1, limit: 100 });
+        if (res.status && res.data) {
+          setInvoices(res.data.invoices);
+        } else {
+          toast.error(res.message || "Failed to load invoices");
+        }
+      } catch (error) {
+        console.error("Failed to fetch invoices:", error);
+        toast.error("Failed to load invoices");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
   if (loading) {
@@ -34,10 +51,7 @@ export default function InvoicesListPage() {
         data={invoices}
         searchFields={[
           { key: "invoiceNumber", label: "Invoice Number" },
-          { key: "dealerName", label: "Dealer Name" },
         ]}
-        toggleAction={() => router.push("/super-admin/invoices/generate")}
-        actionText="Generate Invoice"
       />
     </div>
   );

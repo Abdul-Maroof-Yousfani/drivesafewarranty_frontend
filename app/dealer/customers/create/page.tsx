@@ -92,26 +92,44 @@ export default function CreateCustomerPage() {
       const { createDealerCustomerAction } = await import(
         "@/lib/actions/dealer-customer"
       );
+      
+      // Ensure vehicles array is properly formatted
+      const vehiclesData = data.vehicles.map(vehicle => ({
+        make: vehicle.make.trim(),
+        model: vehicle.model.trim(),
+        year: vehicle.year,
+        vin: vehicle.vin?.trim() || null,
+        registrationNumber: vehicle.registrationNumber?.trim() || null,
+        mileage: vehicle.mileage || 0,
+      }));
+      
       // Map form data to action expected format
-      // We pass 'vehicles' array directly, avoiding flattened legacy fields
       const result = await createDealerCustomerAction({
-        ...data,
-        vehicleMake: "", // Legacy fields (ignored by backend if vehicles present)
-        vehicleModel: "",
-        vehicleYear: 0,
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        email: data.email.trim(),
+        phone: data.phone.trim(),
+        address: data.address.trim(),
+        vehicles: vehiclesData,
+        password: data.password,
       });
+      
       if (result.status) {
         toast.success(result.message || "Customer created successfully");
         router.push(`/dealer/customers/list?newItemId=${result.data?.id}`);
       } else {
-        toast.error(result.message || "Failed to create customer");
+        const errorMessage = result.message || "Failed to create customer";
+        toast.error(errorMessage);
         form.setError("root", {
-          message: result.message || "Failed to create customer",
+          message: errorMessage,
         });
+        console.error("Customer creation failed:", result);
       }
     } catch (error) {
       console.error("Error creating customer:", error);
-      form.setError("root", { message: "An unexpected error occurred" });
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      toast.error(errorMessage);
+      form.setError("root", { message: errorMessage });
     } finally {
       setLoading(false);
     }

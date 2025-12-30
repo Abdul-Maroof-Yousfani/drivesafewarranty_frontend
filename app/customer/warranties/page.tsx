@@ -155,6 +155,34 @@ export default async function CustomerWarrantiesPage() {
 
                 <Separator />
 
+                {/* Vehicle Details */}
+                {warranty.vehicle && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                    <div className="bg-muted/30 p-2 rounded border">
+                      <span className="block text-xs text-muted-foreground mb-1">
+                        Vehicle
+                      </span>
+                      <span className="font-semibold">
+                        {warranty.vehicle.make} {warranty.vehicle.model}{" "}
+                        {warranty.vehicle.year}
+                      </span>
+                    </div>
+                    {(warranty.vehicle.registrationNumber ||
+                      warranty.vehicle.vin) && (
+                      <div className="bg-muted/30 p-2 rounded border">
+                        <span className="block text-xs text-muted-foreground mb-1">
+                          Registration / VIN
+                        </span>
+                        <span className="font-semibold">
+                          {warranty.vehicle.registrationNumber
+                            ? warranty.vehicle.registrationNumber
+                            : warranty.vehicle.vin || ""}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Coverage Highlights */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
                   {price !== undefined && price !== null && (
@@ -167,36 +195,47 @@ export default async function CustomerWarrantiesPage() {
                       </span>
                     </div>
                   )}
-                  {warranty.warrantyPackage.excess !== null && (
-                    <div className="bg-muted/30 p-2 rounded border text-center">
-                      <span className="block text-xs text-muted-foreground mb-1">
-                        Excess
-                      </span>
-                      <span className="font-semibold">
-                        £{Number(warranty.warrantyPackage.excess)}
-                      </span>
-                    </div>
-                  )}
-                  {warranty.warrantyPackage.labourRatePerHour !== null && (
-                    <div className="bg-muted/30 p-2 rounded border text-center">
-                      <span className="block text-xs text-muted-foreground mb-1">
-                        Labour Rate
-                      </span>
-                      <span className="font-semibold">
-                        £{Number(warranty.warrantyPackage.labourRatePerHour)}/hr
-                      </span>
-                    </div>
-                  )}
-                  {warranty.warrantyPackage.fixedClaimLimit !== null && (
-                    <div className="bg-muted/30 p-2 rounded border text-center">
-                      <span className="block text-xs text-muted-foreground mb-1">
-                        Claim Limit
-                      </span>
-                      <span className="font-semibold">
-                        £{Number(warranty.warrantyPackage.fixedClaimLimit)}
-                      </span>
-                    </div>
-                  )}
+                  {warranty.warrantyPackage.excess !== null &&
+                    warranty.warrantyPackage.excess !== undefined &&
+                    !Number.isNaN(Number(warranty.warrantyPackage.excess)) && (
+                      <div className="bg-muted/30 p-2 rounded border text-center">
+                        <span className="block text-xs text-muted-foreground mb-1">
+                          Excess
+                        </span>
+                        <span className="font-semibold">
+                          £{Number(warranty.warrantyPackage.excess)}
+                        </span>
+                      </div>
+                    )}
+                  {warranty.warrantyPackage.labourRatePerHour !== null &&
+                    warranty.warrantyPackage.labourRatePerHour !== undefined &&
+                    !Number.isNaN(
+                      Number(warranty.warrantyPackage.labourRatePerHour)
+                    ) && (
+                      <div className="bg-muted/30 p-2 rounded border text-center">
+                        <span className="block text-xs text-muted-foreground mb-1">
+                          Labour Rate
+                        </span>
+                        <span className="font-semibold">
+                          £{Number(warranty.warrantyPackage.labourRatePerHour)}
+                          /hr
+                        </span>
+                      </div>
+                    )}
+                  {warranty.warrantyPackage.fixedClaimLimit !== null &&
+                    warranty.warrantyPackage.fixedClaimLimit !== undefined &&
+                    !Number.isNaN(
+                      Number(warranty.warrantyPackage.fixedClaimLimit)
+                    ) && (
+                      <div className="bg-muted/30 p-2 rounded border text-center">
+                        <span className="block text-xs text-muted-foreground mb-1">
+                          Claim Limit
+                        </span>
+                        <span className="font-semibold">
+                          £{Number(warranty.warrantyPackage.fixedClaimLimit)}
+                        </span>
+                      </div>
+                    )}
                 </div>
 
                 <Accordion type="single" collapsible className="w-full">

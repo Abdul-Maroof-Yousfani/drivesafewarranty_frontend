@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import {
   Card,
@@ -24,14 +23,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import {
-  getWarrantySalesAction,
-  WarrantySale,
-} from "@/lib/actions/warranty-sales";
+  getCustomerWarrantySalesAction,
+  CustomerWarrantySale,
+} from "@/lib/actions/customer-warranties";
 import { toast } from "sonner";
 import { formatCurrency } from "@/app/shared/utils";
 
 export default function CustomerDashboard() {
-  const [warranties, setWarranties] = useState<WarrantySale[]>([]);
+  const [warranties, setWarranties] = useState<CustomerWarrantySale[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -39,7 +38,7 @@ export default function CustomerDashboard() {
   useEffect(() => {
     const fetchWarranties = async () => {
       try {
-        const res = await getWarrantySalesAction();
+        const res = await getCustomerWarrantySalesAction();
         if (res.status && Array.isArray(res.data)) {
           // Filter warranties for the current customer if the API returns all
           // Assuming the API handles permission, but for safety we display what we get
@@ -206,7 +205,7 @@ export default function CustomerDashboard() {
                     </Badge>
                   </div>
                   <CardDescription>
-                    Policy: {warranty.policyNumber}
+                    Warranty #: {warranty.policyNumber}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 pt-4 space-y-4">
@@ -219,6 +218,26 @@ export default function CustomerDashboard() {
                         {new Date(warranty.saleDate).toLocaleDateString()}
                       </span>
                     </div>
+                    {warranty.vehicle && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground flex items-center gap-2">
+                          <Car className="h-3 w-3" /> Vehicle
+                        </span>
+                        <span
+                          className="font-medium truncate max-w-[180px]"
+                          title={`${warranty.vehicle.make} ${
+                            warranty.vehicle.model
+                          } ${warranty.vehicle.year}${
+                            warranty.vehicle?.registrationNumber
+                              ? ` • ${warranty.vehicle.registrationNumber}`
+                              : ""
+                          }`}
+                        >
+                          {warranty.vehicle.make} {warranty.vehicle.model}{" "}
+                          {warranty.vehicle.year}
+                        </span>
+                      </div>
+                    )}
                     {warranty.dealer && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground flex items-center gap-2">
@@ -246,8 +265,8 @@ export default function CustomerDashboard() {
                 </CardContent>
                 <div className="p-4 pt-0 mt-auto">
                   <Button variant="outline" className="w-full group" asChild>
-                    <Link href={`/customer/documents`}>
-                      View Documents
+                    <Link href={`/invoices/${warranty.id}`} target="_blank">
+                      View Invoice
                       <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </Button>
@@ -273,15 +292,15 @@ export default function CustomerDashboard() {
               className="w-full justify-start h-auto py-4 hover:bg-muted/50 transition-colors"
               asChild
             >
-              <Link href="/customer/documents">
+              <Link href="/customer/invoices">
                 <div className="flex items-center gap-3 w-full">
                   <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                     <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="font-medium">View Documents</p>
+                    <p className="font-medium">View Invoices</p>
                     <p className="text-xs text-muted-foreground">
-                      Warranty papers & certificates
+                      Download invoices for your warranties
                     </p>
                   </div>
                   <ArrowRight className="h-4 w-4" />

@@ -4,16 +4,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowUpDown, Download, Eye } from "lucide-react";
-
-export type Invoice = {
-  id: string;
-  invoiceNumber: string;
-  dealerName: string;
-  amount: number;
-  status: "paid" | "pending" | "overdue";
-  issueDate: string;
-  dueDate: string;
-};
+import { Invoice } from "@/lib/actions/invoices";
+import { formatCurrency } from "@/lib/utils";
 
 export const columns: ColumnDef<Invoice>[] = [
   {
@@ -31,15 +23,21 @@ export const columns: ColumnDef<Invoice>[] = [
     },
   },
   {
-    accessorKey: "dealerName",
+    accessorKey: "dealer",
     header: "Dealer",
+    cell: ({ row }) => {
+      const dealer = row.original.dealer;
+      return dealer
+        ? dealer.businessNameTrading || dealer.businessNameLegal
+        : "N/A";
+    },
   },
   {
-    accessorKey: "amount",
+    accessorKey: "totalAmount",
     header: "Amount",
     cell: ({ row }) => {
-      const amount = row.getValue("amount") as number;
-      return `£${amount.toLocaleString()}`;
+      const amount = Number(row.getValue("totalAmount"));
+      return formatCurrency(amount);
     },
   },
   {
@@ -51,6 +49,7 @@ export const columns: ColumnDef<Invoice>[] = [
         paid: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
         pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
         overdue: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+        cancelled: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
       };
       return (
         <span className={`px-2 py-1 text-xs rounded-full ${statusColors[status] || ""}`}>
@@ -60,12 +59,20 @@ export const columns: ColumnDef<Invoice>[] = [
     },
   },
   {
-    accessorKey: "issueDate",
-    header: "Issue Date",
+    accessorKey: "invoiceDate",
+    header: "Invoice Date",
+    cell: ({ row }) => {
+      const date = row.getValue("invoiceDate") as string;
+      return new Date(date).toLocaleDateString();
+    },
   },
   {
     accessorKey: "dueDate",
     header: "Due Date",
+    cell: ({ row }) => {
+      const date = row.getValue("dueDate") as string;
+      return new Date(date).toLocaleDateString();
+    },
   },
   {
     id: "actions",
@@ -74,12 +81,12 @@ export const columns: ColumnDef<Invoice>[] = [
       return (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" asChild>
-            <Link href={`/super-admin/invoices/view/${invoice.id}`}>
+            <Link href={`/invoices/${invoice.id}`}>
               <Eye className="h-4 w-4" />
             </Link>
           </Button>
           <Button variant="ghost" size="icon" asChild>
-            <Link href={`/super-admin/invoices/download/${invoice.id}`}>
+            <Link href={`/invoices/${invoice.id}`}>
               <Download className="h-4 w-4" />
             </Link>
           </Button>

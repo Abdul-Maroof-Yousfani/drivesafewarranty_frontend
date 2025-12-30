@@ -1,5 +1,5 @@
 "use client";
-
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -17,17 +17,48 @@ import {
   AlertCircle
 } from "lucide-react";
 import Link from "next/link";
+import { getSuperAdminDashboardStatsAction } from "@/lib/actions/dashboard";
 
 export default function SuperAdminDashboard() {
-  // TODO: Fetch real data from API
-  const stats = {
+  const [stats, setStats] = useState<{
+    totalDealers: number;
+    totalCustomers: number;
+    totalWarranties: number;
+    totalEarnings: number;
+    pendingInvoices: number;
+    totalPackages?: number;
+    recentCustomers: Array<{ id: string; name: string; email: string; warrantyPackage: string; date: string }>;
+  }>({
     totalDealers: 0,
     totalCustomers: 0,
     totalWarranties: 0,
     totalEarnings: 0,
     pendingInvoices: 0,
+    totalPackages: 0,
     recentCustomers: [],
-  };
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const res = await getSuperAdminDashboardStatsAction();
+      if (!mounted) return;
+      if (res.status && res.data) {
+        setStats({
+          totalDealers: res.data.totalDealers,
+          totalCustomers: res.data.totalCustomers,
+          totalWarranties: res.data.totalWarranties,
+          totalEarnings: res.data.totalEarnings,
+          pendingInvoices: res.data.pendingInvoices,
+          totalPackages: res.data.totalPackages,
+          recentCustomers: res.data.recentCustomers,
+        });
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -134,7 +165,7 @@ export default function SuperAdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">-</div>
+            <div className="text-3xl font-bold">{stats.totalPackages ?? 0}</div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <Package className="h-3 w-3" />
               Available warranty plans

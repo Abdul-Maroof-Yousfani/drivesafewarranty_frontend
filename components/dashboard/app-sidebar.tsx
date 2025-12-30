@@ -155,27 +155,38 @@ export function AppSidebar({ erpMode = false }: AppSidebarProps) {
     menuItems = customerMenuData;
   }
 
+  // Get dynamic branding info
+  const portalName = isCustomer 
+    ? (user?.firstName ? `${user.firstName} Portal` : 'Customer Portal')
+    : isAdmin() 
+      ? (erpMode ? 'ERP Portal' : 'Drive Safe Portal')
+      : isDealer 
+        ? (user?.details?.businessNameLegal || user?.details?.businessNameTrading || 'Dealer Portal')
+        : 'Portal';
+
+  const logoUrl = user?.avatar;
+
   if (!menuItems.length) return null;
 
   return (
     <Sidebar className="border-r w-64 h-screen fixed">
       <SidebarHeader className="p-4 border-b">
         <div className="flex items-center gap-2">
-          {isCustomer ? (
-            <Shield className="h-6 w-6 text-primary" />
-          ) : isAdmin() ? (
-            <Building2 className="h-6 w-6 text-primary" />
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="h-8 w-8 object-contain rounded" />
           ) : (
-            <User className="h-6 w-6 text-primary" />
+            <>
+              {isCustomer ? (
+                <Shield className="h-6 w-6 text-primary" />
+              ) : isAdmin() ? (
+                <Building2 className="h-6 w-6 text-primary" />
+              ) : (
+                <User className="h-6 w-6 text-primary" />
+              )}
+            </>
           )}
-          <span className="font-semibold">
-            {isCustomer 
-              ? 'My Warranty'
-              : isAdmin() 
-                ? (erpMode ? 'ERP Portal' : 'Warranty Portal')
-                : isDealer 
-                  ? 'Dealer Portal'
-                  : 'Portal'}
+          <span className="font-semibold truncate">
+            {portalName}
           </span>
         </div>
       </SidebarHeader>
