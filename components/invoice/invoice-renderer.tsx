@@ -20,8 +20,17 @@ export interface InvoiceSettings {
   billToOffsetY?: number;
   durationOffsetX?: number;
   durationOffsetY?: number;
+  notesOffsetX?: number;
+  notesOffsetY?: number;
+  termsOffsetX?: number;
+  termsOffsetY?: number;
+  footerOffsetX?: number;
+  footerOffsetY?: number;
+  notesHeading?: string;
   footerText?: string;
   notes?: string;
+  termsHeading?: string;
+  termsText?: string;
   font?: string;
 }
 
@@ -95,8 +104,17 @@ export function InvoiceRenderer({
     billToOffsetY = 0,
     durationOffsetX = 0,
     durationOffsetY = 0,
+    notesOffsetX = 0,
+    notesOffsetY = 0,
+    termsOffsetX = 0,
+    termsOffsetY = 0,
+    footerOffsetX = 0,
+    footerOffsetY = 0,
+    notesHeading,
     footerText,
     notes,
+    termsHeading,
+    termsText,
   } = settings;
 
   const {
@@ -166,7 +184,7 @@ export function InvoiceRenderer({
         className="h-8 w-full print:bg-[color:var(--primary-color)] mb-8"
       ></div>
 
-      <div className="px-10 py-4 flex-1 flex flex-col print:p-0 print:mx-8">
+      <div className="px-10 py-4 flex-1 flex flex-col print:pt-0 print:px-0 print:pb-8 print:mx-8">
         {/* Header Section */}
         <div className="flex justify-between items-start mb-12">
           <div className="relative flex flex-col gap-1 w-1/2 items-start text-left">
@@ -491,12 +509,22 @@ export function InvoiceRenderer({
         {/* Notes & Footer */}
         <div className="mt-auto avoid-break-inside">
           {notes && (
-            <div className="mb-8">
+            <motion.div
+              className="mb-6"
+              style={{ x: notesOffsetX, y: notesOffsetY }}
+              drag={editable}
+              dragMomentum={false}
+              onDragEnd={(_, info) => {
+                if (!onLayoutChange) return;
+                onLayoutChange("notesOffsetX", notesOffsetX + info.offset.x);
+                onLayoutChange("notesOffsetY", notesOffsetY + info.offset.y);
+              }}
+            >
               <h4
                 className="font-bold text-xs uppercase tracking-wider mb-2"
                 style={{ color: slate[500] }}
               >
-                Notes & Terms
+                {notesHeading || "Notes"}
               </h4>
               <p
                 className="text-sm leading-relaxed"
@@ -504,19 +532,58 @@ export function InvoiceRenderer({
               >
                 {notes}
               </p>
-            </div>
+            </motion.div>
           )}
 
-          <div
+          {termsText && (
+            <motion.div
+              className="mb-6"
+              style={{ x: termsOffsetX, y: termsOffsetY }}
+              drag={editable}
+              dragMomentum={false}
+              onDragEnd={(_, info) => {
+                if (!onLayoutChange) return;
+                onLayoutChange("termsOffsetX", termsOffsetX + info.offset.x);
+                onLayoutChange("termsOffsetY", termsOffsetY + info.offset.y);
+              }}
+            >
+              <h4
+                className="font-bold text-xs uppercase tracking-wider mb-2"
+                style={{ color: slate[500] }}
+              >
+                {termsHeading || "Terms & Conditions"}
+              </h4>
+              <p
+                className="text-sm leading-relaxed"
+                style={{ color: slate[600] }}
+              >
+                {termsText}
+              </p>
+            </motion.div>
+          )}
+
+          <motion.div
             className="border-t pt-6 text-center text-xs"
-            style={{ color: slate[400], borderColor: slate[200] }}
+            style={{
+              color: slate[400],
+              borderColor: slate[200],
+              x: footerOffsetX,
+              y: footerOffsetY,
+            }}
+            drag={editable}
+            dragMomentum={false}
+            onDragEnd={(_, info) => {
+              if (!onLayoutChange) return;
+              onLayoutChange("footerOffsetX", footerOffsetX + info.offset.x);
+              onLayoutChange("footerOffsetY", footerOffsetY + info.offset.y);
+            }}
           >
             <p>
               {isSettlement
                 ? "Official Drive Safe Settlement Statement"
                 : footerText || "Thank you for your business!"}
             </p>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>

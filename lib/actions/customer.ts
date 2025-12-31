@@ -145,6 +145,12 @@ export async function createCustomer(data: {
       },
       body: JSON.stringify(data),
     });
+    
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     const result = await res.json();
     if (result.status) {
       revalidatePath("/super-admin/customers");
@@ -184,6 +190,12 @@ export async function updateCustomer(
       },
       body: JSON.stringify(data),
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     const result = await res.json();
     if (result.status) {
       revalidatePath("/super-admin/customers");
@@ -204,6 +216,12 @@ export async function deleteCustomer(
       method: "DELETE",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     const result = await res.json();
     if (result.status) {
       revalidatePath("/super-admin/customers");
@@ -228,6 +246,12 @@ export async function deleteCustomers(
       },
       body: JSON.stringify({ ids }),
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     const result = await res.json();
     if (result.status) {
       revalidatePath("/super-admin/customers");

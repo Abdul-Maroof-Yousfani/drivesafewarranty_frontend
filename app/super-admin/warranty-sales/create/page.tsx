@@ -72,9 +72,7 @@ const warrantySaleSchema = z.object({
   dealerPrice36Months: z.coerce.number().min(0).nullable().optional(),
   // New fields for Direct Sale
   paymentMethod: z.enum(["cash", "card", "bank_transfer", "finance"]),
-  customerConsent: z.boolean().refine(val => val === true, {
-    message: "Customer consent is required for direct sale",
-  }),
+  customerConsent: z.boolean(),
   mileageAtSale: z.coerce.number().min(0, "Mileage must be non-negative").max(500000, "Mileage is too high").nullable().optional(),
   coverageStartDate: z.string().min(1, "Coverage start date is required"),
   vehicleId: z.string().optional(),
@@ -91,11 +89,11 @@ const warrantySaleSchema = z.object({
   message: "Please select a dealer",
   path: ["dealerId"]
 }).refine(data => {
-  if (data.assignTo === "customer") return !!data.vehicleId;
+  if (data.assignTo === "customer") return data.customerConsent === true;
   return true;
 }, {
-  message: "Please select a vehicle",
-  path: ["vehicleId"]
+  message: "Customer consent is required for direct sale",
+  path: ["customerConsent"]
 });
 
 type WarrantySaleFormValues = z.infer<typeof warrantySaleSchema>;
@@ -318,7 +316,7 @@ export default function CreateWarrantySalePage() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit, (errors) => console.error("Form Validation Errors:", errors))} className="space-y-6">
           {/* Step 1: Who to assign to */}
           <Card>
             <CardHeader>

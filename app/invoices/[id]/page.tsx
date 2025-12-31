@@ -83,28 +83,31 @@ export default function InvoicePage() {
 
         const isSettlement = variant === "settlement";
 
-        // Calculate actual duration from coverage dates
+        // Calculate actual duration precisely using month/year diff
         const start = new Date(sale.coverageStartDate);
         const end = new Date(sale.coverageEndDate);
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        const durationMonths = Math.round(
-          diffTime / (1000 * 60 * 60 * 24 * 30.44)
-        ); // Use 30.44 for better average month accuracy
+        
+        // Calculate difference in months
+        let durationMonths = (end.getFullYear() - start.getFullYear()) * 12;
+        durationMonths -= start.getMonth();
+        durationMonths += end.getMonth();
+        
+        // Adjust if end day is significantly less than start day (incomplete final month)
+        // However, for warranties, end date is usually "Start + N months - 1 day" or similar.
+        // A simple robust way for warranties is usually rounding to nearest 12.
+        // Let's assume standard policy lengths:
+        if (durationMonths >= 35 && durationMonths <= 37) durationMonths = 36;
+        else if (durationMonths >= 23 && durationMonths <= 25) durationMonths = 24;
+        else if (durationMonths >= 11 && durationMonths <= 13) durationMonths = 12;
 
         // Pick the correct dealer cost based on duration
         let correctDealerCost = Number(sale.warrantyPrice); // Fallback
-        if (durationMonths <= 12) {
-          correctDealerCost = Number(
-            sale.dealerCost12Months || correctDealerCost
-          );
-        } else if (durationMonths <= 24) {
-          correctDealerCost = Number(
-            sale.dealerCost24Months || correctDealerCost
-          );
-        } else if (durationMonths <= 36) {
-          correctDealerCost = Number(
-            sale.dealerCost36Months || correctDealerCost
-          );
+        if (durationMonths === 12) {
+          correctDealerCost = Number(sale.dealerCost12Months || correctDealerCost);
+        } else if (durationMonths === 24) {
+          correctDealerCost = Number(sale.dealerCost24Months || correctDealerCost);
+        } else if (durationMonths === 36) {
+          correctDealerCost = Number(sale.dealerCost36Months || correctDealerCost);
         }
 
         // If we have an invoice object, it's a dealer invoice (from SA to dealer)
@@ -113,7 +116,8 @@ export default function InvoicePage() {
         // Otherwise, use the dealer's branding for customer invoices
         const isDealerInvoice = !!invoice;
         const settingsRes = await getInvoiceSettingsAction(
-          isDealerInvoice || isSettlement ? undefined : sale.dealer?.id
+          isDealerInvoice || isSettlement ? undefined : sale.dealer?.id,
+          isDealerInvoice || isSettlement ? "master" : undefined
         );
 
         const planLevelRaw = sale.warrantyPackage?.planLevel?.trim();
@@ -177,7 +181,7 @@ export default function InvoicePage() {
             ? correctDealerCost
             : Number(sale.warrantyPrice),
           total: invoice
-            ? Number(invoice.totalAmount)
+            ? Number(invoice.totalAmount || invoice.amount)
             : isSettlement
             ? correctDealerCost
             : Number(sale.warrantyPrice),

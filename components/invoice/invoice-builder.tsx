@@ -62,8 +62,17 @@ const invoiceSettingsSchema = z.object({
   billToOffsetY: z.number().default(0),
   durationOffsetX: z.number().default(0),
   durationOffsetY: z.number().default(0),
+  notesOffsetX: z.number().default(0),
+  notesOffsetY: z.number().default(0),
+  termsOffsetX: z.number().default(0),
+  termsOffsetY: z.number().default(0),
+  footerOffsetX: z.number().default(0),
+  footerOffsetY: z.number().default(0),
   footerText: z.string().trim().min(1, "Footer text is required"),
+  notesHeading: z.string().trim().min(1, "Notes heading is required"),
   notes: z.string().trim().min(1, "Notes are required"),
+  termsHeading: z.string().trim().min(1, "Terms heading is required"),
+  termsText: z.string().default(""),
   font: z
     .enum([
       "Helvetica",
@@ -100,8 +109,17 @@ const defaultSettings: InvoiceSettingsFormValues = {
   billToOffsetY: 0,
   durationOffsetX: 0,
   durationOffsetY: 0,
+  notesOffsetX: 0,
+  notesOffsetY: 0,
+  termsOffsetX: 0,
+  termsOffsetY: 0,
+  footerOffsetX: 0,
+  footerOffsetY: 0,
   footerText: "Thank you for your business!",
+  notesHeading: "Notes",
   notes: "Payment is due immediately upon receipt.",
+  termsHeading: "Terms & Conditions",
+  termsText: "",
   font: "Helvetica",
 };
 
@@ -228,8 +246,35 @@ export function InvoiceBuilder() {
               typeof res.data.durationOffsetY === "number"
                 ? res.data.durationOffsetY
                 : 0,
+            notesOffsetX:
+              typeof res.data.notesOffsetX === "number"
+                ? res.data.notesOffsetX
+                : 0,
+            notesOffsetY:
+              typeof res.data.notesOffsetY === "number"
+                ? res.data.notesOffsetY
+                : 0,
+            termsOffsetX:
+              typeof res.data.termsOffsetX === "number"
+                ? res.data.termsOffsetX
+                : 0,
+            termsOffsetY:
+              typeof res.data.termsOffsetY === "number"
+                ? res.data.termsOffsetY
+                : 0,
+            footerOffsetX:
+              typeof res.data.footerOffsetX === "number"
+                ? res.data.footerOffsetX
+                : 0,
+            footerOffsetY:
+              typeof res.data.footerOffsetY === "number"
+                ? res.data.footerOffsetY
+                : 0,
             footerText: res.data.footerText || defaultSettings.footerText,
+            notesHeading: res.data.notesHeading || defaultSettings.notesHeading,
             notes: res.data.notes || defaultSettings.notes,
+            termsHeading: res.data.termsHeading || defaultSettings.termsHeading,
+            termsText: res.data.termsText || defaultSettings.termsText,
             font: (res.data.font as any) || defaultSettings.font,
           });
 
@@ -301,6 +346,42 @@ export function InvoiceBuilder() {
                     ? parsed.durationOffsetY
                     : 0
                 );
+                form.setValue(
+                  "notesOffsetX",
+                  typeof parsed.notesOffsetX === "number"
+                    ? parsed.notesOffsetX
+                    : 0
+                );
+                form.setValue(
+                  "notesOffsetY",
+                  typeof parsed.notesOffsetY === "number"
+                    ? parsed.notesOffsetY
+                    : 0
+                );
+                form.setValue(
+                  "termsOffsetX",
+                  typeof parsed.termsOffsetX === "number"
+                    ? parsed.termsOffsetX
+                    : 0
+                );
+                form.setValue(
+                  "termsOffsetY",
+                  typeof parsed.termsOffsetY === "number"
+                    ? parsed.termsOffsetY
+                    : 0
+                );
+                form.setValue(
+                  "footerOffsetX",
+                  typeof parsed.footerOffsetX === "number"
+                    ? parsed.footerOffsetX
+                    : 0
+                );
+                form.setValue(
+                  "footerOffsetY",
+                  typeof parsed.footerOffsetY === "number"
+                    ? parsed.footerOffsetY
+                    : 0
+                );
               }
             }
           } catch {}
@@ -356,6 +437,12 @@ export function InvoiceBuilder() {
             billToOffsetY: form.getValues("billToOffsetY"),
             durationOffsetX: form.getValues("durationOffsetX"),
             durationOffsetY: form.getValues("durationOffsetY"),
+            notesOffsetX: form.getValues("notesOffsetX"),
+            notesOffsetY: form.getValues("notesOffsetY"),
+            termsOffsetX: form.getValues("termsOffsetX"),
+            termsOffsetY: form.getValues("termsOffsetY"),
+            footerOffsetX: form.getValues("footerOffsetX"),
+            footerOffsetY: form.getValues("footerOffsetY"),
           };
           if (typeof window !== "undefined") {
             window.localStorage.setItem(
@@ -685,10 +772,52 @@ export function InvoiceBuilder() {
                     />
                     <FormField
                       control={form.control}
+                      name="notesHeading"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Notes Heading</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Notes" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
                       name="notes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Default Notes</FormLabel>
+                          <FormLabel>Notes Text</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Notes..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="termsHeading"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Terms & Conditions Heading</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Terms & Conditions"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="termsText"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Terms & Conditions Text</FormLabel>
                           <FormControl>
                             <Textarea
                               placeholder="Terms & Conditions..."
@@ -768,6 +897,12 @@ export function InvoiceBuilder() {
                   form.setValue("billToOffsetY", 0);
                   form.setValue("durationOffsetX", 0);
                   form.setValue("durationOffsetY", 0);
+                  form.setValue("notesOffsetX", 0);
+                  form.setValue("notesOffsetY", 0);
+                  form.setValue("termsOffsetX", 0);
+                  form.setValue("termsOffsetY", 0);
+                  form.setValue("footerOffsetX", 0);
+                  form.setValue("footerOffsetY", 0);
                 }}
               >
                 Reset Positions

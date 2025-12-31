@@ -171,6 +171,11 @@ export async function createDealer(data: {
       body: JSON.stringify(data),
     });
     
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     const result = await res.json();
     
     if (result.status) {
@@ -213,6 +218,11 @@ export async function updateDealer(
       body: JSON.stringify(data),
     });
     
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     const result = await res.json();
     
     if (result.status) {
@@ -236,6 +246,11 @@ export async function deleteDealer(id: string): Promise<{ status: boolean; messa
       },
     });
     
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     const result = await res.json();
     
     if (result.status) {

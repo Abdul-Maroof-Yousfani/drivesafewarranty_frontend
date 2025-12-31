@@ -24,6 +24,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ import { getDealerCustomersAction } from "@/lib/actions/dealer-customer";
 import { getDealerWarrantyPackagesAction } from "@/lib/actions/warranty-package";
 import { createDealerWarrantySaleAction } from "@/lib/actions/dealer-warranty-sales";
 import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
 
 const dealerSaleSchema = z.object({
   customerId: z.string().min(1, "Please select a customer"),
@@ -290,12 +292,14 @@ export default function DealerCreateWarrantySalePage() {
         // Price fields are ignored by backend - SA controls all customer pricing
       });
       if (res.status) {
+        toast.success("Warranty package assigned");
         router.push("/dealer/warranty-sales/list");
       } else {
-        console.error("Create sale failed:", res.message);
+        toast.error(res.message || "Failed to assign package");
       }
     } catch (error) {
       console.error("Error creating dealer warranty sale:", error);
+      toast.error("Failed to assign package");
     } finally {
       setLoading(false);
     }
@@ -465,13 +469,6 @@ export default function DealerCreateWarrantySalePage() {
                     )}
                   />
 
-                  <NumberInputField
-                    control={form.control}
-                    name="price"
-                    label="Plan Amount (£)"
-                    placeholder="Fixed by package"
-                    disabled={true}
-                  />
 
                   <FormField
                     control={form.control}
@@ -479,7 +476,11 @@ export default function DealerCreateWarrantySalePage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Payment Method</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select payment method" />
@@ -501,6 +502,29 @@ export default function DealerCreateWarrantySalePage() {
 
               <FormField
                 control={form.control}
+                name="customerConsent"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => field.onChange(!!checked)}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Customer Agreement & Acceptance of Terms</FormLabel>
+                      <FormDescription>
+                        I confirm that the customer has read and agreed to the
+                        terms and conditions.
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="customerId"
                 render={({ field }) => (
                   <FormItem>
@@ -512,6 +536,7 @@ export default function DealerCreateWarrantySalePage() {
                         form.setValue("vehicleId", "");
                       }}
                       defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>

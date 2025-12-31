@@ -86,6 +86,12 @@ export async function getWarrantySalesAction(): Promise<{
       cache: "no-store",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
+    
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, data: [], message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch warranty sales:", error);
@@ -106,6 +112,12 @@ export async function getWarrantySaleByIdAction(
       cache: "no-store",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch warranty sale:", error);
@@ -134,6 +146,12 @@ export async function updateWarrantySaleAction(
       },
       body: JSON.stringify(payload),
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     return res.json();
   } catch (error) {
     console.error("Failed to update warranty sale:", error);
@@ -150,6 +168,12 @@ export async function deleteWarrantySaleAction(
       method: "DELETE",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     return res.json();
   } catch (error) {
     console.error("Failed to delete warranty sale:", error);
@@ -185,6 +209,12 @@ export async function createMasterWarrantySaleAction(payload: {
       },
       body: JSON.stringify(payload),
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     return res.json();
   } catch (error) {
     console.error("Failed to create warranty sale:", error);

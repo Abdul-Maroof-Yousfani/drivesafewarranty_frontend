@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getDealerWarrantySalesAction } from "@/lib/actions/dealer-warranty-sales";
+import { getDealerInvoicesAction, Invoice } from "@/lib/actions/invoices";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
@@ -13,26 +14,40 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
-import { FileText, Loader2, Download, CheckCircle, Clock } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { WarrantySale } from "@/lib/actions/warranty-sales";
 
 export default function DealerInvoicesPage() {
-    const [loading, setLoading] = useState(true);
-    const [sales, setSales] = useState<any[]>([]);
+    const [loadingSales, setLoadingSales] = useState(true);
+    const [loadingInvoices, setLoadingInvoices] = useState(true);
+    const [sales, setSales] = useState<WarrantySale[]>([]);
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
 
     useEffect(() => {
-        async function load() {
-            setLoading(true);
-            const res = await getDealerWarrantySalesAction();
-            if (res.status) {
-                setSales(res.data as WarrantySale[]);
-            }
-            setLoading(false);
+        async function loadData() {
+            setLoadingSales(true);
+            setLoadingInvoices(true);
+
+            // Fetch Customer Sales (for Customer Invoices tab)
+            getDealerWarrantySalesAction().then((res) => {
+                if (res.status) {
+                    setSales(res.data as WarrantySale[]);
+                }
+                setLoadingSales(false);
+            });
+
+            // Fetch Dealer Invoices (for Owed to Drive Safe tab)
+            getDealerInvoicesAction().then((res) => {
+                if (res.status && res.data) {
+                    setInvoices(res.data.invoices);
+                }
+                setLoadingInvoices(false);
+            });
         }
-        load();
+        loadData();
     }, []);
 
     return (
@@ -56,7 +71,7 @@ export default function DealerInvoicesPage() {
                             <CardTitle>My Customer Invoices</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {loading ? (
+                            {loadingSales ? (
                                 <div className="flex justify-center p-8">
                                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                                 </div>
@@ -68,7 +83,7 @@ export default function DealerInvoicesPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Invoice #</TableHead>
+                                            <TableHead>Policy #</TableHead>
                                             <TableHead>Date</TableHead>
                                             <TableHead>Customer</TableHead>
                                             <TableHead>Package</TableHead>
@@ -77,7 +92,7 @@ export default function DealerInvoicesPage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {/* Customer Invoices: sales TO customers (has customerId) */}
+                                        {/* Customer Invoices: sales TO customers */}
                                         {sales.filter((s: WarrantySale) => !!s.customerId).map((sale: WarrantySale) => (
                                             <TableRow key={sale.id}>
                                                 <TableCell className="font-medium text-blue-600">
@@ -97,6 +112,7 @@ export default function DealerInvoicesPage() {
                                                 <TableCell className="font-bold">{formatCurrency(sale.warrantyPrice)}</TableCell>
                                                 <TableCell className="text-right">
                                                     <Button asChild variant="outline" size="sm">
+                                                        {/* Link to generic invoice view - likely renders customer receipt */}
                                                         <Link href={`/invoices/${sale.id}`} target="_blank">
                                                             <FileText className="h-4 w-4 mr-2" /> View Invoice
                                                         </Link>
@@ -117,11 +133,11 @@ export default function DealerInvoicesPage() {
                             <CardTitle>Settlements Owed to Drive Safe</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {loading ? (
+                            {loadingInvoices ? (
                                 <div className="flex justify-center p-8">
                                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                                 </div>
-                            ) : sales.length === 0 ? (
+                            ) : invoices.length === 0 ? (
                                 <div className="text-center p-8 text-muted-foreground">
                                     No settlements found.
                                 </div>
@@ -129,56 +145,42 @@ export default function DealerInvoicesPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Settlement #</TableHead>
+                                            <TableHead>Invoice #</TableHead>
                                             <TableHead>Date</TableHead>
                                             <TableHead>Package</TableHead>
-                                            <TableHead>Dealer Cost</TableHead>
-                                            <TableHead>Transaction Status</TableHead>
+                                            <TableHead>Amount (Owed)</TableHead>
+                                            <TableHead>Status</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {/* Owed to Drive Safe: package assignments FROM SA (no customerId, paymentMethod='dealer_assignment') */}
-                                        {sales.filter((s: WarrantySale) => !s.customerId && s.paymentMethod === 'dealer_assignment').map((sale: WarrantySale) => {
-                                            const start = new Date(sale.coverageStartDate);
-                                            const end = new Date(sale.coverageEndDate);
-                                            const diffTime = Math.abs(end.getTime() - start.getTime());
-                                            const durationMonths = Math.round(diffTime / (1000 * 60 * 60 * 24 * 30.44));
-                                            
-                                            let dealerCost = Number(sale.warrantyPrice);
-                                            if (durationMonths <= 12) {
-                                                dealerCost = Number(sale.dealerCost12Months || dealerCost);
-                                            } else if (durationMonths <= 24) {
-                                                dealerCost = Number(sale.dealerCost24Months || dealerCost);
-                                            } else if (durationMonths <= 36) {
-                                                dealerCost = Number(sale.dealerCost36Months || dealerCost);
-                                            }
-                                            
-                                            const isPaid = sale.status === "paid";
-                                            
+                                        {/* Owed Invoices: Actual Invoice records from SA */}
+                                        {invoices.map((inv: Invoice) => {
+                                            const isPaid = inv.status === "paid";
                                             return (
-                                                <TableRow key={`owed-${sale.id}`}>
+                                                <TableRow key={inv.id}>
                                                     <TableCell className="font-medium text-emerald-600">
-                                                        {sale.policyNumber}
+                                                        {inv.invoiceNumber}
                                                     </TableCell>
                                                     <TableCell>
-                                                        {new Date(sale.saleDate).toLocaleDateString()}
+                                                        {new Date(inv.invoiceDate).toLocaleDateString()}
                                                     </TableCell>
                                                     <TableCell>
-                                                        {sale.warrantyPackage?.name || "N/A"}
+                                                        {inv.warrantySale?.warrantyPackage?.name || "Warranty Sale"}
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline">{durationMonths} months</Badge>
+                                                    <TableCell className="font-bold text-slate-900">
+                                                        {formatCurrency(inv.amount)}
                                                     </TableCell>
-                                                    <TableCell className="font-bold text-slate-900">{formatCurrency(dealerCost)}</TableCell>
                                                     <TableCell>
                                                         <Badge className={isPaid ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : "bg-amber-100 text-amber-700 hover:bg-amber-100"}>
-                                                            {isPaid ? "Paid" : "Owed"}
+                                                            {inv.status === "paid" ? "Paid" : inv.status === "pending" ? "Due" : inv.status}
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <Button asChild variant="outline" size="sm">
-                                                            <Link href={`/invoices/${sale.id}?variant=settlement`} target="_blank">
+                                                            {/* Ensure this link opens the 'SA Invoice' view */}
+                                                            {/* Pass variant=settlement to contextually style it if needed */}
+                                                            <Link href={`/invoices/${inv.id}?variant=settlement`} target="_blank">
                                                                 <FileText className="h-4 w-4 mr-2" /> View Statement
                                                             </Link>
                                                         </Button>

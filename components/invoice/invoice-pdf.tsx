@@ -361,7 +361,7 @@ const createStyles = (settings: InvoiceSettings) => {
     },
     footerSection: {
       position: "absolute",
-      bottom: 30,
+      bottom: 45,
       left: 48,
       right: 48,
     },
@@ -482,6 +482,24 @@ export const InvoicePDF = ({ settings, data }: InvoicePDFProps) => {
   const durationOffsetStyle: any = {
     marginLeft: toPt(settings.durationOffsetX),
     marginTop: toPt(settings.durationOffsetY),
+  };
+  const notesOffsetStyle: any = {
+    transform: [
+      { translateX: toPt((settings as any).notesOffsetX) },
+      { translateY: toPt((settings as any).notesOffsetY) },
+    ],
+  };
+  const termsOffsetStyle: any = {
+    transform: [
+      { translateX: toPt((settings as any).termsOffsetX) },
+      { translateY: toPt((settings as any).termsOffsetY) },
+    ],
+  };
+  const footerOffsetStyle: any = {
+    transform: [
+      { translateX: toPt((settings as any).footerOffsetX) },
+      { translateY: toPt((settings as any).footerOffsetY) },
+    ],
   };
 
   return (
@@ -652,12 +670,24 @@ export const InvoicePDF = ({ settings, data }: InvoicePDFProps) => {
         {/* Footer */}
         <View style={styles.footerSection}>
           {settings.notes && (
-            <View style={styles.notesContainer}>
-              <Text style={styles.notesTitle}>Notes & Terms</Text>
+            <View style={[styles.notesContainer, notesOffsetStyle]}>
+              <Text style={styles.notesTitle}>
+                {(settings as any).notesHeading || "Notes"}
+              </Text>
               <Text style={styles.notesText}>{settings.notes}</Text>
             </View>
           )}
-          <View style={styles.footer}>
+          {(settings as any).termsText && (
+            <View style={[styles.notesContainer, termsOffsetStyle]}>
+              <Text style={styles.notesTitle}>
+                {(settings as any).termsHeading || "Terms & Conditions"}
+              </Text>
+              <Text style={styles.notesText}>
+                {(settings as any).termsText}
+              </Text>
+            </View>
+          )}
+          <View style={[styles.footer, footerOffsetStyle]}>
             <Text>
               {isSettlement
                 ? "Official Drive Safe Settlement Statement"

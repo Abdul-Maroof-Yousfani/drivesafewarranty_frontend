@@ -95,6 +95,12 @@ export async function getAllInvoicesAction(params?: {
       cache: "no-store",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch invoices:", error);
@@ -105,9 +111,6 @@ export async function getAllInvoicesAction(params?: {
   }
 }
 
-/**
- * Get invoices for current dealer (Dealer users only)
- */
 export async function getDealerInvoicesAction(params?: {
   page?: number;
   limit?: number;
@@ -130,6 +133,12 @@ export async function getDealerInvoicesAction(params?: {
       cache: "no-store",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch dealer invoices:", error);
@@ -140,9 +149,6 @@ export async function getDealerInvoicesAction(params?: {
   }
 }
 
-/**
- * Get invoice by ID
- */
 export async function getInvoiceByIdAction(
   id: string
 ): Promise<{ status: boolean; data?: Invoice; message?: string }> {
@@ -152,6 +158,12 @@ export async function getInvoiceByIdAction(
       cache: "no-store",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch invoice:", error);
@@ -159,9 +171,6 @@ export async function getInvoiceByIdAction(
   }
 }
 
-/**
- * Update invoice
- */
 export async function updateInvoiceAction(
   id: string,
   payload: {
@@ -181,6 +190,12 @@ export async function updateInvoiceAction(
       },
       body: JSON.stringify(payload),
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     return res.json();
   } catch (error) {
     console.error("Failed to update invoice:", error);

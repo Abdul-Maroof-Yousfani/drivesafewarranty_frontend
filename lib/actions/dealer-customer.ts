@@ -135,6 +135,12 @@ export async function updateDealerCustomerAction(
       },
       body: JSON.stringify(data),
     });
+    
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     const result = await res.json();
     if (result.status) {
       import("next/cache").then(({ revalidatePath }) => {
@@ -172,6 +178,12 @@ export async function createDealerCustomerVehicleAction(
       },
       body: JSON.stringify(data),
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     const result = await res.json();
     if (result.status) {
       import("next/cache").then(({ revalidatePath }) => {
@@ -207,6 +219,12 @@ export async function updateDealerCustomerVehicleAction(
       },
       body: JSON.stringify(data),
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     const result = await res.json();
     // We don't verify customer ID here easily for revalidation, but usually we just revalidate the page we are on
     return result;
@@ -225,6 +243,12 @@ export async function deleteDealerCustomerVehicleAction(
       method: "DELETE",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     const result = await res.json();
     return result;
   } catch (error) {

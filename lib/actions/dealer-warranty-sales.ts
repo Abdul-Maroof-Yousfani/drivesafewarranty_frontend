@@ -17,6 +17,12 @@ export async function getDealerWarrantySalesAction(): Promise<{
       cache: "no-store",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, data: [], message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     return res.json();
   } catch (error) {
     console.error("Failed to fetch dealer warranty sales:", error);
@@ -62,6 +68,12 @@ export async function createDealerWarrantySaleAction(
       },
       body: JSON.stringify(payload),
     });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
     return res.json();
   } catch (error) {
     console.error("Failed to create dealer warranty sale:", error);
