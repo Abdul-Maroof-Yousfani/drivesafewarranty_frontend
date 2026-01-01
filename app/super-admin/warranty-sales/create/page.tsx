@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -41,70 +41,96 @@ import { createMasterWarrantySaleAction } from "@/lib/actions/warranty-sales";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 
-const warrantySaleSchema = z.object({
-  assignTo: z.enum(["customer", "dealer"]),
-  customerId: z.string().optional(),
-  dealerId: z.string().optional(),
-  warrantyPackageId: z.string().min(1, "Please select a warranty package"),
-  price: z.coerce.number().min(0, "Price must be a non‑negative number").max(50000, "Price is too high"),
-  duration: z.coerce.number().min(1, "Duration is required").max(120, "Duration is too long"),
-  excess: z.coerce
-    .number()
-    .min(0, "Excess must be a non‑negative number")
-    .nullable()
-    .optional(),
-  labourRatePerHour: z.coerce
-    .number()
-    .min(0, "Labour rate must be a non‑negative number")
-    .nullable()
-    .optional(),
-  fixedClaimLimit: z.coerce
-    .number()
-    .min(0, "Fixed claim limit must be a non‑negative number")
-    .nullable()
-    .optional(),
-  // Fixed customer prices (read-only, from package)
-  price12Months: z.coerce.number().min(0).nullable().optional(),
-  price24Months: z.coerce.number().min(0).nullable().optional(),
-  price36Months: z.coerce.number().min(0).nullable().optional(),
-  dealerPrice12Months: z.coerce.number().min(0).nullable().optional(),
-  dealerPrice24Months: z.coerce.number().min(0).nullable().optional(),
-  dealerPrice36Months: z.coerce.number().min(0).nullable().optional(),
-  // New fields for Direct Sale
-  paymentMethod: z.enum(["cash", "card", "bank_transfer", "finance"]),
-  customerConsent: z.boolean(),
-  mileageAtSale: z.coerce.number().min(0, "Mileage must be non-negative").max(500000, "Mileage is too high").nullable().optional(),
-  coverageStartDate: z.string().min(1, "Coverage start date is required"),
-  vehicleId: z.string().optional(),
-}).refine(data => {
-  if (data.assignTo === "customer") return !!data.customerId;
-  return true;
-}, {
-  message: "Please select a customer",
-  path: ["customerId"]
-}).refine(data => {
-  if (data.assignTo === "dealer") return !!data.dealerId;
-  return true;
-}, {
-  message: "Please select a dealer",
-  path: ["dealerId"]
-}).refine(data => {
-  if (data.assignTo === "customer") return data.customerConsent === true;
-  return true;
-}, {
-  message: "Customer consent is required for direct sale",
-  path: ["customerConsent"]
-});
+const warrantySaleSchema = z
+  .object({
+    assignTo: z.enum(["customer", "dealer"]),
+    customerId: z.string().optional(),
+    dealerId: z.string().optional(),
+    warrantyPackageId: z.string().min(1, "Please select a warranty package"),
+    price: z.coerce
+      .number()
+      .min(0, "Price must be a non‑negative number")
+      .max(50000, "Price is too high"),
+    duration: z.coerce
+      .number()
+      .min(1, "Duration is required")
+      .max(120, "Duration is too long"),
+    excess: z.coerce
+      .number()
+      .min(0, "Excess must be a non‑negative number")
+      .nullable()
+      .optional(),
+    labourRatePerHour: z.coerce
+      .number()
+      .min(0, "Labour rate must be a non‑negative number")
+      .nullable()
+      .optional(),
+    fixedClaimLimit: z.coerce
+      .number()
+      .min(0, "Fixed claim limit must be a non‑negative number")
+      .nullable()
+      .optional(),
+    // Fixed customer prices (read-only, from package)
+    price12Months: z.coerce.number().min(0).nullable().optional(),
+    price24Months: z.coerce.number().min(0).nullable().optional(),
+    price36Months: z.coerce.number().min(0).nullable().optional(),
+    dealerPrice12Months: z.coerce.number().min(0).nullable().optional(),
+    dealerPrice24Months: z.coerce.number().min(0).nullable().optional(),
+    dealerPrice36Months: z.coerce.number().min(0).nullable().optional(),
+    // New fields for Direct Sale
+    paymentMethod: z.enum(["cash", "card", "bank_transfer", "finance"]),
+    customerConsent: z.boolean(),
+    mileageAtSale: z.coerce
+      .number()
+      .min(0, "Mileage must be non-negative")
+      .max(500000, "Mileage is too high")
+      .nullable()
+      .optional(),
+    coverageStartDate: z.string().min(1, "Coverage start date is required"),
+    vehicleId: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.assignTo === "customer") return !!data.customerId;
+      return true;
+    },
+    {
+      message: "Please select a customer",
+      path: ["customerId"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.assignTo === "dealer") return !!data.dealerId;
+      return true;
+    },
+    {
+      message: "Please select a dealer",
+      path: ["dealerId"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.assignTo === "customer") return data.customerConsent === true;
+      return true;
+    },
+    {
+      message: "Customer consent is required for direct sale",
+      path: ["customerConsent"],
+    }
+  );
 
 type WarrantySaleFormValues = z.infer<typeof warrantySaleSchema>;
 
 export default function CreateWarrantySalePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
   const [dealers, setDealers] = useState<any[]>([]);
   const [packages, setPackages] = useState<any[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
+  const hasAppliedQueryDefaultsRef = useRef(false);
 
   const form = useForm<WarrantySaleFormValues>({
     resolver: zodResolver(warrantySaleSchema) as any,
@@ -127,16 +153,15 @@ export default function CreateWarrantySalePage() {
       paymentMethod: "cash",
       customerConsent: false,
       mileageAtSale: null,
-      coverageStartDate: new Date().toISOString().split('T')[0],
+      coverageStartDate: new Date().toISOString().split("T")[0],
       vehicleId: "",
     },
   });
 
   const selectedCustomerId = form.watch("customerId");
-  const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+  const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
 
   const assignType = form.watch("assignTo");
-  const duration = form.watch("duration");
 
   // Load customers, dealers and packages for selection
   useEffect(() => {
@@ -162,6 +187,44 @@ export default function CreateWarrantySalePage() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    const queryCustomerId = searchParams.get("customerId");
+    const queryDealerId = searchParams.get("dealerId");
+    const queryPackageId =
+      searchParams.get("packageId") || searchParams.get("warrantyPackageId");
+
+    const needsPackage = !!queryPackageId;
+    const matchedPackage = queryPackageId
+      ? packages.find((p) => p.id === queryPackageId)
+      : null;
+    const packagesLoaded = packages.length > 0;
+
+    if (hasAppliedQueryDefaultsRef.current) return;
+    if (!queryCustomerId && !queryDealerId && !queryPackageId) {
+      hasAppliedQueryDefaultsRef.current = true;
+      return;
+    }
+
+    if (queryDealerId) {
+      form.setValue("assignTo", "dealer");
+      form.setValue("dealerId", queryDealerId);
+      form.setValue("customerId", "");
+      form.setValue("vehicleId", "");
+    } else if (queryCustomerId) {
+      form.setValue("assignTo", "customer");
+      form.setValue("customerId", queryCustomerId);
+      form.setValue("dealerId", "");
+    }
+
+    if (matchedPackage) {
+      handlePackageChange(queryPackageId);
+    }
+
+    if (!needsPackage || packagesLoaded) {
+      hasAppliedQueryDefaultsRef.current = true;
+    }
+  }, [form, packages, searchParams]);
 
   const handlePackageChange = (packageId: string) => {
     const pkg = packages.find((p) => p.id === packageId);
@@ -316,7 +379,12 @@ export default function CreateWarrantySalePage() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, (errors) => console.error("Form Validation Errors:", errors))} className="space-y-6">
+        <form
+          onSubmit={form.handleSubmit(onSubmit, (errors) =>
+            console.error("Form Validation Errors:", errors)
+          )}
+          className="space-y-6"
+        >
           {/* Step 1: Who to assign to */}
           <Card>
             <CardHeader>
@@ -336,7 +404,7 @@ export default function CreateWarrantySalePage() {
                       <RadioGroup
                         className="flex flex-col gap-2 sm:flex-row sm:gap-6"
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormItem className="flex items-center space-x-2 space-y-0">
                           <FormControl>
@@ -384,6 +452,7 @@ export default function CreateWarrantySalePage() {
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -406,39 +475,51 @@ export default function CreateWarrantySalePage() {
                     )}
                   />
 
-                  {selectedCustomer && selectedCustomer.vehicles && selectedCustomer.vehicles.length > 0 && (
-                    <FormField
-                      control={form.control}
-                      name="vehicleId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Vehicle</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue>
-                                  {form.watch("vehicleId") 
-                                    ? selectedCustomer.vehicles.find((v: any) => v.id === form.watch("vehicleId"))?.make + " " + selectedCustomer.vehicles.find((v: any) => v.id === form.watch("vehicleId"))?.model
-                                    : "Select vehicle"}
-                                </SelectValue>
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {selectedCustomer.vehicles.map((v: any) => (
-                                <SelectItem key={v.id} value={v.id}>
-                                  {v.make} {v.model} ({v.registrationNumber || v.vin || v.year})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
+                  {selectedCustomer &&
+                    selectedCustomer.vehicles &&
+                    selectedCustomer.vehicles.length > 0 && (
+                      <FormField
+                        control={form.control}
+                        name="vehicleId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Vehicle</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue>
+                                    {form.watch("vehicleId")
+                                      ? selectedCustomer.vehicles.find(
+                                          (v: any) =>
+                                            v.id === form.watch("vehicleId")
+                                        )?.make +
+                                        " " +
+                                        selectedCustomer.vehicles.find(
+                                          (v: any) =>
+                                            v.id === form.watch("vehicleId")
+                                        )?.model
+                                      : "Select vehicle"}
+                                  </SelectValue>
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {selectedCustomer.vehicles.map((v: any) => (
+                                  <SelectItem key={v.id} value={v.id}>
+                                    {v.make} {v.model} (
+                                    {v.registrationNumber || v.vin || v.year})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                 </>
               ) : (
                 <FormField
@@ -450,6 +531,7 @@ export default function CreateWarrantySalePage() {
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -494,6 +576,7 @@ export default function CreateWarrantySalePage() {
                     <Select
                       onValueChange={handlePackageChange}
                       defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -523,7 +606,9 @@ export default function CreateWarrantySalePage() {
                         <FormItem>
                           <FormLabel>
                             Excess (£)
-                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                            <span className="text-xs text-muted-foreground ml-1">
+                              (Fixed)
+                            </span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -537,7 +622,7 @@ export default function CreateWarrantySalePage() {
                               {...field}
                               value={
                                 field.value === null ||
-                                  field.value === undefined
+                                field.value === undefined
                                   ? ""
                                   : field.value
                               }
@@ -554,7 +639,9 @@ export default function CreateWarrantySalePage() {
                         <FormItem>
                           <FormLabel>
                             Labour Rate (£/hr)
-                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                            <span className="text-xs text-muted-foreground ml-1">
+                              (Fixed)
+                            </span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -568,7 +655,7 @@ export default function CreateWarrantySalePage() {
                               {...field}
                               value={
                                 field.value === null ||
-                                  field.value === undefined
+                                field.value === undefined
                                   ? ""
                                   : field.value
                               }
@@ -585,7 +672,9 @@ export default function CreateWarrantySalePage() {
                         <FormItem>
                           <FormLabel>
                             Fixed Claim Limit (£)
-                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                            <span className="text-xs text-muted-foreground ml-1">
+                              (Fixed)
+                            </span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -599,7 +688,7 @@ export default function CreateWarrantySalePage() {
                               {...field}
                               value={
                                 field.value === null ||
-                                  field.value === undefined
+                                field.value === undefined
                                   ? ""
                                   : field.value
                               }
@@ -620,7 +709,9 @@ export default function CreateWarrantySalePage() {
                         <FormItem>
                           <FormLabel>
                             12‑Month Customer Price (£)
-                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                            <span className="text-xs text-muted-foreground ml-1">
+                              (Fixed)
+                            </span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -634,7 +725,7 @@ export default function CreateWarrantySalePage() {
                               {...field}
                               value={
                                 field.value === null ||
-                                  field.value === undefined
+                                field.value === undefined
                                   ? ""
                                   : field.value
                               }
@@ -651,7 +742,9 @@ export default function CreateWarrantySalePage() {
                         <FormItem>
                           <FormLabel>
                             24‑Month Customer Price (£)
-                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                            <span className="text-xs text-muted-foreground ml-1">
+                              (Fixed)
+                            </span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -665,7 +758,7 @@ export default function CreateWarrantySalePage() {
                               {...field}
                               value={
                                 field.value === null ||
-                                  field.value === undefined
+                                field.value === undefined
                                   ? ""
                                   : field.value
                               }
@@ -682,7 +775,9 @@ export default function CreateWarrantySalePage() {
                         <FormItem>
                           <FormLabel>
                             36‑Month Customer Price (£)
-                            <span className="text-xs text-muted-foreground ml-1">(Fixed)</span>
+                            <span className="text-xs text-muted-foreground ml-1">
+                              (Fixed)
+                            </span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -696,7 +791,7 @@ export default function CreateWarrantySalePage() {
                               {...field}
                               value={
                                 field.value === null ||
-                                  field.value === undefined
+                                field.value === undefined
                                   ? ""
                                   : field.value
                               }
@@ -712,9 +807,12 @@ export default function CreateWarrantySalePage() {
                   {assignType === "dealer" && (
                     <div className="space-y-4 pt-4 border-t mt-4">
                       <div>
-                        <h4 className="font-medium text-sm">Dealer Internal Pricing (Cost to Dealer)</h4>
+                        <h4 className="font-medium text-sm">
+                          Dealer Internal Pricing (Cost to Dealer)
+                        </h4>
                         <p className="text-xs text-muted-foreground">
-                          Set the amount the dealer pays for this package. This is their cost, not the customer price.
+                          Set the amount the dealer pays for this package. This
+                          is their cost, not the customer price.
                         </p>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -733,7 +831,7 @@ export default function CreateWarrantySalePage() {
                                   {...field}
                                   value={
                                     field.value === null ||
-                                      field.value === undefined
+                                    field.value === undefined
                                       ? ""
                                       : field.value
                                   }
@@ -746,11 +844,16 @@ export default function CreateWarrantySalePage() {
                                   }
                                 />
                               </FormControl>
-                              {selectedPackage?.price12Months != null && field.value != null && (
-                                <p className="text-xs text-green-600">
-                                  Margin: {formatCurrency(Number(selectedPackage.price12Months) - Number(field.value))}
-                                </p>
-                              )}
+                              {selectedPackage?.price12Months != null &&
+                                field.value != null && (
+                                  <p className="text-xs text-green-600">
+                                    Margin:{" "}
+                                    {formatCurrency(
+                                      Number(selectedPackage.price12Months) -
+                                        Number(field.value)
+                                    )}
+                                  </p>
+                                )}
                               <FormMessage />
                             </FormItem>
                           )}
@@ -770,7 +873,7 @@ export default function CreateWarrantySalePage() {
                                   {...field}
                                   value={
                                     field.value === null ||
-                                      field.value === undefined
+                                    field.value === undefined
                                       ? ""
                                       : field.value
                                   }
@@ -783,11 +886,16 @@ export default function CreateWarrantySalePage() {
                                   }
                                 />
                               </FormControl>
-                              {selectedPackage?.price24Months != null && field.value != null && (
-                                <p className="text-xs text-green-600">
-                                  Margin: {formatCurrency(Number(selectedPackage.price24Months) - Number(field.value))}
-                                </p>
-                              )}
+                              {selectedPackage?.price24Months != null &&
+                                field.value != null && (
+                                  <p className="text-xs text-green-600">
+                                    Margin:{" "}
+                                    {formatCurrency(
+                                      Number(selectedPackage.price24Months) -
+                                        Number(field.value)
+                                    )}
+                                  </p>
+                                )}
                               <FormMessage />
                             </FormItem>
                           )}
@@ -807,7 +915,7 @@ export default function CreateWarrantySalePage() {
                                   {...field}
                                   value={
                                     field.value === null ||
-                                      field.value === undefined
+                                    field.value === undefined
                                       ? ""
                                       : field.value
                                   }
@@ -820,11 +928,16 @@ export default function CreateWarrantySalePage() {
                                   }
                                 />
                               </FormControl>
-                              {selectedPackage?.price36Months != null && field.value != null && (
-                                <p className="text-xs text-green-600">
-                                  Margin: {formatCurrency(Number(selectedPackage.price36Months) - Number(field.value))}
-                                </p>
-                              )}
+                              {selectedPackage?.price36Months != null &&
+                                field.value != null && (
+                                  <p className="text-xs text-green-600">
+                                    Margin:{" "}
+                                    {formatCurrency(
+                                      Number(selectedPackage.price36Months) -
+                                        Number(field.value)
+                                    )}
+                                  </p>
+                                )}
                               <FormMessage />
                             </FormItem>
                           )}
@@ -844,7 +957,7 @@ export default function CreateWarrantySalePage() {
                               onValueChange={(val) =>
                                 handleDurationSelect(Number(val))
                               }
-                              defaultValue={String(field.value)}
+                              value={String(field.value)}
                               className="flex flex-col space-y-1"
                             >
                               {selectedPackage &&
@@ -907,7 +1020,11 @@ export default function CreateWarrantySalePage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Payment Method</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                value={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select payment method" />
@@ -916,7 +1033,9 @@ export default function CreateWarrantySalePage() {
                                 <SelectContent>
                                   <SelectItem value="cash">Cash</SelectItem>
                                   <SelectItem value="card">Card</SelectItem>
-                                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                                  <SelectItem value="bank_transfer">
+                                    Bank Transfer
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -941,14 +1060,16 @@ export default function CreateWarrantySalePage() {
                           name="mileageAtSale"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Mileage at Sale</FormLabel>
+                              <FormLabel>Vehicle Mileage at Sale</FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
                                   placeholder="Enter current mileage"
                                   {...field}
                                   value={field.value ?? ""}
-                                  onChange={e => field.onChange(e.target.valueAsNumber)}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.valueAsNumber)
+                                  }
                                 />
                               </FormControl>
                               <FormMessage />
@@ -964,7 +1085,9 @@ export default function CreateWarrantySalePage() {
                                 <input
                                   type="checkbox"
                                   checked={field.value}
-                                  onChange={(e) => field.onChange(e.target.checked)}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.checked)
+                                  }
                                   className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary mt-1"
                                 />
                               </FormControl>
@@ -973,7 +1096,8 @@ export default function CreateWarrantySalePage() {
                                   Customer Agreement & Acceptance of Terms
                                 </FormLabel>
                                 <FormDescription>
-                                  I confirm that the customer has read and agreed to the terms and conditions.
+                                  I confirm that the customer has read and
+                                  agreed to the terms and conditions.
                                 </FormDescription>
                               </div>
                             </FormItem>
@@ -1001,6 +1125,6 @@ export default function CreateWarrantySalePage() {
           </div>
         </form>
       </Form>
-    </div >
+    </div>
   );
 }

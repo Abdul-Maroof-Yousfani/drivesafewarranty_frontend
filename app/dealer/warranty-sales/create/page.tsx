@@ -215,12 +215,19 @@ export default function DealerCreateWarrantySalePage() {
 
         if (customersRes.status && customersRes.data) {
           setCustomers(customersRes.data);
+
+          const customerId = searchParams.get("customerId");
+          if (customerId) {
+            form.setValue("customerId", customerId);
+            form.setValue("vehicleId", "");
+          }
         }
 
         if (packagesRes.status && Array.isArray(packagesRes.data)) {
           setPackages(packagesRes.data);
 
-          const packageId = searchParams.get("packageId");
+          const packageId =
+            searchParams.get("packageId") || searchParams.get("warrantyPackageId");
           if (packageId) {
             const found = packagesRes.data.find((p: any) => p.id === packageId);
             if (found) {
@@ -426,7 +433,7 @@ export default function DealerCreateWarrantySalePage() {
                             onValueChange={(val) =>
                               handleDurationSelect(Number(val))
                             }
-                            defaultValue={String(field.value)}
+                            value={String(field.value)}
                             className="flex flex-col space-y-1"
                           >
                             {pkg.price12Months != null && (
@@ -500,28 +507,7 @@ export default function DealerCreateWarrantySalePage() {
                 </div>
               )}
 
-              <FormField
-                control={form.control}
-                name="customerConsent"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={(checked) => field.onChange(!!checked)}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Customer Agreement & Acceptance of Terms</FormLabel>
-                      <FormDescription>
-                        I confirm that the customer has read and agreed to the
-                        terms and conditions.
-                      </FormDescription>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
+              
 
               <FormField
                 control={form.control}
@@ -538,6 +524,7 @@ export default function DealerCreateWarrantySalePage() {
                       defaultValue={field.value}
                       value={field.value}
                     >
+                      
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select customer" />
@@ -555,6 +542,7 @@ export default function DealerCreateWarrantySalePage() {
                   </FormItem>
                 )}
               />
+             
 
               {/* Vehicle Selection */}
               {selectedCustomerId && (
@@ -569,6 +557,7 @@ export default function DealerCreateWarrantySalePage() {
                         defaultValue={field.value}
                         value={field.value}
                       >
+                      
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select vehicle" />
@@ -593,7 +582,28 @@ export default function DealerCreateWarrantySalePage() {
                   )}
                 />
               )}
-
+ <FormField
+                control={form.control}
+                name="customerConsent"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => field.onChange(!!checked)}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Customer Agreement & Acceptance of Terms</FormLabel>
+                      <FormDescription>
+                        I confirm that the customer has read and agreed to the
+                        terms and conditions.
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
               <div className="flex gap-4">
                 <Button type="submit" disabled={loading || !pkg}>
                   {loading ? "Assigning..." : "Assign Package"}

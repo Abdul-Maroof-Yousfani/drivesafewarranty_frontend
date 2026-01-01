@@ -47,12 +47,18 @@ export const columns: ColumnDef<Invoice>[] = [
       const status = row.getValue("status") as string;
       const statusColors: Record<string, string> = {
         paid: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-        pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+        pending:
+          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
         overdue: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-        cancelled: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+        cancelled:
+          "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
       };
       return (
-        <span className={`px-2 py-1 text-xs rounded-full ${statusColors[status] || ""}`}>
+        <span
+          className={`px-2 py-1 text-xs rounded-full ${
+            statusColors[status] || ""
+          }`}
+        >
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </span>
       );
@@ -78,15 +84,18 @@ export const columns: ColumnDef<Invoice>[] = [
     id: "actions",
     cell: ({ row }) => {
       const invoice = row.original;
+      const settlementQuery = invoice.dealerId
+        ? `?variant=settlement&dealerId=${invoice.dealerId}`
+        : "";
       return (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" asChild>
-            <Link href={`/invoices/${invoice.id}`}>
+            <Link href={`/invoices/${invoice.id}${settlementQuery}`}>
               <Eye className="h-4 w-4" />
             </Link>
           </Button>
           <Button variant="ghost" size="icon" asChild>
-            <Link href={`/invoices/${invoice.id}`}>
+            <Link href={`/invoices/${invoice.id}${settlementQuery}`}>
               <Download className="h-4 w-4" />
             </Link>
           </Button>
@@ -95,4 +104,3 @@ export const columns: ColumnDef<Invoice>[] = [
     },
   },
 ];
-

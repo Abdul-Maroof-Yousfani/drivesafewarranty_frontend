@@ -27,22 +27,15 @@ export default function InvoicePage() {
       if (!id) return;
 
       try {
+        const dealerId = searchParams.get("dealerId") || undefined;
         // 1. Try to fetch Invoice first (for dealer invoices)
-        const invoiceRes = await getInvoiceByIdAction(id as string);
+        const invoiceRes = await getInvoiceByIdAction(id as string, dealerId);
         let invoice = null;
         let sale = null;
 
         if (invoiceRes.status && invoiceRes.data) {
           invoice = invoiceRes.data;
-          // Fetch the warranty sale associated with this invoice
-          if (invoice.warrantySaleId) {
-            const saleRes = await getWarrantySaleByIdAction(
-              invoice.warrantySaleId
-            );
-            if (saleRes.status && saleRes.data) {
-              sale = saleRes.data;
-            }
-          }
+          sale = invoice.warrantySale || null;
         } else {
           // 2. If not an invoice, try fetching as Warranty Sale (for customer invoices)
           const saleRes = await getWarrantySaleByIdAction(id as string);
@@ -86,28 +79,36 @@ export default function InvoicePage() {
         // Calculate actual duration precisely using month/year diff
         const start = new Date(sale.coverageStartDate);
         const end = new Date(sale.coverageEndDate);
-        
+
         // Calculate difference in months
         let durationMonths = (end.getFullYear() - start.getFullYear()) * 12;
         durationMonths -= start.getMonth();
         durationMonths += end.getMonth();
-        
+
         // Adjust if end day is significantly less than start day (incomplete final month)
         // However, for warranties, end date is usually "Start + N months - 1 day" or similar.
         // A simple robust way for warranties is usually rounding to nearest 12.
         // Let's assume standard policy lengths:
         if (durationMonths >= 35 && durationMonths <= 37) durationMonths = 36;
-        else if (durationMonths >= 23 && durationMonths <= 25) durationMonths = 24;
-        else if (durationMonths >= 11 && durationMonths <= 13) durationMonths = 12;
+        else if (durationMonths >= 23 && durationMonths <= 25)
+          durationMonths = 24;
+        else if (durationMonths >= 11 && durationMonths <= 13)
+          durationMonths = 12;
 
         // Pick the correct dealer cost based on duration
         let correctDealerCost = Number(sale.warrantyPrice); // Fallback
         if (durationMonths === 12) {
-          correctDealerCost = Number(sale.dealerCost12Months || correctDealerCost);
+          correctDealerCost = Number(
+            sale.dealerCost12Months || correctDealerCost
+          );
         } else if (durationMonths === 24) {
-          correctDealerCost = Number(sale.dealerCost24Months || correctDealerCost);
+          correctDealerCost = Number(
+            sale.dealerCost24Months || correctDealerCost
+          );
         } else if (durationMonths === 36) {
-          correctDealerCost = Number(sale.dealerCost36Months || correctDealerCost);
+          correctDealerCost = Number(
+            sale.dealerCost36Months || correctDealerCost
+          );
         }
 
         // If we have an invoice object, it's a dealer invoice (from SA to dealer)

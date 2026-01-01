@@ -31,11 +31,18 @@ export interface Invoice {
     id: string;
     policyNumber: string;
     warrantyPrice: string | number;
+    saleDate?: string;
+    coverageStartDate?: string;
+    coverageEndDate?: string;
+    dealerCost12Months?: number | null;
+    dealerCost24Months?: number | null;
+    dealerCost36Months?: number | null;
     customer?: {
       id: string;
       firstName: string;
       lastName: string;
       email?: string;
+      address?: string;
     } | null;
     vehicle?: {
       make: string;
@@ -48,6 +55,7 @@ export interface Invoice {
       id: string;
       name: string;
       description?: string | null;
+      planLevel?: string | null;
     } | null;
   } | null;
   createdBy?: {
@@ -81,7 +89,7 @@ export async function getAllInvoicesAction(params?: {
   try {
     const token = await getAccessToken();
     const queryParams = new URLSearchParams();
-    
+
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.search) queryParams.append("search", params.search);
@@ -90,15 +98,20 @@ export async function getAllInvoicesAction(params?: {
     if (params?.startDate) queryParams.append("startDate", params.startDate);
     if (params?.endDate) queryParams.append("endDate", params.endDate);
 
-    const url = `${API_BASE}/invoices${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    const url = `${API_BASE}/invoices${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const res = await fetch(url, {
       cache: "no-store",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
 
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     return res.json();
@@ -121,22 +134,27 @@ export async function getDealerInvoicesAction(params?: {
   try {
     const token = await getAccessToken();
     const queryParams = new URLSearchParams();
-    
+
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.status) queryParams.append("status", params.status);
     if (params?.startDate) queryParams.append("startDate", params.startDate);
     if (params?.endDate) queryParams.append("endDate", params.endDate);
 
-    const url = `${API_BASE}/invoices/dealer${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    const url = `${API_BASE}/invoices/dealer${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const res = await fetch(url, {
       cache: "no-store",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
 
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     return res.json();
@@ -150,18 +168,28 @@ export async function getDealerInvoicesAction(params?: {
 }
 
 export async function getInvoiceByIdAction(
-  id: string
+  id: string,
+  dealerId?: string
 ): Promise<{ status: boolean; data?: Invoice; message?: string }> {
   try {
     const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/invoices/${id}`, {
+    const queryParams = new URLSearchParams();
+    if (dealerId) queryParams.append("dealerId", dealerId);
+    const url = `${API_BASE}/invoices/${id}${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+
+    const res = await fetch(url, {
       cache: "no-store",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
 
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     return res.json();
@@ -178,11 +206,18 @@ export async function updateInvoiceAction(
     paymentMethod?: string;
     paidDate?: string | null;
     notes?: string;
-  }
+  },
+  dealerId?: string
 ): Promise<{ status: boolean; data?: Invoice; message?: string }> {
   try {
     const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/invoices/${id}`, {
+    const queryParams = new URLSearchParams();
+    if (dealerId) queryParams.append("dealerId", dealerId);
+    const url = `${API_BASE}/invoices/${id}${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+
+    const res = await fetch(url, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -192,8 +227,11 @@ export async function updateInvoiceAction(
     });
 
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     return res.json();
@@ -202,4 +240,3 @@ export async function updateInvoiceAction(
     return { status: false, message: "Failed to update invoice" };
   }
 }
-

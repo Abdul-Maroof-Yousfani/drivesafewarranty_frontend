@@ -181,12 +181,12 @@ export function InvoiceRenderer({
       {/* Header Bar */}
       <div
         style={{ backgroundColor: primaryColor }}
-        className="h-8 w-full print:bg-[color:var(--primary-color)] mb-8"
+        className="h-8 w-full print:bg-[color:var(--primary-color)] mb-6"
       ></div>
 
       <div className="px-10 py-4 flex-1 flex flex-col print:pt-0 print:px-0 print:pb-8 print:mx-8">
         {/* Header Section */}
-        <div className="flex justify-between items-start mb-12">
+        <div className="flex justify-between items-start mb-8">
           <div className="relative flex flex-col gap-1 w-1/2 items-start text-left">
             {absoluteLogoUrl && (
               <motion.img
@@ -284,7 +284,7 @@ export function InvoiceRenderer({
 
         {/* Bill To Section with Accent Background */}
         <div
-          className="mb-4 p-5 rounded-lg print:border"
+          className="mb-3 p-5 rounded-lg print:border"
           style={{ backgroundColor: accentColor }}
         >
           <div className="grid grid-cols-2 gap-4">
@@ -357,7 +357,7 @@ export function InvoiceRenderer({
         {/* Vehicle Details */}
         {vehicle && (
           <div
-            className="mb-6 p-5 rounded-lg border"
+            className="mb-4 p-5 rounded-lg border"
             style={{ borderColor: slate[200], backgroundColor: slate[50] }}
           >
             <h3
@@ -410,7 +410,7 @@ export function InvoiceRenderer({
 
         {/* Items Table */}
         <div
-          className="mb-6 p-2 border-2 rounded-lg"
+          className="mb-4 p-2 border-2 rounded-lg"
           style={{ borderColor: slate[200] }}
         >
           <table className="w-full text-left  ">
@@ -478,7 +478,7 @@ export function InvoiceRenderer({
         </div>
 
         {/* Totals */}
-        <div className="flex justify-end mb-16">
+        <div className="flex justify-end mb-10">
           <div className="w-5/12 space-y-3">
             <div
               className="flex justify-between font-medium"

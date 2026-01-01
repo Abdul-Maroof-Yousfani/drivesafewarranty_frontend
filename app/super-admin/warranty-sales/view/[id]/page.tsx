@@ -138,7 +138,7 @@ export default async function WarrantySaleViewPage({
             </div>
             {sale.mileageAtSale && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Mileage at Sale</span>
+                <span className="text-sm text-muted-foreground">Vehicle Mileage at Sale</span>
                 <span className="font-medium">{sale.mileageAtSale.toLocaleString()} miles</span>
               </div>
             )}

@@ -235,8 +235,8 @@ export default function CreateCustomerPage() {
                 )}
               />
 
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4">
+              <div className="border-t pt-3">
+                <h3 className="text-lg font-semibold mb-2"> 
                   Account Information
                 </h3>
               </div>
@@ -276,8 +276,8 @@ export default function CreateCustomerPage() {
               />
 
               {/* Vehicle Information */}
-              <div className="border-t pt-6">
-                <div className="flex items-center justify-between mb-4">
+              <div className="border-t pt-3">
+                <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-semibold">Vehicle Information</h3>
                   <Button
                     type="button"
@@ -302,7 +302,7 @@ export default function CreateCustomerPage() {
                 <div className="space-y-6">
                   {fields.map((field, index) => (
                     <Card key={field.id} className="relative">
-                      <CardContent className="pt-6">
+                      <CardContent className="pt-2">
                         {fields.length > 1 && (
                           <div className="absolute top-2 right-2">
                             <Button
@@ -316,7 +316,7 @@ export default function CreateCustomerPage() {
                             </Button>
                           </div>
                         )}
-                        <h4 className="text-sm font-medium mb-4 text-muted-foreground">
+                        <h4 className="text-sm font-medium mb-2 text-muted-foreground">
                           Vehicle {index + 1}
                         </h4>
                         <div className="grid grid-cols-2 gap-4">
@@ -360,11 +360,11 @@ export default function CreateCustomerPage() {
                                   <Input
                                     type="number"
                                     {...field}
-                                    onChange={(e) =>
-                                      field.onChange(
-                                        parseInt(e.target.value) || 0
-                                      )
-                                    }
+                                    // onChange={(e) =>
+                                    //   field.onChange(
+                                    //     parseInt(e.target.value) || 0
+                                    //   )
+                                    // }
                                     value={field.value}
                                   />
                                 </FormControl>
@@ -383,11 +383,11 @@ export default function CreateCustomerPage() {
                                   <Input
                                     type="number"
                                     {...field}
-                                    onChange={(e) =>
-                                      field.onChange(
-                                        parseInt(e.target.value) || 0
-                                      )
-                                    }
+                                    // onChange={(e) =>
+                                    //   field.onChange(
+                                    //     parseInt(e.target.value) || "0"
+                                    //   )
+                                    // }
                                     value={field.value}
                                   />
                                 </FormControl>
@@ -397,7 +397,7 @@ export default function CreateCustomerPage() {
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div className="grid grid-cols-2 gap-4 mt-2">
                           <FormField
                             control={form.control}
                             name={`vehicles.${index}.vin`}

@@ -89,12 +89,12 @@ const createStyles = (settings: InvoiceSettings) => {
     },
     container: {
       paddingHorizontal: 35, // Balanced padding
-      paddingVertical: 30,
+      paddingVertical: 22,
     },
     headerSection: {
       flexDirection: "row",
       justifyContent: "space-between",
-      marginBottom: 35,
+      marginBottom: 24,
     },
     companyInfo: {
       flexDirection: "column",
@@ -128,7 +128,7 @@ const createStyles = (settings: InvoiceSettings) => {
       fontWeight: "light",
       color: primaryColor,
       textTransform: "uppercase",
-      marginBottom: 10,
+      marginBottom: 6,
       maxWidth: "100%",
     },
     invoiceDetail: {
@@ -156,9 +156,9 @@ const createStyles = (settings: InvoiceSettings) => {
     },
     billToCard: {
       backgroundColor: accentColor,
-      padding: 20,
+      padding: 15,
       borderRadius: 4,
-      marginBottom: 18,
+      marginBottom: 12,
       flexDirection: "row",
     },
     billToLeft: {
@@ -207,7 +207,7 @@ const createStyles = (settings: InvoiceSettings) => {
     },
     durationBadge: {
       backgroundColor: "rgba(255,255,255,0.7)",
-      paddingHorizontal: 12,
+      paddingHorizontal: 6,
       paddingVertical: 6,
       borderRadius: 12,
     },
@@ -220,7 +220,7 @@ const createStyles = (settings: InvoiceSettings) => {
       backgroundColor: "#f8fafc", // slate-50
       padding: 15,
       borderRadius: 4,
-      marginBottom: 12,
+      marginBottom: 8,
       borderWidth: 1,
       borderColor: "#e2e8f0",
     },
@@ -261,7 +261,7 @@ const createStyles = (settings: InvoiceSettings) => {
       borderColor: "#e2e8f0",
       borderRadius: 8,
       padding: 8,
-      marginBottom: 12,
+      marginBottom: 8,
     },
     tableHeader: {
       flexDirection: "row",
@@ -320,8 +320,8 @@ const createStyles = (settings: InvoiceSettings) => {
     totalsSection: {
       flexDirection: "row",
       justifyContent: "flex-end",
-      marginTop: 20,
-      marginBottom: 45,
+      marginTop: 14,
+      marginBottom: 30,
     },
     totalsContainer: {
       width: "45%",
