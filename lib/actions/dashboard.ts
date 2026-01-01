@@ -14,6 +14,7 @@ export async function getSuperAdminDashboardStatsAction(): Promise<{
     totalWarranties: number;
     totalEarnings: number;
     pendingInvoices: number;
+    pendingInvoicesAmount?: number;
     totalPackages: number;
     recentCustomers: Array<{
       id: string;
@@ -42,8 +43,12 @@ export async function getDealerDashboardStatsAction(): Promise<{
   data?: {
     totalCustomers: number;
     totalWarranties: number;
-    totalEarnings: number;
+    totalEarnings?: number;
+    totalRevenue?: number;
+    amountOwed?: number;
+    profit?: number;
     pendingInvoices: number;
+    pendingInvoicesAmount?: number;
   };
   message?: string;
 }> {
@@ -75,4 +80,3 @@ export async function getCustomerDashboardStatsAction(): Promise<{
     return { status: false, message: "Failed to load dashboard" };
   }
 }
-

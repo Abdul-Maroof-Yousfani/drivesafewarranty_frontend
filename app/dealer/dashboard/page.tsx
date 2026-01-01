@@ -10,8 +10,11 @@ export default function DealerDashboard() {
   const [stats, setStats] = useState({
     totalCustomers: 0,
     totalWarranties: 0,
-    totalEarnings: 0,
+    totalRevenue: 0,
+    amountOwed: 0,
+    profit: 0,
     pendingInvoices: 0,
+    pendingInvoicesAmount: 0,
   });
 
   useEffect(() => {
@@ -20,11 +23,16 @@ export default function DealerDashboard() {
       const res = await getDealerDashboardStatsAction();
       if (!mounted) return;
       if (res.status && res.data) {
+        const totalRevenue = res.data.totalRevenue ?? res.data.totalEarnings ?? 0;
+        const pendingInvoicesAmount = res.data.pendingInvoicesAmount ?? 0;
         setStats({
           totalCustomers: res.data.totalCustomers,
           totalWarranties: res.data.totalWarranties,
-          totalEarnings: res.data.totalEarnings,
+          totalRevenue,
+          amountOwed: res.data.amountOwed ?? pendingInvoicesAmount,
+          profit: res.data.profit ?? 0,
           pendingInvoices: res.data.pendingInvoices,
+          pendingInvoicesAmount,
         });
       }
     })();
@@ -49,7 +57,7 @@ export default function DealerDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className="relative overflow-hidden border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">My Customers</CardTitle>
@@ -80,6 +88,21 @@ export default function DealerDashboard() {
           </CardContent>
         </Card>
 
+        <Card className="relative overflow-hidden border-l-4 border-l-purple-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+              <DollarSign className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">£{stats.totalRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Customer sales value
+            </p>
+          </CardContent>
+        </Card>
+
         <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Amount Owed</CardTitle>
@@ -88,16 +111,31 @@ export default function DealerDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">£{stats.totalEarnings.toLocaleString()}</div>
+            <div className="text-3xl font-bold">£{stats.amountOwed.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Outstanding to Drive Safe
             </p>
           </CardContent>
         </Card>
 
+        <Card className="relative overflow-hidden border-l-4 border-l-emerald-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Profit</CardTitle>
+            <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">£{stats.profit.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Revenue minus invoices
+            </p>
+          </CardContent>
+        </Card>
+
         <Card className="relative overflow-hidden border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">My Invoices</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Invoices</CardTitle>
             <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
               <Receipt className="h-5 w-5 text-orange-600 dark:text-orange-400" />
             </div>
@@ -105,7 +143,7 @@ export default function DealerDashboard() {
           <CardContent>
             <div className="text-3xl font-bold">{stats.pendingInvoices}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Total invoices
+              £{stats.pendingInvoicesAmount.toLocaleString()} pending amount
             </p>
           </CardContent>
         </Card>

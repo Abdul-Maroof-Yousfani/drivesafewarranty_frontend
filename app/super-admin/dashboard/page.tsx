@@ -1,20 +1,26 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Building2, 
-  Users, 
-  ShieldCheck, 
-  DollarSign, 
-  TrendingUp, 
-  Package, 
+import {
+  Building2,
+  Users,
+  ShieldCheck,
+  DollarSign,
+  TrendingUp,
+  Package,
   Car,
   FileText,
   PlusCircle,
   BarChart3,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { getSuperAdminDashboardStatsAction } from "@/lib/actions/dashboard";
@@ -26,14 +32,22 @@ export default function SuperAdminDashboard() {
     totalWarranties: number;
     totalEarnings: number;
     pendingInvoices: number;
+    pendingInvoicesAmount: number;
     totalPackages?: number;
-    recentCustomers: Array<{ id: string; name: string; email: string; warrantyPackage: string; date: string }>;
+    recentCustomers: Array<{
+      id: string;
+      name: string;
+      email: string;
+      warrantyPackage: string;
+      date: string;
+    }>;
   }>({
     totalDealers: 0,
     totalCustomers: 0,
     totalWarranties: 0,
     totalEarnings: 0,
     pendingInvoices: 0,
+    pendingInvoicesAmount: 0,
     totalPackages: 0,
     recentCustomers: [],
   });
@@ -50,6 +64,7 @@ export default function SuperAdminDashboard() {
           totalWarranties: res.data.totalWarranties,
           totalEarnings: res.data.totalEarnings,
           pendingInvoices: res.data.pendingInvoices,
+          pendingInvoicesAmount: res.data.pendingInvoicesAmount ?? 0,
           totalPackages: res.data.totalPackages,
           recentCustomers: res.data.recentCustomers,
         });
@@ -70,7 +85,8 @@ export default function SuperAdminDashboard() {
             Drive Safe Warranty Portal
           </h1>
           <p className="text-muted-foreground mt-2">
-            Comprehensive overview of your warranty business operations and performance
+            Comprehensive overview of your warranty business operations and
+            performance
           </p>
         </div>
       </div>
@@ -95,7 +111,9 @@ export default function SuperAdminDashboard() {
 
         <Card className="relative overflow-hidden border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Customers
+            </CardTitle>
             <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
               <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
@@ -111,7 +129,9 @@ export default function SuperAdminDashboard() {
 
         <Card className="relative overflow-hidden border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Warranties</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active Warranties
+            </CardTitle>
             <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
               <ShieldCheck className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
@@ -133,7 +153,9 @@ export default function SuperAdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">£{stats.totalEarnings.toLocaleString()}</div>
+            <div className="text-3xl font-bold">
+              £{stats.totalEarnings.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <TrendingUp className="h-3 w-3" />
               All-time warranty sales revenue
@@ -143,23 +165,29 @@ export default function SuperAdminDashboard() {
 
         <Card className="relative overflow-hidden border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Invoices</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pending Invoices
+            </CardTitle>
             <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
               <FileText className="h-5 w-5 text-orange-600 dark:text-orange-400" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.pendingInvoices}</div>
+            <div className="text-3xl font-bold">
+              £{stats.pendingInvoicesAmount.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <AlertCircle className="h-3 w-3" />
-              Awaiting dealer payments
+              {stats.pendingInvoices} pending invoices
             </p>
           </CardContent>
         </Card>
 
         <Card className="relative overflow-hidden border-l-4 border-l-indigo-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Warranty Packages</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Warranty Packages
+            </CardTitle>
             <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
               <Package className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             </div>
@@ -184,7 +212,9 @@ export default function SuperAdminDashboard() {
                 <Users className="h-5 w-5 text-primary" />
                 Recent Warranty Customers
               </CardTitle>
-              <CardDescription>Latest customers who purchased warranty coverage</CardDescription>
+              <CardDescription>
+                Latest customers who purchased warranty coverage
+              </CardDescription>
             </div>
             <Button variant="outline" size="sm" asChild>
               <Link href="/super-admin/customers/list">
@@ -213,8 +243,10 @@ export default function SuperAdminDashboard() {
             ) : (
               <div className="space-y-4">
                 {stats.recentCustomers.map((customer: any, idx: number) => (
-                  <div 
-                    key={`${customer.id}-${customer.email || ""}-${customer.date || ""}-${idx}`} 
+                  <div
+                    key={`${customer.id}-${customer.email || ""}-${
+                      customer.date || ""
+                    }-${idx}`}
                     className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
@@ -223,12 +255,18 @@ export default function SuperAdminDashboard() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">{customer.name}</p>
-                        <p className="text-xs text-muted-foreground">{customer.email}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {customer.email}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-medium">{customer.warrantyPackage || "N/A"}</p>
-                      <p className="text-xs text-muted-foreground">{customer.date}</p>
+                      <p className="text-xs font-medium">
+                        {customer.warrantyPackage || "N/A"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {customer.date}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -276,7 +314,11 @@ export default function SuperAdminDashboard() {
               </Link>
             </Button>
             <div className="pt-2 border-t">
-              <Button variant="ghost" className="w-full justify-start text-primary" asChild>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-primary"
+                asChild
+              >
                 <Link href="/super-admin/reports/sales">
                   <BarChart3 className="mr-2 h-4 w-4" />
                   View All Reports
@@ -298,7 +340,9 @@ export default function SuperAdminDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium">Dealer Management</p>
-                <p className="text-xs text-muted-foreground">Manage showroom partners</p>
+                <p className="text-xs text-muted-foreground">
+                  Manage showroom partners
+                </p>
               </div>
             </div>
           </CardContent>
@@ -312,7 +356,9 @@ export default function SuperAdminDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium">Warranty Coverage</p>
-                <p className="text-xs text-muted-foreground">Track active warranties</p>
+                <p className="text-xs text-muted-foreground">
+                  Track active warranties
+                </p>
               </div>
             </div>
           </CardContent>
@@ -326,7 +372,9 @@ export default function SuperAdminDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium">Financial Reports</p>
-                <p className="text-xs text-muted-foreground">View earnings & invoices</p>
+                <p className="text-xs text-muted-foreground">
+                  View earnings & invoices
+                </p>
               </div>
             </div>
           </CardContent>
@@ -335,4 +383,3 @@ export default function SuperAdminDashboard() {
     </div>
   );
 }
-
