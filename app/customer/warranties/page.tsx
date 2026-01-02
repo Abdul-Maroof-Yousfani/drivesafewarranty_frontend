@@ -25,6 +25,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
+export const dynamic = "force-dynamic";
 
 export default async function CustomerWarrantiesPage() {
   const { status, data: warranties } = await getCustomerWarrantySalesAction();

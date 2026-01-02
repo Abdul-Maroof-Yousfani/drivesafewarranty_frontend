@@ -1,6 +1,8 @@
 import { getWarrantySalesAction } from "@/lib/actions/warranty-sales";
 import { WarrantySalesList } from "./warranty-sales-list";
+import { Suspense } from "react";
 
+export const dynamic = "force-dynamic";
 export default async function WarrantySalesListPage() {
   const response = await getWarrantySalesAction();
   const data = response.data || [];
@@ -19,7 +21,9 @@ export default async function WarrantySalesListPage() {
           {response.message || "Failed to load warranty sales"}
         </div>
       )}
-      <WarrantySalesList initialSales={data} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <WarrantySalesList initialSales={data} />
+      </Suspense>
     </div>
   );
 }

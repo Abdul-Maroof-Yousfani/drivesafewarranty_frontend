@@ -11,6 +11,15 @@ export interface CustomerWarrantySale {
   coverageEndDate: string;
   status: string;
   planMonths?: number | null;
+  vehicle?: {
+    id?: string;
+    make: string;
+    model: string;
+    year: number;
+    vin?: string | null;
+    registrationNumber?: string | null;
+    mileage?: number | null;
+  } | null;
   warrantyPackage: {
     id: string;
     name: string;
@@ -18,6 +27,7 @@ export interface CustomerWarrantySale {
     planLevel?: string;
     eligibility?: string;
     coverageDuration: number;
+    durationValue: number;
     durationUnit: string;
     includedFeatures?: any; // JSON
     keyBenefits?: any; // JSON
