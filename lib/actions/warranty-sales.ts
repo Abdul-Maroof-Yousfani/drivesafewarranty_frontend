@@ -1,10 +1,7 @@
 "use server";
 
 import { getAccessToken } from "@/lib/auth";
-
-const API_BASE = (
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api"
-).replace(/\/$/, "");
+import { API_BASE } from "./constants";
 
 export interface WarrantySale {
   id: string;
@@ -86,10 +83,14 @@ export async function getWarrantySalesAction(): Promise<{
       cache: "no-store",
       headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
-    
+
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, data: [], message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        data: [],
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     return res.json();
@@ -114,8 +115,11 @@ export async function getWarrantySaleByIdAction(
     });
 
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     return res.json();
@@ -148,8 +152,11 @@ export async function updateWarrantySaleAction(
     });
 
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     return res.json();
@@ -170,8 +177,11 @@ export async function deleteWarrantySaleAction(
     });
 
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     return res.json();
@@ -211,8 +221,11 @@ export async function createMasterWarrantySaleAction(payload: {
     });
 
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     return res.json();

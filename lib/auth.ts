@@ -2,9 +2,8 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { apiUrl } from "@/lib/actions/constants";
 
-const API_BASE = process.env.API_URL || "http://localhost:8080/api";
-console.log(API_BASE);
 export interface User {
   id: number;
   email: string;
@@ -40,7 +39,7 @@ export async function login(
   }
 
   try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const res = await fetch(apiUrl("/auth/login"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -130,7 +129,7 @@ export async function logout(): Promise<void> {
 
   try {
     if (accessToken) {
-      await fetch(`${API_BASE}/auth/logout`, {
+      await fetch(apiUrl("/auth/logout"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -179,7 +178,7 @@ export async function refreshAccessToken(): Promise<boolean> {
   if (!refreshToken) return false;
 
   try {
-    const res = await fetch(`${API_BASE}/auth/refresh-token`, {
+    const res = await fetch(apiUrl("/auth/refresh-token"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
@@ -224,7 +223,7 @@ export async function authFetch(
   const isFormData = options.body instanceof FormData;
 
   const makeRequest = async (token: string | undefined) => {
-    return fetch(`${API_BASE}${url}`, {
+    return fetch(apiUrl(url), {
       ...options,
       headers: {
         ...(!isFormData && { "Content-Type": "application/json" }),
@@ -317,7 +316,11 @@ export async function checkSession(): Promise<{ valid: boolean }> {
 }
 
 // Get current user profile from server
-export async function getMe(): Promise<{ status: boolean; data?: any; message?: string }> {
+export async function getMe(): Promise<{
+  status: boolean;
+  data?: any;
+  message?: string;
+}> {
   try {
     const response = await authFetch("/auth/me");
     return await response.json();
@@ -340,25 +343,32 @@ export async function updateMe(data: {
       body: JSON.stringify(data),
     });
     const result = await response.json();
-    
+
     if (result.status && result.data) {
       const cookieStore = await cookies();
       const existingUser = JSON.parse(cookieStore.get("user")?.value || "{}");
-      cookieStore.set("user", JSON.stringify({
-        ...existingUser,
-        firstName: result.data.firstName || existingUser.firstName,
-        lastName: result.data.lastName || existingUser.lastName,
-        avatar: result.data.avatar !== undefined ? result.data.avatar : existingUser.avatar,
-        details: result.data.details || existingUser.details,
-      }), {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60,
-        path: "/",
-      });
+      cookieStore.set(
+        "user",
+        JSON.stringify({
+          ...existingUser,
+          firstName: result.data.firstName || existingUser.firstName,
+          lastName: result.data.lastName || existingUser.lastName,
+          avatar:
+            result.data.avatar !== undefined
+              ? result.data.avatar
+              : existingUser.avatar,
+          details: result.data.details || existingUser.details,
+        }),
+        {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60,
+          path: "/",
+        }
+      );
     }
-    
+
     return result;
   } catch (error) {
     console.error("Update me error:", error);
@@ -367,7 +377,9 @@ export async function updateMe(data: {
 }
 
 // Upload logo/avatar
-export async function uploadLogo(file: File): Promise<{ status: boolean; url?: string; message?: string }> {
+export async function uploadLogo(
+  file: File
+): Promise<{ status: boolean; url?: string; message?: string }> {
   try {
     const formData = new FormData();
     formData.append("file", file);

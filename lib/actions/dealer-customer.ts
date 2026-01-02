@@ -2,8 +2,7 @@
 
 import { getAccessToken } from "@/lib/auth";
 import { Customer } from "./customer";
-
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api").replace(/\/$/, "");
+import { API_BASE } from "./constants";
 
 export async function getDealerCustomersAction(): Promise<{
   status: boolean;

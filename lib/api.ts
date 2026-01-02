@@ -1,7 +1,7 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+import { apiUrl } from "./actions/constants";
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
+  const res = await fetch(apiUrl(endpoint), {
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,

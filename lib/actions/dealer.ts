@@ -3,8 +3,7 @@
 import { getAccessToken } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { WarrantyPackage } from "@/lib/actions/warranty-package";
-
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api").replace(/\/$/, "");
+import { API_BASE } from "./constants";
 
 export interface Dealer {
   id: string;

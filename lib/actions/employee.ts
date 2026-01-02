@@ -1,14 +1,14 @@
-'use server';
+"use server";
 
-import { getAccessToken } from '../auth';
-import { revalidatePath } from 'next/cache';
+import { getAccessToken } from "../auth";
+import { revalidatePath } from "next/cache";
 
-const API_URL = process.env.API_URL || 'http://localhost:8080/api';
+import { API_BASE as API_URL } from "./constants";
 
 async function getAuthHeaders() {
   const token = await getAccessToken();
   return {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
   };
 }
@@ -82,47 +82,67 @@ export interface Employee {
 }
 
 // Get all employees
-export async function getEmployees(): Promise<{ status: boolean; data?: Employee[]; message?: string }> {
+export async function getEmployees(): Promise<{
+  status: boolean;
+  data?: Employee[];
+  message?: string;
+}> {
   try {
     const res = await fetch(`${API_URL}/employees`, {
       headers: await getAuthHeaders(),
-      cache: 'no-store',
+      cache: "no-store",
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch employees' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch employees" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
     return res.json();
   } catch (error) {
-    console.error('Error fetching employees:', error);
-    return { 
-      status: false, 
-      message: error instanceof Error ? error.message : 'Failed to fetch employees. Please check your connection.' 
+    console.error("Error fetching employees:", error);
+    return {
+      status: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch employees. Please check your connection.",
     };
   }
 }
 
 // Get employee by id
-export async function getEmployeeById(id: string): Promise<{ status: boolean; data?: Employee; message?: string }> {
+export async function getEmployeeById(
+  id: string
+): Promise<{ status: boolean; data?: Employee; message?: string }> {
   try {
     const res = await fetch(`${API_URL}/employees/${id}`, {
       headers: await getAuthHeaders(),
-      cache: 'no-store',
+      cache: "no-store",
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch employee' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch employee" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
     return res.json();
   } catch (error) {
-    console.error('Error fetching employee:', error);
-    return { 
-      status: false, 
-      message: error instanceof Error ? error.message : 'Failed to fetch employee' 
+    console.error("Error fetching employee:", error);
+    return {
+      status: false,
+      message:
+        error instanceof Error ? error.message : "Failed to fetch employee",
     };
   }
 }
@@ -181,73 +201,104 @@ export async function createEmployee(data: {
 }): Promise<{ status: boolean; data?: Employee; message?: string }> {
   try {
     const res = await fetch(`${API_URL}/employees`, {
-      method: 'POST',
+      method: "POST",
       headers: await getAuthHeaders(),
       body: JSON.stringify(data),
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to create employee' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to create employee" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
     const result = await res.json();
     if (result.status) {
-      revalidatePath('/dashboard/employee/list');
+      revalidatePath("/dashboard/employee/list");
     }
     return result;
   } catch (error) {
-    console.error('Error creating employee:', error);
-    return { status: false, message: error instanceof Error ? error.message : 'Failed to create employee' };
+    console.error("Error creating employee:", error);
+    return {
+      status: false,
+      message:
+        error instanceof Error ? error.message : "Failed to create employee",
+    };
   }
 }
 
 // Update employee
-export async function updateEmployee(id: string, data: Partial<Employee>): Promise<{ status: boolean; data?: Employee; message?: string }> {
+export async function updateEmployee(
+  id: string,
+  data: Partial<Employee>
+): Promise<{ status: boolean; data?: Employee; message?: string }> {
   try {
     const res = await fetch(`${API_URL}/employees/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: await getAuthHeaders(),
       body: JSON.stringify(data),
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to update employee' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to update employee" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
     const result = await res.json();
     if (result.status) {
-      revalidatePath('/dashboard/employee/list');
+      revalidatePath("/dashboard/employee/list");
     }
     return result;
   } catch (error) {
-    console.error('Error updating employee:', error);
-    return { status: false, message: error instanceof Error ? error.message : 'Failed to update employee' };
+    console.error("Error updating employee:", error);
+    return {
+      status: false,
+      message:
+        error instanceof Error ? error.message : "Failed to update employee",
+    };
   }
 }
 
 // Delete employee
-export async function deleteEmployee(id: string): Promise<{ status: boolean; message?: string }> {
+export async function deleteEmployee(
+  id: string
+): Promise<{ status: boolean; message?: string }> {
   try {
     const res = await fetch(`${API_URL}/employees/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: await getAuthHeaders(),
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to delete employee' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to delete employee" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
     const result = await res.json();
     if (result.status) {
-      revalidatePath('/dashboard/employee/list');
+      revalidatePath("/dashboard/employee/list");
     }
     return result;
   } catch (error) {
-    console.error('Error deleting employee:', error);
-    return { status: false, message: error instanceof Error ? error.message : 'Failed to delete employee' };
+    console.error("Error deleting employee:", error);
+    return {
+      status: false,
+      message:
+        error instanceof Error ? error.message : "Failed to delete employee",
+    };
   }
 }
-

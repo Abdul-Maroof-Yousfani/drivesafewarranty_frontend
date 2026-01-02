@@ -1,14 +1,14 @@
-'use server';
+"use server";
 
-import { getAccessToken } from '../auth';
-import { revalidatePath } from 'next/cache';
+import { getAccessToken } from "../auth";
+import { revalidatePath } from "next/cache";
 
-const API_URL = process.env.API_URL || 'http://localhost:8080/api';
+import { API_BASE as API_URL } from "./constants";
 
 async function getAuthHeaders() {
   const token = await getAccessToken();
   return {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
   };
 }
@@ -68,177 +68,250 @@ export interface Employee {
 }
 
 // Get all exit clearances
-export async function getAllExitClearances(): Promise<{ status: boolean; data?: ExitClearance[]; message?: string }> {
+export async function getAllExitClearances(): Promise<{
+  status: boolean;
+  data?: ExitClearance[];
+  message?: string;
+}> {
   try {
     const res = await fetch(`${API_URL}/exit-clearances`, {
       headers: await getAuthHeaders(),
-      cache: 'no-store',
+      cache: "no-store",
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch exit clearances' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch exit clearances" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
     const data = await res.json();
     return { status: true, data };
   } catch (error) {
-    console.error('Error fetching exit clearances:', error);
+    console.error("Error fetching exit clearances:", error);
     return {
       status: false,
-      message: error instanceof Error ? error.message : 'Failed to fetch exit clearances. Please check your connection.',
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch exit clearances. Please check your connection.",
     };
   }
 }
 
 // Get exit clearance by ID
-export async function getExitClearanceById(id: string): Promise<{ status: boolean; data?: ExitClearance; message?: string }> {
+export async function getExitClearanceById(
+  id: string
+): Promise<{ status: boolean; data?: ExitClearance; message?: string }> {
   try {
     const res = await fetch(`${API_URL}/exit-clearances/${id}`, {
       headers: await getAuthHeaders(),
-      cache: 'no-store',
+      cache: "no-store",
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch exit clearance' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch exit clearance" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
     const data = await res.json();
     return { status: true, data };
   } catch (error) {
-    console.error('Error fetching exit clearance:', error);
+    console.error("Error fetching exit clearance:", error);
     return {
       status: false,
-      message: error instanceof Error ? error.message : 'Failed to fetch exit clearance',
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch exit clearance",
     };
   }
 }
 
 // Create exit clearance
-export async function createExitClearance(data: Omit<ExitClearance, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ status: boolean; data?: ExitClearance; message?: string }> {
+export async function createExitClearance(
+  data: Omit<ExitClearance, "id" | "createdAt" | "updatedAt">
+): Promise<{ status: boolean; data?: ExitClearance; message?: string }> {
   try {
     const res = await fetch(`${API_URL}/exit-clearances`, {
-      method: 'POST',
+      method: "POST",
       headers: await getAuthHeaders(),
       body: JSON.stringify(data),
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to create exit clearance' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to create exit clearance" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
     const result = await res.json();
     if (result.id || result.status) {
-      revalidatePath('/dashboard/exit-clearance/list');
+      revalidatePath("/dashboard/exit-clearance/list");
     }
     return { status: true, data: result };
   } catch (error) {
-    console.error('Error creating exit clearance:', error);
+    console.error("Error creating exit clearance:", error);
     return {
       status: false,
-      message: error instanceof Error ? error.message : 'Failed to create exit clearance',
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to create exit clearance",
     };
   }
 }
 
 // Update exit clearance
-export async function updateExitClearance(id: string, data: Partial<ExitClearance>): Promise<{ status: boolean; data?: ExitClearance; message?: string }> {
+export async function updateExitClearance(
+  id: string,
+  data: Partial<ExitClearance>
+): Promise<{ status: boolean; data?: ExitClearance; message?: string }> {
   try {
     const res = await fetch(`${API_URL}/exit-clearances/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: await getAuthHeaders(),
       body: JSON.stringify(data),
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to update exit clearance' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to update exit clearance" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
     const result = await res.json();
     if (result.id || result.status) {
-      revalidatePath('/dashboard/exit-clearance/list');
+      revalidatePath("/dashboard/exit-clearance/list");
     }
     return { status: true, data: result };
   } catch (error) {
-    console.error('Error updating exit clearance:', error);
+    console.error("Error updating exit clearance:", error);
     return {
       status: false,
-      message: error instanceof Error ? error.message : 'Failed to update exit clearance',
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to update exit clearance",
     };
   }
 }
 
 // Delete exit clearance
-export async function deleteExitClearance(id: string): Promise<{ status: boolean; message?: string }> {
+export async function deleteExitClearance(
+  id: string
+): Promise<{ status: boolean; message?: string }> {
   try {
     const res = await fetch(`${API_URL}/exit-clearances/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: await getAuthHeaders(),
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to delete exit clearance' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to delete exit clearance" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
-    revalidatePath('/dashboard/exit-clearance/list');
-    return { status: true, message: 'Exit clearance deleted successfully' };
+    revalidatePath("/dashboard/exit-clearance/list");
+    return { status: true, message: "Exit clearance deleted successfully" };
   } catch (error) {
-    console.error('Error deleting exit clearance:', error);
+    console.error("Error deleting exit clearance:", error);
     return {
       status: false,
-      message: error instanceof Error ? error.message : 'Failed to delete exit clearance',
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to delete exit clearance",
     };
   }
 }
 
 // Get all employees for clearance
-export async function getAllEmployeesForClearance(): Promise<{ status: boolean; data?: Employee[]; message?: string }> {
+export async function getAllEmployeesForClearance(): Promise<{
+  status: boolean;
+  data?: Employee[];
+  message?: string;
+}> {
   try {
     const res = await fetch(`${API_URL}/employees-list`, {
       headers: await getAuthHeaders(),
-      cache: 'no-store',
+      cache: "no-store",
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch employees' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch employees" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
     const data = await res.json();
     return { status: true, data };
   } catch (error) {
-    console.error('Error fetching employees:', error);
+    console.error("Error fetching employees:", error);
     return {
       status: false,
-      message: error instanceof Error ? error.message : 'Failed to fetch employees',
+      message:
+        error instanceof Error ? error.message : "Failed to fetch employees",
     };
   }
 }
 
 // Get employee department info
-export async function getEmployeeDepartmentInfo(employeeId: string): Promise<{ status: boolean; data?: Employee; message?: string }> {
+export async function getEmployeeDepartmentInfo(
+  employeeId: string
+): Promise<{ status: boolean; data?: Employee; message?: string }> {
   try {
     const res = await fetch(`${API_URL}/employee-department/${employeeId}`, {
       headers: await getAuthHeaders(),
-      cache: 'no-store',
+      cache: "no-store",
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch employee details' }));
-      return { status: false, message: errorData.message || `HTTP error! status: ${res.status}` };
+      const errorData = await res
+        .json()
+        .catch(() => ({ message: "Failed to fetch employee details" }));
+      return {
+        status: false,
+        message: errorData.message || `HTTP error! status: ${res.status}`,
+      };
     }
 
     const data = await res.json();
     return { status: true, data };
   } catch (error) {
-    console.error('Error fetching employee details:', error);
+    console.error("Error fetching employee details:", error);
     return {
       status: false,
-      message: error instanceof Error ? error.message : 'Failed to fetch employee details',
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch employee details",
     };
   }
 }

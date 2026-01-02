@@ -1,12 +1,10 @@
-'use server';
+"use server";
 
-import { getAccessToken } from '../auth';
-import { revalidatePath } from 'next/cache';
+import { getAccessToken } from "../auth";
+import { revalidatePath } from "next/cache";
 
-const API_URL = process.env.API_URL || 'http://localhost:8080/api';
-const PUBLIC_BASE =
-  (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/api$/, '') ||
-  API_URL.replace(/\/api$/, '');
+import { API_BASE as API_URL } from "./constants";
+const PUBLIC_BASE = API_URL.replace(/\/api$/, "") || "";
 
 export interface EmployeeCsvRow {
   [key: string]: string;
@@ -33,10 +31,10 @@ export async function uploadEmployeeCsv(
   try {
     const token = await getAccessToken();
     const fd = new FormData();
-    fd.append('file', file);
+    fd.append("file", file);
 
     const res = await fetch(`${API_URL}/employees/import-csv`, {
-      method: 'POST',
+      method: "POST",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
@@ -51,10 +49,10 @@ export async function uploadEmployeeCsv(
       };
     }
 
-    const path = json.data?.path?.replace(/\\/g, '/');
+    const path = json.data?.path?.replace(/\\/g, "/");
     const url = path ? `${PUBLIC_BASE}/${path}` : undefined;
 
-    revalidatePath('/dashboard/employee/list');
+    revalidatePath("/dashboard/employee/list");
 
     return {
       status: true,
@@ -65,14 +63,13 @@ export async function uploadEmployeeCsv(
       message: json.message,
     };
   } catch (error) {
-    console.error('Error uploading employee CSV:', error);
+    console.error("Error uploading employee CSV:", error);
     return {
       status: false,
       message:
         error instanceof Error
           ? error.message
-          : 'Failed to upload employee CSV',
+          : "Failed to upload employee CSV",
     };
   }
 }
-

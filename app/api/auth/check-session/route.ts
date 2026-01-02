@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-
-const API_BASE = process.env.API_URL || "http://localhost:8080/api";
+import { apiUrl } from "@/lib/actions/constants";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -15,7 +14,7 @@ export async function GET() {
   // Try with access token first
   if (accessToken) {
     try {
-      const res = await fetch(`${API_BASE}/auth/check-session`, {
+      const res = await fetch(apiUrl("/auth/check-session"), {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
@@ -52,11 +51,14 @@ export async function GET() {
   return NextResponse.json({ valid: false, reason: "session_expired" });
 }
 
-async function tryRefresh(refreshToken: string | undefined, cookieStore: any): Promise<boolean> {
+async function tryRefresh(
+  refreshToken: string | undefined,
+  cookieStore: any
+): Promise<boolean> {
   if (!refreshToken) return false;
 
   try {
-    const res = await fetch(`${API_BASE}/auth/refresh-token`, {
+    const res = await fetch(apiUrl("/auth/refresh-token"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
@@ -90,4 +92,3 @@ async function tryRefresh(refreshToken: string | undefined, cookieStore: any): P
 
   return false;
 }
-

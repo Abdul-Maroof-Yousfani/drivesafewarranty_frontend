@@ -2,7 +2,7 @@
 
 import { getAccessToken } from '../auth';
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
+import { API_BASE as API_URL } from "./constants";
 
 async function getAuthHeaders() {
   const token = await getAccessToken();

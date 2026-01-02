@@ -1,7 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getAccessToken } from "@/lib/auth";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api";
+import { apiUrl } from "@/lib/actions/constants";
 
 export async function GET(req: NextRequest, ctx: any) {
   try {
@@ -18,7 +17,7 @@ export async function GET(req: NextRequest, ctx: any) {
       return NextResponse.json({ status: false, data: [], message: "stateId is required" }, { status: 400 });
     }
 
-    const res = await fetch(`${API_BASE}/cities/state/${stateId}`, { headers, cache: "no-store" });
+    const res = await fetch(apiUrl(`/cities/state/${stateId}`), { headers, cache: "no-store" });
     const json = await res.json();
     return NextResponse.json(json);
   } catch (error: any) {
