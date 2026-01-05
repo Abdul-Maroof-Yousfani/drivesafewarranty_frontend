@@ -51,7 +51,7 @@ const packageSchema = z.object({
   price24Months: z.coerce.number().min(0, "24‑month price must be non‑negative"),
   price36Months: z.coerce.number().min(0, "36‑month price must be non‑negative"),
   includedFeatures: z.array(z.string()).optional().default([]),
-  keyBenefits: z.array(z.string()).min(1, "Select at least one benefit"),
+  keyBenefits: z.array(z.string()).min(1, "Select at least one benefit"), // Array of WarrantyItem IDs
 });
 
 type PackageFormValues = z.infer<typeof packageSchema>;
@@ -106,7 +106,11 @@ export default function EditWarrantyPackagePage() {
           price24Months: p.price24Months ?? 0,
           price36Months: p.price36Months ?? 0,
           includedFeatures: Array.isArray(p.includedFeatures) ? p.includedFeatures : [],
-          keyBenefits: Array.isArray(p.keyBenefits) ? p.keyBenefits : [],
+          // Extract benefit item IDs from items relation
+          keyBenefits: p.items
+            ?.filter((item: any) => item.type === "benefit")
+            .map((item: any) => item.warrantyItem?.id || item.warrantyItemId)
+            .filter(Boolean) || [],
         });
       } else {
         toast.error(pkgRes.message || "Failed to load package");
@@ -280,12 +284,12 @@ export default function EditWarrantyPackagePage() {
                             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                               <FormControl>
                                 <Checkbox
-                                  checked={field.value?.includes(item.label)}
+                                  checked={field.value?.includes(item.id)}
                                   onCheckedChange={(checked) => {
                                     return checked
-                                      ? field.onChange([...field.value, item.label])
+                                      ? field.onChange([...field.value, item.id])
                                       : field.onChange(
-                                          field.value?.filter((value) => value !== item.label)
+                                          field.value?.filter((value) => value !== item.id)
                                         );
                                   }}
                                 />

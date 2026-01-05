@@ -127,11 +127,13 @@ export default async function WarrantyPackageViewPage({
                <div>
                  <h3 className="font-semibold mb-2">Key Benefits</h3>
                  <ul className="space-y-2">
-                   {pkg.keyBenefits?.map((b, i) => (
-                     <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                       <span className="text-primary">•</span> {b}
-                     </li>
-                   )) || <p className="text-sm text-muted-foreground">No benefits listed.</p>}
+                   {pkg.items
+                     ?.filter((item: any) => item.type === "benefit")
+                     .map((item: any, i: number) => (
+                       <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                         <span className="text-primary">•</span> {item.warrantyItem?.label || item.warrantyItemId}
+                       </li>
+                     )) || <p className="text-sm text-muted-foreground">No benefits listed.</p>}
                  </ul>
                </div>
              

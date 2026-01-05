@@ -83,7 +83,7 @@ const warrantySaleSchema = z
     mileageAtSale: z.coerce
       .number()
       .min(0, "Mileage must be non-negative")
-      .max(500000, "Mileage is too high")
+      .max(1000000, "Mileage is too high")
       .nullable()
       .optional(),
     coverageStartDate: z.string().min(1, "Coverage start date is required"),

@@ -29,12 +29,22 @@ export interface CustomerWarrantySale {
     coverageDuration: number;
     durationValue: number;
     durationUnit: string;
-    includedFeatures?: any; // JSON
-    keyBenefits?: any; // JSON
+    items?: Array<{
+      id: string;
+      type: "benefit" | "feature";
+      warrantyItem: {
+        id: string;
+        label: string;
+        type: string;
+      };
+    }> | null;
     excess?: number | null;
     labourRatePerHour?: number | null;
     fixedClaimLimit?: number | null;
     price?: number | null;
+    price12Months?: number | null;
+    price24Months?: number | null;
+    price36Months?: number | null;
   };
   warrantyPrice?: number;
   dealer?: {

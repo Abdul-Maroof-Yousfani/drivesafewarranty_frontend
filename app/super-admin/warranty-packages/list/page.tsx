@@ -31,11 +31,8 @@ export default function WarrantyPackagesListPage() {
           durationUnit: pkg.durationUnit,
           price: pkg.price ?? 0,
           createdAt: pkg.createdAt,
-          featuresCount: Array.isArray(pkg.includedFeatures)
-            ? pkg.includedFeatures.length
-            : Array.isArray(pkg.keyBenefits)
-            ? pkg.keyBenefits.length
-            : 0,
+          featuresCount: pkg.items
+            ?.filter((item: any) => item.type === "benefit").length || 0,
           price12Months: pkg.price12Months ?? null,
           price24Months: pkg.price24Months ?? null,
           price36Months: pkg.price36Months ?? null,

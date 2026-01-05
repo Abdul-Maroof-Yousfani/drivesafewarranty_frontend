@@ -74,30 +74,16 @@ export default async function CustomerWarrantiesPage() {
               ? warranty.warrantyPackage.durationValue * 12
               : warranty.warrantyPackage.durationValue;
 
-          // Parse features if they are strings (JSON)
-          let features = [];
-          try {
-            if (typeof warranty.warrantyPackage.includedFeatures === "string") {
-              features = JSON.parse(warranty.warrantyPackage.includedFeatures);
-            } else if (
-              Array.isArray(warranty.warrantyPackage.includedFeatures)
-            ) {
-              features = warranty.warrantyPackage.includedFeatures;
-            }
-          } catch (e) {
-            console.error("Error parsing features", e);
-          }
+          // Extract features and benefits from items relation
+          const features =
+            warranty.warrantyPackage.items
+              ?.filter((item) => item.type === "feature")
+              .map((item) => item.warrantyItem?.label || "") || [];
 
-          let benefits = [];
-          try {
-            if (typeof warranty.warrantyPackage.keyBenefits === "string") {
-              benefits = JSON.parse(warranty.warrantyPackage.keyBenefits);
-            } else if (Array.isArray(warranty.warrantyPackage.keyBenefits)) {
-              benefits = warranty.warrantyPackage.keyBenefits;
-            }
-          } catch (e) {
-            console.error("Error parsing benefits", e);
-          }
+          const benefits =
+            warranty.warrantyPackage.items
+              ?.filter((item) => item.type === "benefit")
+              .map((item) => item.warrantyItem?.label || "") || [];
 
           return (
             <Card
@@ -241,11 +227,11 @@ export default async function CustomerWarrantiesPage() {
 
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="details">
-                    <AccordionTrigger className="text-sm font-medium">
+                    <AccordionTrigger className="text-sm font-medium hover:no-underline hover:cursor-pointer">
                       View Full Coverage Details
                     </AccordionTrigger>
                     <AccordionContent>
-                      <div className="space-y-4 pt-2">
+                      <div className="space-y-4">
                         {/* Description */}
                         {warranty.warrantyPackage.description && (
                           <div className="text-sm text-muted-foreground">
@@ -274,17 +260,14 @@ export default async function CustomerWarrantiesPage() {
                               Included Features
                             </h4>
                             <ul className="grid grid-cols-1 gap-2 text-sm">
-                              {features.map((feature: any, idx: number) => (
+                              {features.map((feature: string, idx: number) => (
                                 <li
                                   key={idx}
                                   className="flex items-start gap-2"
                                 >
                                   <CheckCircle2Icon className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                                   <span className="text-muted-foreground">
-                                    {typeof feature === "string"
-                                      ? feature
-                                      : feature.label ||
-                                        JSON.stringify(feature)}
+                                    {feature}
                                   </span>
                                 </li>
                               ))}
@@ -300,17 +283,14 @@ export default async function CustomerWarrantiesPage() {
                               Key Benefits
                             </h4>
                             <ul className="grid grid-cols-1 gap-2 text-sm">
-                              {benefits.map((benefit: any, idx: number) => (
+                              {benefits.map((benefit: string, idx: number) => (
                                 <li
                                   key={idx}
                                   className="flex items-start gap-2"
                                 >
                                   <CheckCircle2Icon className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
                                   <span className="text-muted-foreground">
-                                    {typeof benefit === "string"
-                                      ? benefit
-                                      : benefit.label ||
-                                        JSON.stringify(benefit)}
+                                    {benefit}
                                   </span>
                                 </li>
                               ))}

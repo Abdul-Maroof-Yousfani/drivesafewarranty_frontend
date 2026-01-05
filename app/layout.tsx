@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}
+        className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased overflow-x-hidden`}
         cz-shortcut-listen="true"
       >
         <ThemeProvider

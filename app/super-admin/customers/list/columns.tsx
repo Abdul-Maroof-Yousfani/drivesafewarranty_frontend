@@ -11,22 +11,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useState, useTransition } from "react";
-import * as z from "zod";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { updateCustomer } from "@/lib/actions/customer";
-import { toast } from "sonner";
 
 export type CustomerRow = {
   id: string;
@@ -149,68 +133,7 @@ export const columns: ColumnDef<CustomerRow>[] = [
   },
 ];
 
-const customerSchema = z.object({
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  email: z.string().email(),
-  phone: z.string().min(1),
-  address: z.string().min(1),
-  vehicleMake: z.string().min(1),
-  vehicleModel: z.string().min(1),
-  vehicleYear: z.coerce.number().min(1900),
-  vin: z.string().optional(),
-  registrationNumber: z.string().optional(),
-  mileage: z.coerce.number().optional(),
-  status: z.string().optional(),
-});
-type CustomerEditValues = z.infer<typeof customerSchema>;
-
 function CustomerActionsCell({ customer }: { customer: CustomerRow }) {
-  const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-  const form = useForm<CustomerEditValues>({
-    resolver: zodResolver(customerSchema),
-    defaultValues: {
-      firstName: customer.firstName,
-      lastName: customer.lastName,
-      email: customer.email,
-      phone: customer.phone,
-      address: customer.address || "",
-      vehicleMake: customer.vehicleMake,
-      vehicleModel: customer.vehicleModel,
-      vehicleYear: customer.vehicleYear,
-      vin: customer.vin || "",
-      registrationNumber: customer.registrationNumber || "",
-      mileage: customer.mileage,
-      status: undefined,
-    },
-  });
-
-  const onSubmit: SubmitHandler<CustomerEditValues> = async (values) => {
-    startTransition(async () => {
-      const res = await updateCustomer(customer.id, {
-        firstName: values.firstName,
-        lastName: values.lastName,
-        email: values.email,
-        phone: values.phone,
-        address: values.address,
-        vehicleMake: values.vehicleMake,
-        vehicleModel: values.vehicleModel,
-        vehicleYear: values.vehicleYear,
-        vin: values.vin,
-        registrationNumber: values.registrationNumber,
-        mileage: values.mileage,
-        status: values.status,
-      });
-      if (res.status) {
-        toast.success("Customer updated");
-        setOpen(false);
-      } else {
-        toast.error(res.message || "Failed to update customer");
-      }
-    });
-  };
-
   return (
     <div className="flex items-center ">
       <TooltipProvider>
@@ -228,77 +151,20 @@ function CustomerActionsCell({ customer }: { customer: CustomerRow }) {
         </Tooltip>
       </TooltipProvider>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <Edit className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Edit Customer</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>First Name</Label>
-                <Input {...form.register("firstName")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Last Name</Label>
-                <Input {...form.register("lastName")} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" {...form.register("email")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input {...form.register("phone")} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Address</Label>
-              <Input {...form.register("address")} />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Vehicle Make</Label>
-                <Input {...form.register("vehicleMake")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Vehicle Model</Label>
-                <Input {...form.register("vehicleModel")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Vehicle Year</Label>
-                <Input type="number" {...form.register("vehicleYear")} />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>VIN</Label>
-                <Input {...form.register("vin")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Registration #</Label>
-                <Input {...form.register("registrationNumber")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Mileage</Label>
-                <Input type="number" {...form.register("mileage")} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={isPending}>
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" asChild>
+              <Link href={`/super-admin/customers/edit/${customer.id}`}>
+                <Edit className="h-4 w-4" />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Edit Customer</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

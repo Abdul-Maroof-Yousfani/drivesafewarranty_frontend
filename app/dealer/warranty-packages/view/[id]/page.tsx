@@ -42,8 +42,15 @@ export default function DealerViewWarrantyPackagePage({
     excess?: number | null;
     labourRatePerHour?: number | null;
     fixedClaimLimit?: number | null;
-    includedFeatures?: string[] | null;
-    keyBenefits?: string[] | null;
+    items?: Array<{
+      id: string;
+      type: "benefit" | "feature";
+      warrantyItem: {
+        id: string;
+        label: string;
+        type: string;
+      };
+    }> | null;
     durationValue?: number | null;
     durationUnit?: string | null;
     // Customer Price (Selling Price)
@@ -219,35 +226,41 @@ export default function DealerViewWarrantyPackagePage({
               <CardDescription>What is included in this package.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {Array.isArray(pkg.keyBenefits) && pkg.keyBenefits.length > 0 && (
+              {pkg.items?.filter((item) => item.type === "benefit").length > 0 && (
                 <div>
                   <h3 className="font-semibold mb-3 flex items-center text-sm uppercase tracking-wide text-primary">Key Benefits</h3>
                   <ul className="space-y-3">
-                    {pkg.keyBenefits.map((benefit, i) => (
-                      <li key={i} className="flex items-start gap-3 text-sm group">
-                        <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0 group-hover:text-green-600 transition-colors" />
-                        <span className="group-hover:text-primary transition-colors">{benefit}</span>
-                      </li>
-                    ))}
+                    {pkg.items
+                      .filter((item) => item.type === "benefit")
+                      .map((item, i) => (
+                        <li key={i} className="flex items-start gap-3 text-sm group">
+                          <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0 group-hover:text-green-600 transition-colors" />
+                          <span className="group-hover:text-primary transition-colors">{item.warrantyItem?.label || item.warrantyItemId}</span>
+                        </li>
+                      ))}
                   </ul>
                 </div>
               )}
 
-              {Array.isArray(pkg.keyBenefits) && pkg.keyBenefits.length > 0 &&
-                Array.isArray(pkg.includedFeatures) && pkg.includedFeatures.length > 0 && (
+              {pkg.items?.filter((item) => item.type === "benefit").length > 0 &&
+                pkg.items?.filter((item) => item.type === "feature").length > 0 && (
                   <Separator className="my-2" />
                 )}
 
-              {Array.isArray(pkg.includedFeatures) && pkg.includedFeatures.length > 0 && (
+              {pkg.items?.filter((item) => item.type === "feature").length > 0 && (
                 <div>
                   <h3 className="font-semibold mb-3 flex items-center text-sm uppercase tracking-wide text-primary">Included Features</h3>
                   <ul className="grid gap-2 sm:grid-cols-2">
-                    {pkg.includedFeatures.map((feature, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm bg-muted/40 p-2.5 rounded-md border hover:border-blue-200 transition-colors">
-                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
-                        <span className="truncate font-medium text-muted-foreground hover:text-foreground transition-colors" title={feature}>{feature}</span>
-                      </li>
-                    ))}
+                    {pkg.items
+                      .filter((item) => item.type === "feature")
+                      .map((item, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm bg-muted/40 p-2.5 rounded-md border hover:border-blue-200 transition-colors">
+                          <div className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                          <span className="truncate font-medium text-muted-foreground hover:text-foreground transition-colors" title={item.warrantyItem?.label || item.warrantyItemId}>
+                            {item.warrantyItem?.label || item.warrantyItemId}
+                          </span>
+                        </li>
+                      ))}
                   </ul>
                 </div>
               )}

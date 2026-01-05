@@ -65,7 +65,7 @@ const dealerSaleSchema = z.object({
     message: "Customer consent is required",
   }),
   customerSignature: z.string().optional().nullable(),
-  mileageAtSale: z.coerce.number().min(0, "Mileage must be non-negative").max(500000, "Mileage is too high").nullable().optional(),
+  mileageAtSale: z.coerce.number().min(0, "Mileage must be non-negative").max(1000000, "Mileage is too high").nullable().optional(),
   salesRepresentativeName: z.string().optional().nullable(),
   paymentMethod: z.enum(["cash", "card", "bank_transfer", "finance"]),
   coverageStartDate: z.string().min(1, "Coverage start date is required"),

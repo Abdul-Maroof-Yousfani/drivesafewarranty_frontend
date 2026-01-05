@@ -63,9 +63,9 @@ function SubMenuItem({ item, pathname }: { item: MenuItem; pathname: string }) {
     return (
       <Collapsible className="group/submenu">
         <CollapsibleTrigger asChild>
-          <SidebarMenuSubButton className="cursor-pointer">
-            <span>{item.title}</span>
-            <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/submenu:rotate-90" />
+          <SidebarMenuSubButton className="cursor-pointer pr-8">
+            <span className="truncate flex-1 min-w-0">{item.title}</span>
+            <ChevronRight className="ml-auto h-4 w-4 shrink-0 transition-transform group-data-[state=open]/submenu:rotate-90" />
           </SidebarMenuSubButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -99,10 +99,10 @@ function MenuItemComponent({ item, pathname }: { item: MenuItem; pathname: strin
       <Collapsible className="group/collapsible">
         <SidebarMenuItem>
           <CollapsibleTrigger asChild>
-            <SidebarMenuButton className="cursor-pointer">
-              {Icon && <Icon className="h-4 w-4" />}
-              <span>{item.title}</span>
-              <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+            <SidebarMenuButton className="cursor-pointer pr-8">
+              {Icon && <Icon className="h-4 w-4 shrink-0" />}
+              <span className="truncate flex-1 min-w-0">{item.title}</span>
+              <ChevronRight className="ml-auto h-4 w-4 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-90" />
             </SidebarMenuButton>
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -169,19 +169,19 @@ export function AppSidebar({ erpMode = false }: AppSidebarProps) {
   if (!menuItems.length) return null;
 
   return (
-    <Sidebar className="border-r w-64 h-screen fixed">
-      <SidebarHeader className="p-4 border-b">
-        <div className="flex items-center gap-2">
+    <Sidebar>
+      <SidebarHeader className="p-4 border-b h-[3.9rem] flex items-center shrink-0">
+        <div className="flex items-center gap-2 w-full">
           {logoUrl ? (
-            <img src={logoUrl} alt="Logo" className="h-8 w-8 object-contain rounded" />
+            <img src={logoUrl} alt="Logo" className="h-8 w-8 object-contain rounded shrink-0" />
           ) : (
             <>
               {isCustomer ? (
-                <Shield className="h-6 w-6 text-primary" />
+                <Shield className="h-6 w-6 text-primary shrink-0" />
               ) : isAdmin() ? (
-                <Building2 className="h-6 w-6 text-primary" />
+                <Building2 className="h-6 w-6 text-primary shrink-0" />
               ) : (
-                <User className="h-6 w-6 text-primary" />
+                <User className="h-6 w-6 text-primary shrink-0" />
               )}
             </>
           )}
@@ -191,7 +191,7 @@ export function AppSidebar({ erpMode = false }: AppSidebarProps) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <ScrollArea className="h-[calc(100vh-80px)]">
+        <ScrollArea className="h-[calc(100vh-3.9rem)]">
           <SidebarGroup>
             {!isCustomer && (
               <SidebarGroupLabel>

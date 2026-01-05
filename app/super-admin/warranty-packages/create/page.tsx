@@ -60,7 +60,7 @@ const packageSchema = z.object({
     .number()
     .min(0, "36‑month price must be non‑negative"),
   includedFeatures: z.array(z.string()).default([]),
-  keyBenefits: z.array(z.string()).min(1, "Select at least one benefit"),
+  keyBenefits: z.array(z.string()).min(1, "Select at least one benefit"), // Array of WarrantyItem IDs
 });
 
 type PackageFormValues = z.infer<typeof packageSchema>;
@@ -271,13 +271,13 @@ export default function CreateWarrantyPackagePage() {
                               >
                                 <FormControl>
                                   <Checkbox
-                                    checked={field.value?.includes(item.label)}
+                                    checked={field.value?.includes(item.id)}
                                     onCheckedChange={(checked) => {
                                       return checked
-                                        ? field.onChange([...field.value, item.label])
+                                        ? field.onChange([...field.value, item.id])
                                         : field.onChange(
                                             field.value?.filter(
-                                              (value) => value !== item.label
+                                              (value) => value !== item.id
                                             )
                                           );
                                     }}

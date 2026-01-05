@@ -19,8 +19,15 @@ export interface WarrantyPackage {
   dealerPrice12Months?: number | null;
   dealerPrice24Months?: number | null;
   dealerPrice36Months?: number | null;
-  includedFeatures?: string[] | null;
-  keyBenefits?: string[] | null;
+  items?: Array<{
+    id: string;
+    type: "benefit" | "feature";
+    warrantyItem: {
+      id: string;
+      label: string;
+      type: string;
+    };
+  }> | null;
   coverageDuration?: number;
   durationValue?: number;
   durationUnit?: "months" | "years";

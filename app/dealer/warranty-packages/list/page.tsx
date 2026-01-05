@@ -32,9 +32,7 @@ export default function DealerWarrantyPackagesListPage() {
             price12Months: pkg.price12Months,
             price24Months: pkg.price24Months,
             price36Months: pkg.price36Months,
-            featuresCount: Array.isArray(pkg.keyBenefits)
-              ? pkg.keyBenefits.length
-              : 0,
+            featuresCount: (pkg.items?.filter((item: any) => item.type === "benefit") || []).length,
             status: pkg.status,
           })
         );

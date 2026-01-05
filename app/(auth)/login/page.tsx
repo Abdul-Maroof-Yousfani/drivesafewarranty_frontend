@@ -5,9 +5,16 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, LogIn, AlertCircle } from "lucide-react";
+import { Loader2, LogIn, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { login } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -18,9 +25,10 @@ export default function LoginPage() {
     const cb = params.get("callbackUrl");
     if (cb) setCallbackUrl(cb);
   }, []);
-  
+
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,15 +38,15 @@ export default function LoginPage() {
 
     startTransition(async () => {
       const result = await login(formData);
-      
+
       if (result.status) {
         if (callbackUrl === "/dashboard" && result.role) {
-          if (result.role === 'super_admin' || result.role === 'admin') {
-            router.push('/super-admin/dashboard');
-          } else if (result.role === 'dealer') {
-            router.push('/dealer/dashboard');
-          } else if (result.role === 'customer') {
-            router.push('/customer/dashboard');
+          if (result.role === "super_admin" || result.role === "admin") {
+            router.push("/super-admin/dashboard");
+          } else if (result.role === "dealer") {
+            router.push("/dealer/dashboard");
+          } else if (result.role === "customer") {
+            router.push("/customer/dashboard");
           } else {
             router.push(callbackUrl);
           }
@@ -71,7 +79,7 @@ export default function LoginPage() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -83,20 +91,38 @@ export default function LoginPage() {
               disabled={isPending}
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              required
-              disabled={isPending}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                required
+                disabled={isPending}
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isPending}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
-        
+
         <CardFooter>
           <Button type="submit" className="w-full mt-6" disabled={isPending}>
             {isPending ? (

@@ -12,12 +12,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { KeyRound, Loader2 } from "lucide-react";
+import { KeyRound, Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const handleSubmitReal = async () => {
     setSaving(true);
@@ -61,23 +63,59 @@ export default function ChangePasswordPage() {
         <CardContent className="grid gap-6 max-w-xl">
           <div className="space-y-2">
             <Label htmlFor="currentPassword">Current Password</Label>
-            <Input
-              id="currentPassword"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <Input
+                id="currentPassword"
+                type={showCurrentPassword ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="••••••••"
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                aria-label={
+                  showCurrentPassword ? "Hide password" : "Show password"
+                }
+              >
+                {showCurrentPassword ? (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="newPassword">New Password</Label>
-            <Input
-              id="newPassword"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="At least 8 characters"
-            />
+            <div className="relative">
+              <Input
+                id="newPassword"
+                type={showNewPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                aria-label={showNewPassword ? "Hide password" : "Show password"}
+              >
+                {showNewPassword ? (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
           </div>
           <div className="flex items-center justify-end">
             <Button onClick={handleSubmitReal} disabled={saving}>
