@@ -175,15 +175,9 @@ export function AppSidebar({ erpMode = false }: AppSidebarProps) {
           {logoUrl ? (
             <img src={logoUrl} alt="Logo" className="h-8 w-8 object-contain rounded shrink-0" />
           ) : (
-            <>
-              {isCustomer ? (
-                <Shield className="h-6 w-6 text-primary shrink-0" />
-              ) : isAdmin() ? (
-                <Building2 className="h-6 w-6 text-primary shrink-0" />
-              ) : (
-                <User className="h-6 w-6 text-primary shrink-0" />
-              )}
-            </>
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-white p-1">
+               <img src="/Drive Safe-04.png" alt="DriveSafe" className="h-full w-full object-contain" />
+            </div>
           )}
           <span className="font-semibold truncate">
             {portalName}
@@ -195,7 +189,7 @@ export function AppSidebar({ erpMode = false }: AppSidebarProps) {
           <SidebarGroup>
             {!isCustomer && (
               <SidebarGroupLabel>
-                {erpMode ? "ERP Navigation" : "Warranty Portal"}
+                {erpMode ? "HRM Portal Navigation" : "Warranty Portal Navigation"}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>

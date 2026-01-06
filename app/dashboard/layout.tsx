@@ -106,7 +106,7 @@ export default function DashboardLayout({
                   onClick={toggleErpMode}
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
-                  {erpMode ? "ERP Mode On" : "Switch to ERP Mode"}
+                  {erpMode ? "Switch to Warranty Portal" : "Switch to HR Portal"}
                   <motion.span
                     className="absolute inset-0"
                     initial={false}

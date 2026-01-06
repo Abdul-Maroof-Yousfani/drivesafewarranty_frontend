@@ -466,70 +466,25 @@ export const warrantyPortalMenuData: MenuItem[] = [
     title: "Dealer Management",
     icon: Store,
     children: [
-      {
-        title: "Dealers",
-        children: [
-          { title: "Create", href: "/super-admin/dealers/create" },
-          { title: "List", href: "/super-admin/dealers/list" },
-        ],
-      },
+      { title: "Create", href: "/super-admin/dealers/create" },
+      { title: "List", href: "/super-admin/dealers/list" },
+      { title: "Warranties Assigned", href: "/super-admin/dealers/assigned-warranties" }, // Assuming a route or placeholder
     ],
   },
   {
     title: "Customer Management",
     icon: UserCheck,
     children: [
-      {
-        title: "Customers",
-        children: [
-          { title: "Create Customer", href: "/super-admin/customers/create" },
-          { title: "Customer List", href: "/super-admin/customers/list" },
-
-        ],
-      },
-      {
-        title: "Documents",
-        icon: FileCheck,
-        children: [
-          { title: "Upload Documents", href: "/super-admin/documents/upload" },
-          { title: "View Documents", href: "/super-admin/documents/view" },
-        ],
-      },
+      { title: "Customer", href: "/super-admin/customers/list" }, // Combined create/list into list or main view as per request "customer (ispe click krengy to list show hogi...)"
+      { title: "Documents", href: "/super-admin/documents/view" }, // Combined upload/view or mostly view
     ],
   },
   {
     title: "Warranty Management",
     icon: ShieldCheck,
     children: [
-      {
-        title: "Warranty Packages",
-        icon: Package,
-        children: [
-          {
-            title: "Create Package",
-            href: "/super-admin/warranty-packages/create",
-          },
-          {
-            title: "Package List",
-            href: "/super-admin/warranty-packages/list",
-          },
-        ],
-      },
-      {
-        title: "Warranty Sales",
-        icon: ShieldCheck,
-        children: [
-          {
-            title: "Create Warranty Sale",
-            href: "/super-admin/warranty-sales/create",
-          },
-          {
-            title: "Warranty Sales List",
-            href: "/super-admin/warranty-sales/list",
-          },
-
-        ],
-      },
+      { title: "Warranty Packages", href: "/super-admin/warranty-packages/list" },
+      { title: "Warranty Sales", href: "/super-admin/warranty-sales/list" },
     ],
   },
   {
@@ -585,13 +540,8 @@ export const warrantyPortalMenuData: MenuItem[] = [
     title: "Settings",
     icon: Settings,
     children: [
-      {
-        title: "Account Settings",
-        children: [
-          { title: "Change Password", href: "/super-admin/settings/password" },
-          { title: "Edit Profile", href: "/super-admin/settings/profile" },
-        ],
-      },
+      { title: "Change Password", href: "/super-admin/settings/password" },
+      { title: "Edit Profile", href: "/super-admin/settings/profile" },
     ],
   },
 ];
