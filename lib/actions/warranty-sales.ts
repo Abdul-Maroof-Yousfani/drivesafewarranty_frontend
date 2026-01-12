@@ -1,5 +1,7 @@
 "use server";
 
+import { headers } from "next/headers";
+
 import { getAccessToken } from "@/lib/auth";
 import { API_BASE } from "./constants";
 
@@ -79,9 +81,16 @@ export async function getWarrantySalesAction(): Promise<{
 }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/warranty-sales`, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
     });
 
     if (!res.ok) {
@@ -109,9 +118,16 @@ export async function getWarrantySaleByIdAction(
 ): Promise<{ status: boolean; data?: WarrantySale; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/warranty-sales/${id}`, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
     });
 
     if (!res.ok) {
@@ -142,11 +158,16 @@ export async function updateWarrantySaleAction(
 ): Promise<{ status: boolean; data?: WarrantySale; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/warranty-sales/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
       },
       body: JSON.stringify(payload),
     });
@@ -171,9 +192,16 @@ export async function deleteWarrantySaleAction(
 ): Promise<{ status: boolean; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/warranty-sales/${id}`, {
       method: "DELETE",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
     });
 
     if (!res.ok) {
@@ -211,11 +239,16 @@ export async function createMasterWarrantySaleAction(payload: {
 }): Promise<{ status: boolean; data?: WarrantySale; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/warranty-sales`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
       },
       body: JSON.stringify(payload),
     });

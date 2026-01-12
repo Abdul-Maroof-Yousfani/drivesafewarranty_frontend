@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import DataTable from "@/components/common/data-table";
 import { ListSkeleton } from "@/components/dashboard/list-skeleton";
 import { getDealerWarrantySalesAction } from "@/lib/actions/dealer-warranty-sales";
 import { DealerSaleRow, columns } from "./columns";
 
 export default function DealerWarrantySalesListPage() {
+  const router = useRouter();
   const [data, setData] = useState<DealerSaleRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -64,6 +66,8 @@ export default function DealerWarrantySalesListPage() {
       <DataTable
         columns={columns}
         data={data}
+        actionText="Add"
+        toggleAction={() => router.push("/dealer/warranty-sales/create")}
         searchFields={[
           { key: "policyNumber", label: "id" },
           { key: "packageName", label: "Package" },

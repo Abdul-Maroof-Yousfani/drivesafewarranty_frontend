@@ -64,13 +64,13 @@ export function HeaderUserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings/profile">
+            <Link href={user.role === 'customer' ? '/customer/settings/profile' : '/dashboard/settings/profile'}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings/password">
+            <Link href={user.role === 'customer' ? '/customer/settings/password' : '/dashboard/settings/password'}>
               <Key className="mr-2 h-4 w-4" />
               Change Password
             </Link>

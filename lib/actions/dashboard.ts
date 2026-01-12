@@ -1,5 +1,7 @@
 "use server";
 
+import { headers } from "next/headers";
+
 import { getAccessToken } from "@/lib/auth";
 
 import { API_BASE } from "./constants";
@@ -26,9 +28,16 @@ export async function getSuperAdminDashboardStatsAction(): Promise<{
 }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dashboard/super-admin`, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: { 
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
+      },
     });
     return res.json();
   } catch (error) {
@@ -52,9 +61,16 @@ export async function getDealerDashboardStatsAction(): Promise<{
 }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dashboard/dealer`, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: { 
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
+      },
     });
     return res.json();
   } catch (error) {
@@ -69,9 +85,16 @@ export async function getCustomerDashboardStatsAction(): Promise<{
 }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dashboard/customer`, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: { 
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
+      },
     });
     return res.json();
   } catch (error) {

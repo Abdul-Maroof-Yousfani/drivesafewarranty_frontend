@@ -36,7 +36,10 @@ import { getDealers } from "@/lib/actions/dealer";
 import {
   getWarrantyPackagesAction,
   assignWarrantyPackageToDealer,
+  getWarrantyItemsAction,
 } from "@/lib/actions/warranty-package";
+import { Customer } from "@/lib/actions/customer";
+import { WarrantyPackage } from "@/lib/actions/warranty-package";
 import { createMasterWarrantySaleAction } from "@/lib/actions/warranty-sales";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
@@ -88,6 +91,7 @@ const warrantySaleSchema = z
       .optional(),
     coverageStartDate: z.string().min(1, "Coverage start date is required"),
     vehicleId: z.string().optional(),
+    includedBenefits: z.array(z.string()).default([]),
   })
   .refine(
     (data) => {
@@ -122,14 +126,29 @@ const warrantySaleSchema = z
 
 type WarrantySaleFormValues = z.infer<typeof warrantySaleSchema>;
 
+function normalizeToastMessage(value: unknown): string | undefined {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.filter(Boolean).join(", ");
+  if (value && typeof value === "object" && "message" in value) {
+    const msg = (value as any).message;
+    if (typeof msg === "string") return msg;
+    if (Array.isArray(msg)) return msg.filter(Boolean).join(", ");
+  }
+  return undefined;
+}
+
 export default function CreateWarrantySalePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [dealers, setDealers] = useState<any[]>([]);
-  const [packages, setPackages] = useState<any[]>([]);
-  const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
+  const [packages, setPackages] = useState<WarrantyPackage[]>([]);
+  const [selectedPackage, setSelectedPackage] =
+    useState<WarrantyPackage | null>(null);
+  const [warrantyItems, setWarrantyItems] = useState<
+    { id: string; label: string; type: string }[]
+  >([]);
   const hasAppliedQueryDefaultsRef = useRef(false);
 
   const form = useForm<WarrantySaleFormValues>({
@@ -152,26 +171,104 @@ export default function CreateWarrantySalePage() {
       dealerPrice36Months: null,
       paymentMethod: "cash",
       customerConsent: false,
-      mileageAtSale: null,
       coverageStartDate: new Date().toISOString().split("T")[0],
       vehicleId: "",
+      includedBenefits: [],
     },
   });
 
   const selectedCustomerId = form.watch("customerId");
   const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
+  const availableVehicles = selectedCustomer?.vehicles || [];
+  const selectedVehicle = availableVehicles.find(
+    (v) => v.id === form.watch("vehicleId")
+  );
 
   const assignType = form.watch("assignTo");
+  const [eligibilityStatus, setEligibilityStatus] = useState<{
+    eligible: boolean;
+    messages: string[];
+  } | null>(null);
 
-  // Load customers, dealers and packages for selection
+  useEffect(() => {
+    if (selectedPackage && selectedVehicle) {
+      const messages: string[] = [];
+      let eligible = true;
+
+      if (
+        selectedPackage.eligibilityMileageValue !== null &&
+        selectedPackage.eligibilityMileageValue !== undefined &&
+        selectedVehicle.mileage !== undefined &&
+        selectedVehicle.mileage !== null
+      ) {
+        if (selectedPackage.eligibilityMileageComparator === "lt") {
+          if (
+            selectedVehicle.mileage >= selectedPackage.eligibilityMileageValue
+          ) {
+            eligible = false;
+            messages.push(
+              `Vehicle mileage (${selectedVehicle.mileage}) exceeds limit (${selectedPackage.eligibilityMileageValue})`
+            );
+          }
+        } else if (selectedPackage.eligibilityMileageComparator === "gt") {
+          if (
+            selectedVehicle.mileage <= selectedPackage.eligibilityMileageValue
+          ) {
+            eligible = false;
+            messages.push(
+              `Vehicle mileage (${selectedVehicle.mileage}) is below required (${selectedPackage.eligibilityMileageValue})`
+            );
+          }
+        }
+      }
+
+      if (
+        selectedPackage.eligibilityVehicleAgeYearsMax !== null &&
+        selectedPackage.eligibilityVehicleAgeYearsMax !== undefined &&
+        selectedVehicle.year
+      ) {
+        const currentYear = new Date().getFullYear();
+        const age = currentYear - selectedVehicle.year;
+        if (age > selectedPackage.eligibilityVehicleAgeYearsMax) {
+          eligible = false;
+          messages.push(
+            `Vehicle age (${age} years) exceeds limit (${selectedPackage.eligibilityVehicleAgeYearsMax} years)`
+          );
+        }
+      }
+
+      if (
+        selectedPackage.eligibilityTransmission &&
+        selectedVehicle.transmission
+      ) {
+        const packageTransmission = String(selectedPackage.eligibilityTransmission);
+        if (
+          packageTransmission.toLowerCase() !==
+          String(selectedVehicle.transmission || "").toLowerCase()
+        ) {
+          eligible = false;
+          messages.push(
+            `Vehicle transmission (${selectedVehicle.transmission}) does not match package (${selectedPackage.eligibilityTransmission})`
+          );
+        }
+      }
+
+      setEligibilityStatus({ eligible, messages });
+    } else {
+      setEligibilityStatus(null);
+    }
+  }, [selectedPackage, selectedVehicle]);
+
   useEffect(() => {
     (async () => {
       try {
-        const [customersRes, dealersRes, packagesRes] = await Promise.all([
-          getCustomers(),
-          getDealers(),
-          getWarrantyPackagesAction(),
-        ]);
+        const [customersRes, dealersRes, packagesRes, itemsRes] =
+          await Promise.all([
+            getCustomers(),
+            getDealers(),
+            getWarrantyPackagesAction(),
+            getWarrantyItemsAction(),
+          ]);
 
         if (customersRes.status && customersRes.data) {
           setCustomers(customersRes.data);
@@ -181,6 +278,9 @@ export default function CreateWarrantySalePage() {
         }
         if (packagesRes.status && packagesRes.data) {
           setPackages(packagesRes.data);
+        }
+        if (itemsRes.status && itemsRes.data) {
+          setWarrantyItems(itemsRes.data);
         }
       } catch (e) {
         console.error("Failed to load assignment data", e);
@@ -266,14 +366,13 @@ export default function CreateWarrantySalePage() {
       } else if (pkg.price != null) {
         // Fallback for flat price packages
         form.setValue("price", Number(pkg.price));
-        // Default duration if not specified?
-        form.setValue(
-          "duration",
-          pkg.coverageDuration
-            ? pkg.coverageDuration / 30 / 24 / 60 / 60 / 1000
-            : 12
-        ); // Approximate or default
       }
+      const defaultBenefitIds = Array.isArray(pkg.items)
+        ? pkg.items
+            .filter((it) => it.type === "benefit")
+            .map((it) => it.warrantyItem.id)
+        : [];
+      form.setValue("includedBenefits", defaultBenefitIds);
     }
   };
 
@@ -307,13 +406,24 @@ export default function CreateWarrantySalePage() {
           warrantyPackageId: data.warrantyPackageId,
           duration: data.duration,
           // Package operational settings
-          excess: data.excess ?? null,
-          labourRatePerHour: data.labourRatePerHour ?? null,
-          fixedClaimLimit: data.fixedClaimLimit ?? null,
+          ...(data.excess != null ? { excess: data.excess } : {}),
+          ...(data.labourRatePerHour != null
+            ? { labourRatePerHour: data.labourRatePerHour }
+            : {}),
+          ...(data.fixedClaimLimit != null
+            ? { fixedClaimLimit: data.fixedClaimLimit }
+            : {}),
           // Dealer internal prices (cost to dealer - editable by SA)
-          dealerPrice12Months: data.dealerPrice12Months ?? null,
-          dealerPrice24Months: data.dealerPrice24Months ?? null,
-          dealerPrice36Months: data.dealerPrice36Months ?? null,
+          ...(data.dealerPrice12Months != null
+            ? { dealerPrice12Months: data.dealerPrice12Months }
+            : {}),
+          ...(data.dealerPrice36Months != null
+            ? { dealerPrice36Months: data.dealerPrice36Months }
+            : {}),
+          ...(Array.isArray(data.includedBenefits) &&
+          data.includedBenefits.length > 0
+            ? { includedBenefits: data.includedBenefits }
+            : {}),
           // Note: Customer prices are fixed from master package, not sent
         });
         if (result.status) {
@@ -321,7 +431,10 @@ export default function CreateWarrantySalePage() {
             result.message || "Warranty package assigned to dealer successfully"
           );
         } else {
-          toast.error(result.message || "Failed to assign package to dealer");
+          toast.error(
+            normalizeToastMessage(result.message) ||
+              "Failed to assign package to dealer"
+          );
           setLoading(false);
           return;
         }
@@ -336,22 +449,41 @@ export default function CreateWarrantySalePage() {
           warrantyPackageId: data.warrantyPackageId,
           price: data.price,
           duration: data.duration,
-          excess: data.excess ?? null,
-          labourRatePerHour: data.labourRatePerHour ?? null,
-          fixedClaimLimit: data.fixedClaimLimit ?? null,
-          price12Months: data.price12Months ?? null,
-          price24Months: data.price24Months ?? null,
-          price36Months: data.price36Months ?? null,
-          paymentMethod: data.paymentMethod,
-          customerConsent: data.customerConsent,
-          mileageAtSale: data.mileageAtSale,
-          coverageStartDate: data.coverageStartDate,
-          vehicleId: data.vehicleId,
+          ...(data.excess != null ? { excess: data.excess } : {}),
+          ...(data.labourRatePerHour != null
+            ? { labourRatePerHour: data.labourRatePerHour }
+            : {}),
+          ...(data.fixedClaimLimit != null
+            ? { fixedClaimLimit: data.fixedClaimLimit }
+            : {}),
+          ...(data.price12Months != null
+            ? { price12Months: data.price12Months }
+            : {}),
+          ...(data.price24Months != null
+            ? { price24Months: data.price24Months }
+            : {}),
+          ...(data.price36Months != null
+            ? { price36Months: data.price36Months }
+            : {}),
+          ...(data.paymentMethod ? { paymentMethod: data.paymentMethod } : {}),
+          ...(data.customerConsent ? { customerConsent: data.customerConsent } : {}),
+          ...(data.mileageAtSale != null ? { mileageAtSale: data.mileageAtSale } : {}),
+          ...(data.coverageStartDate
+            ? { coverageStartDate: data.coverageStartDate }
+            : {}),
+          ...(data.vehicleId ? { vehicleId: data.vehicleId } : {}),
+          ...(Array.isArray(data.includedBenefits) &&
+          data.includedBenefits.length > 0
+            ? { includedBenefits: data.includedBenefits }
+            : {}),
         });
         if (result.status) {
           toast.success("Warranty package assigned to customer successfully");
         } else {
-          toast.error(result.message || "Failed to assign package to customer");
+          toast.error(
+            normalizeToastMessage(result.message) ||
+              "Failed to assign package to customer"
+          );
           setLoading(false);
           return;
         }
@@ -492,22 +624,14 @@ export default function CreateWarrantySalePage() {
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue>
-                                    {form.watch("vehicleId")
-                                      ? selectedCustomer.vehicles.find(
-                                          (v: any) =>
-                                            v.id === form.watch("vehicleId")
-                                        )?.make +
-                                        " " +
-                                        selectedCustomer.vehicles.find(
-                                          (v: any) =>
-                                            v.id === form.watch("vehicleId")
-                                        )?.model
+                                    {selectedVehicle
+                                      ? `${selectedVehicle.make} ${selectedVehicle.model}`
                                       : "Select vehicle"}
                                   </SelectValue>
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {selectedCustomer.vehicles.map((v: any) => (
+                                {selectedCustomer.vehicles.map((v) => (
                                   <SelectItem key={v.id} value={v.id}>
                                     {v.make} {v.model} (
                                     {v.registrationNumber || v.vin || v.year})
@@ -595,6 +719,62 @@ export default function CreateWarrantySalePage() {
                   </FormItem>
                 )}
               />
+
+              {eligibilityStatus && (
+                <div
+                  className={`rounded-md p-4 border ${
+                    eligibilityStatus.eligible
+                      ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300"
+                      : "bg-destructive/10 border-destructive/20 text-destructive dark:bg-destructive/20 dark:border-destructive/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-medium">
+                    {eligibilityStatus.eligible ? (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-5 w-5"
+                        >
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                          <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                        Vehicle is eligible for this package
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-5 w-5"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="15" y1="9" x2="9" y2="15" />
+                          <line x1="9" y1="9" x2="15" y2="15" />
+                        </svg>
+                        Vehicle is NOT eligible
+                      </>
+                    )}
+                  </div>
+                  {!eligibilityStatus.eligible && (
+                    <ul className="mt-2 list-disc pl-5 text-sm">
+                      {eligibilityStatus.messages.map((msg, idx) => (
+                        <li key={idx}>{msg}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
 
               {selectedPackage && (
                 <div className="space-y-4 rounded-md border p-4 bg-muted/20">
@@ -1001,10 +1181,10 @@ export default function CreateWarrantySalePage() {
                                       )}
                                     </FormLabel>
                                   </FormItem>
-                                )}
-                            </RadioGroup>
-                          </FormControl>
-                          <FormMessage />
+                  {assignType === "customer" && (
+                    <div className="space-y-4 pt-4 border-t mt-4">
+                      <h4 className="font-medium text-sm">Sale Details</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         </FormItem>
                       )}
                     />
@@ -1094,16 +1274,27 @@ export default function CreateWarrantySalePage() {
                               <div className="space-y-1 leading-none">
                                 <FormLabel>
                                   Customer Agreement & Acceptance of Terms
-                                </FormLabel>
-                                <FormDescription>
-                                  I confirm that the customer has read and
-                                  agreed to the terms and conditions.
-                                </FormDescription>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
                       </div>
+                    </div>
+                  )}
+                                    >
+                                      <Checkbox
+            </CardContent>
+          </Card>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          )}
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
+                      />
                     </div>
                   )}
                 </div>

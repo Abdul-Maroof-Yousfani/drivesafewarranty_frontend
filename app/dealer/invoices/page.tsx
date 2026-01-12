@@ -159,7 +159,7 @@ export default function DealerInvoicesPage() {
                                             const isPaid = inv.status === "paid";
                                             return (
                                                 <TableRow key={inv.id}>
-                                                    <TableCell className="font-medium text-emerald-600">
+                                                    <TableCell className="font-medium text-white-600">
                                                         {inv.invoiceNumber}
                                                     </TableCell>
                                                     <TableCell>
@@ -168,7 +168,7 @@ export default function DealerInvoicesPage() {
                                                     <TableCell>
                                                         {inv.warrantySale?.warrantyPackage?.name || "Warranty Sale"}
                                                     </TableCell>
-                                                    <TableCell className="font-bold text-slate-900">
+                                                    <TableCell className="font-bold text-white-900">
                                                         {formatCurrency(inv.amount)}
                                                     </TableCell>
                                                     <TableCell>

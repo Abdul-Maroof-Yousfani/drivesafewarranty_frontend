@@ -33,6 +33,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Customer } from "@/lib/actions/customer";
+import { WarrantyPackage } from "@/lib/actions/warranty-package";
 import { getDealerCustomersAction } from "@/lib/actions/dealer-customer";
 import { getDealerWarrantyPackagesAction } from "@/lib/actions/warranty-package";
 import { createDealerWarrantySaleAction } from "@/lib/actions/dealer-warranty-sales";
@@ -43,8 +45,14 @@ const dealerSaleSchema = z.object({
   customerId: z.string().min(1, "Please select a customer"),
   vehicleId: z.string().min(1, "Please select a vehicle"),
   warrantyPackageId: z.string().min(1, "Please select a package"),
-  price: z.coerce.number().min(0, "Price must be a non‑negative number").max(50000, "Price is too high"),
-  duration: z.coerce.number().min(1, "Duration is required").max(120, "Duration is too long"),
+  price: z.coerce
+    .number()
+    .min(0, "Price must be a non‑negative number")
+    .max(50000, "Price is too high"),
+  duration: z.coerce
+    .number()
+    .min(1, "Duration is required")
+    .max(120, "Duration is too long"),
   // New fields for package assignment
   excess: z.coerce
     .number()
@@ -61,11 +69,16 @@ const dealerSaleSchema = z.object({
   price12Months: z.coerce.number().min(0).nullable().optional(),
   price24Months: z.coerce.number().min(0).nullable().optional(),
   price36Months: z.coerce.number().min(0).nullable().optional(),
-  customerConsent: z.boolean().refine(val => val === true, {
+  customerConsent: z.boolean().refine((val) => val === true, {
     message: "Customer consent is required",
   }),
   customerSignature: z.string().optional().nullable(),
-  mileageAtSale: z.coerce.number().min(0, "Mileage must be non-negative").max(1000000, "Mileage is too high").nullable().optional(),
+  mileageAtSale: z.coerce
+    .number()
+    .min(0, "Mileage must be non-negative")
+    .max(1000000, "Mileage is too high")
+    .nullable()
+    .optional(),
   salesRepresentativeName: z.string().optional().nullable(),
   paymentMethod: z.enum(["cash", "card", "bank_transfer", "finance"]),
   coverageStartDate: z.string().min(1, "Coverage start date is required"),
@@ -134,7 +147,6 @@ function NumberInputField({
     />
   );
 }
-  
 
 export default function DealerCreateWarrantySalePage() {
   const router = useRouter();
@@ -164,13 +176,85 @@ export default function DealerCreateWarrantySalePage() {
       mileageAtSale: null,
       salesRepresentativeName: "",
       paymentMethod: "cash",
-      coverageStartDate: new Date().toISOString().split('T')[0], // Default today
+      coverageStartDate: new Date().toISOString().split("T")[0], // Default today
     },
   });
 
   const selectedCustomerId = form.watch("customerId");
   const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
   const availableVehicles = selectedCustomer?.vehicles || [];
+
+  const selectedVehicle = availableVehicles.find(
+    (v: any) => v.id === form.watch("vehicleId")
+  );
+  const [eligibilityStatus, setEligibilityStatus] = useState<{
+    eligible: boolean;
+    messages: string[];
+  } | null>(null);
+
+  useEffect(() => {
+    if (pkg && selectedVehicle) {
+      const messages: string[] = [];
+      let eligible = true;
+
+      // Check Mileage
+      if (
+        pkg.eligibilityMileageValue !== null &&
+        pkg.eligibilityMileageValue !== undefined &&
+        selectedVehicle.mileage
+      ) {
+        if (pkg.eligibilityMileageComparator === "lt") {
+          if (selectedVehicle.mileage >= pkg.eligibilityMileageValue) {
+            eligible = false;
+            messages.push(
+              `Vehicle mileage (${selectedVehicle.mileage}) exceeds limit (${pkg.eligibilityMileageValue})`
+            );
+          }
+        } else if (pkg.eligibilityMileageComparator === "gt") {
+          if (selectedVehicle.mileage <= pkg.eligibilityMileageValue) {
+            eligible = false;
+            messages.push(
+              `Vehicle mileage (${selectedVehicle.mileage}) is below required (${pkg.eligibilityMileageValue})`
+            );
+          }
+        }
+      }
+
+      // Check Age
+      if (
+        pkg.eligibilityVehicleAgeYearsMax !== null &&
+        pkg.eligibilityVehicleAgeYearsMax !== undefined &&
+        selectedVehicle.year
+      ) {
+        const currentYear = new Date().getFullYear();
+        const age = currentYear - selectedVehicle.year;
+        if (age > pkg.eligibilityVehicleAgeYearsMax) {
+          eligible = false;
+          messages.push(
+            `Vehicle age (${age} years) exceeds limit (${pkg.eligibilityVehicleAgeYearsMax} years)`
+          );
+        }
+      }
+
+      // Check Transmission
+      if (pkg.eligibilityTransmission && selectedVehicle.transmission) {
+        if (
+          pkg.eligibilityTransmission !== "any" &&
+          pkg.eligibilityTransmission.toLowerCase() !==
+            selectedVehicle.transmission.toLowerCase()
+        ) {
+          eligible = false;
+          messages.push(
+            `Vehicle transmission (${selectedVehicle.transmission}) does not match package (${pkg.eligibilityTransmission})`
+          );
+        }
+      }
+
+      setEligibilityStatus({ eligible, messages });
+    } else {
+      setEligibilityStatus(null);
+    }
+  }, [pkg, selectedVehicle]);
 
   const handlePackageSelect = (packageId: string) => {
     const selectedPkg = packages.find((p) => p.id === packageId);
@@ -228,9 +312,12 @@ export default function DealerCreateWarrantySalePage() {
           setPackages(packagesRes.data);
 
           const packageId =
-            searchParams.get("packageId") || searchParams.get("warrantyPackageId");
+            searchParams.get("packageId") ||
+            searchParams.get("warrantyPackageId");
           if (packageId) {
-            const found = packagesRes.data.find((p: any) => p.id === packageId);
+            const found = packagesRes.data.find(
+              (p: WarrantyPackage) => p.id === packageId
+            );
             if (found) {
               setPkg(found);
 
@@ -325,7 +412,6 @@ export default function DealerCreateWarrantySalePage() {
         </p>
       </div>
 
-
       <Card>
         <CardHeader>
           <CardTitle>Assignment Details</CardTitle>
@@ -376,7 +462,11 @@ export default function DealerCreateWarrantySalePage() {
                     <FormItem>
                       <FormLabel>Sales Representative Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter name" {...field} value={field.value || ""} />
+                        <Input
+                          placeholder="Enter name"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -477,7 +567,6 @@ export default function DealerCreateWarrantySalePage() {
                     )}
                   />
 
-
                   <FormField
                     control={form.control}
                     name="paymentMethod"
@@ -497,7 +586,9 @@ export default function DealerCreateWarrantySalePage() {
                           <SelectContent>
                             <SelectItem value="cash">Cash</SelectItem>
                             <SelectItem value="card">Card</SelectItem>
-                            <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                            <SelectItem value="bank_transfer">
+                              Bank Transfer
+                            </SelectItem>
                             <SelectItem value="finance">Finance</SelectItem>
                           </SelectContent>
                         </Select>
@@ -507,8 +598,6 @@ export default function DealerCreateWarrantySalePage() {
                   />
                 </div>
               )}
-
-              
 
               <FormField
                 control={form.control}
@@ -525,7 +614,6 @@ export default function DealerCreateWarrantySalePage() {
                       defaultValue={field.value}
                       value={field.value}
                     >
-                      
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select customer" />
@@ -543,7 +631,6 @@ export default function DealerCreateWarrantySalePage() {
                   </FormItem>
                 )}
               />
-             
 
               {/* Vehicle Selection */}
               {selectedCustomerId && (
@@ -558,7 +645,6 @@ export default function DealerCreateWarrantySalePage() {
                         defaultValue={field.value}
                         value={field.value}
                       >
-                      
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select vehicle" />
@@ -566,9 +652,10 @@ export default function DealerCreateWarrantySalePage() {
                         </FormControl>
                         <SelectContent>
                           {availableVehicles.length > 0 ? (
-                            availableVehicles.map((v: any) => (
+                            availableVehicles.map((v) => (
                               <SelectItem key={v.id} value={v.id}>
-                                {v.make} {v.model} ({v.year}) - {v.registrationNumber || "No Reg"}
+                                {v.make} {v.model} ({v.year}) -{" "}
+                                {v.registrationNumber || "No Reg"}
                               </SelectItem>
                             ))
                           ) : (
@@ -583,7 +670,65 @@ export default function DealerCreateWarrantySalePage() {
                   )}
                 />
               )}
- <FormField
+
+              {/* Eligibility Status Display */}
+              {eligibilityStatus && (
+                <div
+                  className={`rounded-md p-4 border ${
+                    eligibilityStatus.eligible
+                      ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300"
+                      : "bg-destructive/10 border-destructive/20 text-destructive dark:bg-destructive/20 dark:border-destructive/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-medium">
+                    {eligibilityStatus.eligible ? (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-5 w-5"
+                        >
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                          <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                        Vehicle is eligible for this package
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-5 w-5"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="15" y1="9" x2="9" y2="15" />
+                          <line x1="9" y1="9" x2="15" y2="15" />
+                        </svg>
+                        Vehicle is NOT eligible
+                      </>
+                    )}
+                  </div>
+                  {!eligibilityStatus.eligible && (
+                    <ul className="mt-2 list-disc pl-5 text-sm">
+                      {eligibilityStatus.messages.map((msg, idx) => (
+                        <li key={idx}>{msg}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              <FormField
                 control={form.control}
                 name="customerConsent"
                 render={({ field }) => (
@@ -595,7 +740,9 @@ export default function DealerCreateWarrantySalePage() {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Customer Agreement & Acceptance of Terms</FormLabel>
+                      <FormLabel>
+                        Customer Agreement & Acceptance of Terms
+                      </FormLabel>
                       <FormDescription>
                         I confirm that the customer has read and agreed to the
                         terms and conditions.

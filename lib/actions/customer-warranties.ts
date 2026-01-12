@@ -1,5 +1,7 @@
 "use server";
 
+import { headers } from "next/headers";
+
 import { getAccessToken } from "@/lib/auth";
 
 import { API_BASE } from "./constants";
@@ -62,17 +64,53 @@ export async function getCustomerWarrantySalesAction(): Promise<{
 }> {
   try {
     const token = await getAccessToken();
+    
+    // Inject Host header for backend portal validation
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/customer/my-warranties`, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: { 
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
+      },
     });
-    return res.json();
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      console.error("Failed to fetch customer warranties:", res.status, errorData);
+      return {
+        status: false,
+        data: [],
+        message: errorData.message || `Failed to fetch warranties (${res.status})`,
+      };
+    }
+
+    const result = await res.json();
+    
+    // Ensure data is always an array
+    if (result.status && Array.isArray(result.data)) {
+      return {
+        status: true,
+        data: result.data,
+        message: result.message,
+      };
+    }
+
+    // Handle case where API returns data but not in expected format
+    return {
+      status: result.status || false,
+      data: Array.isArray(result.data) ? result.data : [],
+      message: result.message || "Invalid response format",
+    };
   } catch (error) {
     console.error("Failed to fetch customer warranties:", error);
     return {
       status: false,
       data: [],
-      message: "Failed to fetch warranties",
+      message: error instanceof Error ? error.message : "Failed to fetch warranties",
     };
   }
 }

@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const CHECK_INTERVAL = 60 * 1000; // Check every 60 seconds
+const CHECK_INTERVAL = 1 * 60 * 1000; // Check every 1 minutes
 
 export function SessionChecker() {
   const router = useRouter();
@@ -22,9 +22,31 @@ export function SessionChecker() {
   const performCheck = useCallback(async () => {
     try {
       const res = await fetch("/api/auth/check-session");
-      const data = await res.json();
-      if (!data.valid) {
+
+      if (res.status === 401) {
         setSessionExpired(true);
+        return;
+      }
+      if (!res.ok) {
+        if (res.status >= 500) {
+          console.error(`[SessionChecker] API returned status: ${res.status}`);
+        }
+        return;
+      }
+
+      const text = await res.text();
+      try {
+        const data = JSON.parse(text);
+        if (!data.valid) {
+          console.log("[SessionChecker] Session invalid:", data.reason);
+          setSessionExpired(true);
+        } else {
+          // Session is valid, reset expired state
+          setSessionExpired(false);
+        }
+      } catch (jsonErr) {
+        console.error("[SessionChecker] Failed to parse JSON:", jsonErr);
+        console.error("[SessionChecker] Response text was:", text);
       }
     } catch (error) {
       console.error("Session check failed:", error);
@@ -32,6 +54,12 @@ export function SessionChecker() {
   }, []);
 
   useEffect(() => {
+    // Don't check if we're on login page
+    if (pathname === "/login") {
+      setSessionExpired(false);
+      return;
+    }
+
     // Initial check
     performCheck();
 
@@ -41,10 +69,17 @@ export function SessionChecker() {
     return () => {
       clearInterval(interval);
     };
-  }, [performCheck]);
+  }, [performCheck, pathname]);
 
   const handleLogin = () => {
-    const callbackUrl = encodeURIComponent(pathname || "/dashboard");
+    // Close the dialog first
+    setSessionExpired(false);
+
+    // Get the current pathname or default to dashboard
+    const currentPath = pathname || "/dashboard";
+    const callbackUrl = encodeURIComponent(currentPath);
+
+    // Redirect to login page
     router.push(`/login?callbackUrl=${callbackUrl}`);
   };
 
@@ -66,4 +101,3 @@ export function SessionChecker() {
     </AlertDialog>
   );
 }
-

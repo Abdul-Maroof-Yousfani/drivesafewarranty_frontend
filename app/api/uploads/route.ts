@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const name = (file as any).name || "upload";
     fd.append("file", file, name);
 
-    const res = await fetch(apiUrl("/uploads"), {
+    const res = await fetch(apiUrl("/upload/single?category=logos"), {
       method: "POST",
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: fd,
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     if (!json.status) {
       return NextResponse.json(json, { status: res.status });
     }
-    const url = json.data?.url || apiUrl(`/uploads/${json.data?.id}/download`);
+    const url = json.data?.url || apiUrl(`/upload/${json.data?.id}/download`);
     return NextResponse.json({ status: true, data: { ...json.data, url } });
   } catch (error: any) {
     return NextResponse.json({ status: false, message: error?.message || "Upload failed" }, { status: 500 });

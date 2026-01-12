@@ -468,7 +468,10 @@ export const warrantyPortalMenuData: MenuItem[] = [
     children: [
       { title: "Create", href: "/super-admin/dealers/create" },
       { title: "List", href: "/super-admin/dealers/list" },
-      { title: "Warranties Assigned", href: "/super-admin/dealers/assigned-warranties" }, // Assuming a route or placeholder
+      {
+        title: "Warranties Assigned",
+        href: "/super-admin/dealers/assigned-warranties",
+      }, // Assuming a route or placeholder
     ],
   },
   {
@@ -483,7 +486,11 @@ export const warrantyPortalMenuData: MenuItem[] = [
     title: "Warranty Management",
     icon: ShieldCheck,
     children: [
-      { title: "Warranty Packages", href: "/super-admin/warranty-packages/list" },
+      {
+        title: "Warranty Packages",
+        href: "/super-admin/warranty-packages/list",
+      },
+      // { title: "Plan Presets", href: "/super-admin/warranty-plan-presets" },
       { title: "Warranty Sales", href: "/super-admin/warranty-sales/list" },
     ],
   },
@@ -540,8 +547,8 @@ export const warrantyPortalMenuData: MenuItem[] = [
     title: "Settings",
     icon: Settings,
     children: [
-      { title: "Change Password", href: "/super-admin/settings/password" },
-      { title: "Edit Profile", href: "/super-admin/settings/profile" },
+      { title: "Change Password", href: "/dashboard/settings/password" },
+      { title: "Edit Profile", href: "/dashboard/settings/profile" },
     ],
   },
 ];

@@ -126,7 +126,7 @@ const defaultSettings: InvoiceSettingsFormValues = {
 import { InvoiceRenderer, InvoiceData } from "./invoice-renderer";
 
 const mockInvoiceData: InvoiceData = {
-  invoiceNumber: "#INV-00001",
+  invoiceNumber: "#INV-000000000000000",
   date: new Date().toLocaleDateString(),
   dueDate: new Date().toLocaleDateString(),
   billToName: "John Doe",
@@ -411,7 +411,9 @@ export function InvoiceBuilder() {
         if (uploadRes.status && uploadRes.data?.url) {
           finalLogoUrl = uploadRes.data.url;
         } else {
-          toast.error("Failed to upload logo, saving other settings...");
+          const errorMsg = uploadRes.message || "Failed to upload logo";
+          toast.error(`${errorMsg}. Saving other settings...`);
+          console.error("Logo upload error:", uploadRes);
         }
       }
 

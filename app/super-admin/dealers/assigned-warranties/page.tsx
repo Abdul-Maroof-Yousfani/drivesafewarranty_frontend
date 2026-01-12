@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  getAllInvoicesAction,
-  Invoice,
-  updateInvoiceAction,
-} from "@/lib/actions/invoices";
+import { getWarrantySalesAction, WarrantySale } from "@/lib/actions/warranty-sales";
 import { getDealers, Dealer } from "@/lib/actions/dealer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -21,15 +17,13 @@ import { formatCurrency } from "@/lib/utils";
 import {
   FileText,
   Loader2,
-  CheckCircle,
   Search,
-  Wallet,
-  Banknote,
-  Clock,
+  Settings,
+  ShieldCheck,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -39,46 +33,20 @@ import {
 } from "@/components/ui/select";
 
 export default function AssignedWarrantiesPage() {
-  // Settlement tab state
-  const [loadingInvoices, setLoadingInvoices] = useState(false);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loadingSales, setLoadingSales] = useState(false);
+  const [sales, setSales] = useState<WarrantySale[]>([]);
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [selectedDealerId, setSelectedDealerId] = useState<string>("");
 
-  // Calculate Summary Stats
-  const totalInvoices = invoices.length;
-  const totalAmount = invoices.reduce(
-    (sum, inv) => sum + Number(inv.amount),
-    0
-  );
-
-  const paidInvoicesList = invoices.filter((inv) => inv.status === "paid");
-  const paidCount = paidInvoicesList.length;
-  const paidAmount = paidInvoicesList.reduce(
-    (sum, inv) => sum + Number(inv.amount),
-    0
-  );
-
-  const pendingInvoicesList = invoices.filter(
-    (inv) => inv.status === "pending"
-  );
-  const pendingCount = pendingInvoicesList.length;
-  const pendingAmount = pendingInvoicesList.reduce(
-    (sum, inv) => sum + Number(inv.amount),
-    0
-  );
-
   useEffect(() => {
-    // Load initial data
     loadDealers();
   }, []);
 
   useEffect(() => {
-    // Load invoices when dealer selection changes
     if (selectedDealerId) {
-      loadInvoices(selectedDealerId === "all" ? undefined : selectedDealerId);
+      loadSales(selectedDealerId === "all" ? undefined : selectedDealerId);
     } else {
-      setInvoices([]);
+      setSales([]);
     }
   }, [selectedDealerId]);
 
@@ -89,35 +57,18 @@ export default function AssignedWarrantiesPage() {
     }
   };
 
-  const loadInvoices = async (dealerId?: string) => {
-    setLoadingInvoices(true);
-    const res = await getAllInvoicesAction({ dealerId }); // If dealerId is undefined, fetches all
+  const loadSales = async (dealerId?: string) => {
+    setLoadingSales(true);
+    const res = await getWarrantySalesAction();
     if (res.status && res.data) {
-      // Filter to ensure we only show invoices that HAVE a dealerId (settlements)
-      const settlementInvoices = res.data.invoices.filter(
-        (inv) => !!inv.dealerId
-      );
-      setInvoices(settlementInvoices);
-    }
-    setLoadingInvoices(false);
-  };
-
-  const handleMarkAsPaid = async (invoiceId: string, dealerId?: string) => {
-    try {
-      const res = await updateInvoiceAction(
-        invoiceId,
-        { status: "paid" },
-        dealerId
-      );
-      if (res.status) {
-        toast.success("Settlement marked as paid");
-        loadInvoices(selectedDealerId === "all" ? undefined : selectedDealerId); // Refresh list
-      } else {
-        toast.error(res.message || "Failed to update status");
+      // Filter for assignments: dealerId matches AND customerId is NULL
+      let filtered = res.data.filter((s) => !s.customerId && !!s.dealerId);
+      if (dealerId) {
+        filtered = filtered.filter((s) => s.dealerId === dealerId);
       }
-    } catch (error) {
-      toast.error("An error occurred");
+      setSales(filtered);
     }
+    setLoadingSales(false);
   };
 
   return (
@@ -125,13 +76,13 @@ export default function AssignedWarrantiesPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Warranties Assigned</h1>
         <p className="text-muted-foreground mt-2">
-            Manage dealer settlement statements and warranty assignments.
+            View packages and warranties directly assigned to dealers.
         </p>
       </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Dealer Settlement Statements</CardTitle>
+          <CardTitle>Dealer Assignments</CardTitle>
           <div className="w-[300px]">
             <Select
               value={selectedDealerId}
@@ -153,180 +104,87 @@ export default function AssignedWarrantiesPage() {
         </CardHeader>
         <CardContent>
           {!selectedDealerId ? (
-            <div className="text-center text-muted-foreground border-2 border-dashed rounded-lg p-8">
-              <Search className="h-8 w-8 mx-auto mb-4 opacity-20" />
-              <h3 className="text-lg font-medium">No Dealer Selected</h3>
-              <p>
-                Please select a dealer from the dropdown above to view their
-                settlement details.
+            <div className="text-center text-muted-foreground border-2 border-dashed rounded-lg p-12">
+              <Search className="h-12 w-12 mx-auto mb-4 opacity-20" />
+              <h3 className="text-xl font-medium">No Dealer Selected</h3>
+              <p className="mt-2 max-w-sm mx-auto">
+                Please select a dealer from the dropdown above to view the packages
+                assigned to them.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Summary Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800">
-                  <CardContent className="pt-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                        Total Invoices
-                      </p>
-                      <h4 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                        {formatCurrency(totalAmount)}
-                      </h4>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {totalInvoices} Invoices Total
-                      </p>
-                    </div>
-                    <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
-                      <Wallet className="h-5 w-5" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50">
-                  <CardContent className="pt-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                        Paid Amount
-                      </p>
-                      <h4 className="text-2xl font-bold text-emerald-800 dark:text-emerald-100">
-                        {formatCurrency(paidAmount)}
-                      </h4>
-                      <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                        {paidCount} Invoices Paid
-                      </p>
-                    </div>
-                    <div className="h-10 w-10 rounded-full bg-emerald-200 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-300">
-                      <Banknote className="h-5 w-5" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50">
-                  <CardContent className="pt-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                        Pending Amount
-                      </p>
-                      <h4 className="text-2xl font-bold text-amber-800 dark:text-amber-100">
-                        {formatCurrency(pendingAmount)}
-                      </h4>
-                      <p className="text-sm text-amber-600 dark:text-amber-400">
-                        {pendingCount} Invoices Due
-                      </p>
-                    </div>
-                    <div className="h-10 w-10 rounded-full bg-amber-200 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-300">
-                      <Clock className="h-5 w-5" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Invoices Table */}
-              {loadingInvoices ? (
-                <div className="flex justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              {loadingSales ? (
+                <div className="flex justify-center p-12">
+                  <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
                 </div>
-              ) : invoices.length === 0 ? (
-                <div className="text-center p-8 text-muted-foreground">
-                  No pending settlements found for this selection.
+              ) : sales.length === 0 ? (
+                <div className="text-center p-12 text-muted-foreground border rounded-lg bg-slate-50/50">
+                  No warranties found for this selection.
                 </div>
               ) : (
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Invoice #</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Dealer (Owed By)</TableHead>
+                        <TableHead>Policy #</TableHead>
+                        <TableHead>Assignment Date</TableHead>
+                        <TableHead>Dealer</TableHead>
                         <TableHead>Package</TableHead>
-                        <TableHead>Cost (Owed)</TableHead>
+                        <TableHead>Duration</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="text-right">
-                          Actions
-                        </TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {invoices.map((inv: Invoice) => {
-                        const isPaid = inv.status === "paid";
-                        return (
-                          <TableRow key={`inv-${inv.id}`}>
-                            <TableCell>{inv.invoiceNumber}</TableCell>
-                            <TableCell>
-                              {new Date(
-                                inv.invoiceDate
-                              ).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-col">
-                                <span className="font-medium">
-                                  {inv.dealer?.businessNameLegal}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {inv.dealer?.email}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {inv.warrantySale?.warrantyPackage?.name ||
-                                "N/A"}
-                            </TableCell>
-                            <TableCell className="font-bold ">
-                              {formatCurrency(inv.amount)}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                className={
-                                  isPaid
-                                    ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-                                    : "bg-amber-100 text-amber-700 hover:bg-amber-100"
-                                }
-                              >
-                                {inv.status === "paid"
-                                  ? "Paid"
-                                  : inv.status === "pending"
-                                  ? "Due"
-                                  : inv.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                {!isPaid && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                                    onClick={() =>
-                                      handleMarkAsPaid(inv.id, inv.dealerId)
-                                    }
-                                  >
-                                    <CheckCircle className="h-4 w-4 mr-2" />{" "}
-                                    Mark Paid
-                                  </Button>
-                                )}
-                                <Button asChild variant="default" size="sm">
-                                  <Link
-                                    href={`/invoices/${
-                                      inv.id
-                                    }?variant=settlement&dealerId=${
-                                      inv.dealerId ||
-                                      (selectedDealerId !== "all"
-                                        ? selectedDealerId
-                                        : "")
-                                    }`}
-                                    target="_blank"
-                                  >
-                                    <FileText className="h-4 w-4 mr-2" />{" "}
-                                    View
-                                  </Link>
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {sales.map((sale) => (
+                        <TableRow key={sale.id}>
+                          <TableCell className="font-medium text-blue-600">
+                            {sale.policyNumber}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center text-sm">
+                              <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                              {new Date(sale.saleDate).toLocaleDateString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {sale.dealer?.businessNameLegal}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {sale.dealer?.email}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <ShieldCheck className="h-4 w-4 mr-2 text-emerald-500" />
+                              {sale.warrantyPackage?.name || "N/A"}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                             {sale.price12Months ? "12 Months" : sale.price24Months ? "24 Months" : "36 Months"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={sale.status === "active" ? "default" : "secondary"}
+                              className={sale.status === "active" ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : ""}
+                            >
+                              {sale.status.toUpperCase()}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button asChild variant="outline" size="sm">
+                              <Link href={`/super-admin/warranty-sales/edit/${sale.id}`}>
+                                <Settings className="h-4 w-4 mr-2" />
+                                Manage
+                              </Link>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </div>

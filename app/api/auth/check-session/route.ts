@@ -1,94 +1,12 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { apiUrl } from "@/lib/actions/constants";
+import { checkSession } from "@/lib/auth";
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
-  const refreshToken = cookieStore.get("refreshToken")?.value;
-
-  if (!accessToken && !refreshToken) {
-    return NextResponse.json({ valid: false, reason: "no_tokens" });
+  const result = await checkSession();
+  
+  if (result.valid) {
+    return NextResponse.json({ valid: true });
   }
-
-  // Try with access token first
-  if (accessToken) {
-    try {
-      const res = await fetch(apiUrl("/auth/check-session"), {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
-      if (res.ok) {
-        return NextResponse.json({ valid: true });
-      }
-
-      // Token expired, try refresh
-      if (res.status === 401) {
-        const refreshed = await tryRefresh(refreshToken, cookieStore);
-        if (refreshed) {
-          return NextResponse.json({ valid: true });
-        }
-      }
-    } catch (error) {
-      console.error("Session check error:", error);
-    }
-  }
-
-  // No access token, try refresh directly
-  if (refreshToken && !accessToken) {
-    const refreshed = await tryRefresh(refreshToken, cookieStore);
-    if (refreshed) {
-      return NextResponse.json({ valid: true });
-    }
-  }
-
-  // Clear invalid cookies
-  cookieStore.delete("accessToken");
-  cookieStore.delete("refreshToken");
-  cookieStore.delete("userRole");
-  cookieStore.delete("user");
 
   return NextResponse.json({ valid: false, reason: "session_expired" });
-}
-
-async function tryRefresh(
-  refreshToken: string | undefined,
-  cookieStore: any
-): Promise<boolean> {
-  if (!refreshToken) return false;
-
-  try {
-    const res = await fetch(apiUrl("/auth/refresh-token"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    const data = await res.json();
-
-    if (data.status && data.data) {
-      // Update cookies with new tokens
-      cookieStore.set("accessToken", data.data.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 2 * 60 * 60, // 2 hours (matches backend access token expiry)
-        path: "/",
-      });
-
-      cookieStore.set("refreshToken", data.data.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 24 * 60 * 60, // 1 day (session duration)
-        path: "/",
-      });
-
-      return true;
-    }
-  } catch (error) {
-    console.error("Token refresh error:", error);
-  }
-
-  return false;
 }

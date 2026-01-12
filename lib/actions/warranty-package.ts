@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { API_BASE } from "./constants";
 
 export interface WarrantyPackage {
@@ -9,6 +9,10 @@ export interface WarrantyPackage {
   description?: string | null;
   planLevel?: string | null;
   eligibility?: string | null;
+  eligibilityMileageComparator?: "gt" | "lt" | null;
+  eligibilityMileageValue?: number | null;
+  eligibilityVehicleAgeYearsMax?: number | null;
+  eligibilityTransmission?: "manual" | "automatic" | null;
   excess?: number | null;
   labourRatePerHour?: number | null;
   fixedClaimLimit?: number | null;
@@ -53,13 +57,64 @@ export async function getWarrantyItemsAction(): Promise<
     return { status: false, message: "Not authenticated" };
   }
   try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/warranty-items`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
       cache: "no-store",
     });
     return res.json();
   } catch (error) {
     return { status: false, message: "Failed to load warranty items" };
+  }
+}
+
+export async function createWarrantyItemAction(payload: {
+  label: string;
+  type: string;
+}): Promise<
+  ApiResponse<{ id: string; label: string; type: string; status: string }>
+> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+
+  try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/warranty-items`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || "Failed to create warranty item",
+      };
+    }
+
+    const json = await res.json();
+    return json;
+  } catch (error) {
+    return { status: false, message: "Network error or server unreachable" };
   }
 }
 
@@ -74,11 +129,16 @@ export async function createWarrantyPackageAction(
   }
 
   try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/warranty-packages`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
       },
       body: JSON.stringify(payload),
       cache: "no-store",
@@ -126,10 +186,15 @@ export async function getWarrantyPackagesAction(): Promise<
     return { status: false, message: "Not authenticated" };
   }
 
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+
   const res = await fetch(`${API_BASE}/warranty-packages`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
+      Host: host,
+      "X-Forwarded-Host": host,
     },
     cache: "no-store",
   });
@@ -148,11 +213,16 @@ export async function getDealerWarrantyPackagesAction(): Promise<
     return { status: false, message: "Not authenticated" };
   }
 
-  // Use the dealer-specific endpoint to ensure filtering
-  const res = await fetch(`${API_BASE}/dealer/warranty-packages`, {
+  // Dealer access is served via tenant context on the standard endpoint
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+
+  const res = await fetch(`${API_BASE}/warranty-packages?context=dealer`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
+      Host: host,
+      "X-Forwarded-Host": host,
     },
     cache: "no-store",
   });
@@ -181,11 +251,16 @@ export async function updateDealerPackagePriceAction(
   }
 
   try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/warranty-packages/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
       },
       body: JSON.stringify({ price }),
       cache: "no-store",
@@ -213,9 +288,14 @@ export async function getWarrantyPackageByIdAction(
   }
 
   try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/warranty-packages/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
       },
       cache: "no-store",
     });
@@ -254,11 +334,16 @@ export async function updateWarrantyPackageAction(
   }
 
   try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/warranty-packages/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
       },
       body: JSON.stringify(payload),
       cache: "no-store",
@@ -304,18 +389,44 @@ export async function assignWarrantyPackageToDealer(params: {
     return { status: false, message: "Not authenticated" };
   }
 
-  const res = await fetch(`${API_BASE}/warranty-packages/assign-to-dealer`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(params),
-    cache: "no-store",
-  });
+  try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
 
-  const json = await res.json();
-  return json;
+    const res = await fetch(`${API_BASE}/warranty-packages/assign-to-dealer`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
+      body: JSON.stringify(params),
+      cache: "no-store",
+    });
+
+    const raw = await res.text();
+    const parsed = (() => {
+      try {
+        return raw ? JSON.parse(raw) : {};
+      } catch {
+        return {};
+      }
+    })();
+
+    if (!res.ok) {
+      const message =
+        (typeof parsed?.message === "string" && parsed.message) ||
+        (Array.isArray(parsed?.message) && parsed.message.join(", ")) ||
+        (typeof parsed?.error === "string" && parsed.error) ||
+        `Error: ${res.status} ${res.statusText}`;
+      return { status: false, message };
+    }
+
+    return parsed;
+  } catch (error) {
+    return { status: false, message: "Network error or server unreachable" };
+  }
 }
 
 export async function deleteWarrantyPackageAction(
@@ -329,10 +440,15 @@ export async function deleteWarrantyPackageAction(
   }
 
   try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/warranty-packages/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
       },
     });
     return res.json();
@@ -378,10 +494,15 @@ export async function deleteDealerWarrantyPackageAction(
   }
 
   try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dealer/warranty-packages/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
       },
     });
     return res.json();
@@ -413,5 +534,95 @@ export async function deleteDealerWarrantyPackages(
   } catch (error) {
     console.error("Failed to delete dealer warranty packages:", error);
     return { status: false, message: "Failed to delete warranty packages" };
+  }
+}
+
+/**
+ * Get all warranty plan presets
+ */
+export async function getWarrantyPresetsAction(): Promise<
+  ApiResponse<WarrantyPackage[]>
+> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+
+  try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/warranty-packages/presets`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      return { status: false, message: "Failed to fetch presets" };
+    }
+
+    const json = await res.json();
+    return json;
+  } catch (error) {
+    return { status: false, message: "Failed to fetch presets" };
+  }
+}
+
+/**
+ * Create warranty package from preset with customizable benefits
+ */
+export async function createPackageFromPresetAction(
+  presetId: string,
+  payload: {
+    name: string;
+    keyBenefits?: string[];
+    includedFeatures?: string[];
+    dealerId?: string;
+  }
+): Promise<ApiResponse<WarrantyPackage>> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+
+  try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(
+      `${API_BASE}/warranty-packages/from-preset/${presetId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          Host: host,
+          "X-Forwarded-Host": host,
+        },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      }
+    );
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || "Failed to create package from preset",
+      };
+    }
+
+    const json = await res.json();
+    return json;
+  } catch (error) {
+    return { status: false, message: "Failed to create package from preset" };
   }
 }

@@ -26,6 +26,29 @@ export default function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   console.log(`[Middleware] Request: ${pathname}`);
 
+  // --- SUBDOMAIN VALIDATION (FIRST - Before anything else) ---
+  const host = request.headers.get("host") || "";
+  const hostname = host.split(":")[0]; // Remove port
+  const parts = hostname.split(".");
+  
+  // Check if there's a subdomain
+  const hasSubdomain = parts.length > 1 && parts[0] !== "localhost" && parts[0] !== "127";
+  
+  if (hasSubdomain) {
+    const subdomain = parts[0];
+    const allowedSubdomains = ["dealer", "customer"];
+    
+    // Block any subdomain that's not in the allowed list
+    if (!allowedSubdomains.includes(subdomain)) {
+      console.log(`[Middleware] Blocked invalid subdomain: ${subdomain}`);
+      // Redirect to main domain (no subdomain)
+      const mainDomain = parts.slice(1).join(".");
+      const port = request.nextUrl.port ? `:${request.nextUrl.port}` : "";
+      const mainUrl = `${request.nextUrl.protocol}//${mainDomain}${port}/login`;
+      return NextResponse.redirect(mainUrl);
+    }
+  }
+
   // Get tokens and role from cookies
   const accessToken = request.cookies.get("accessToken")?.value;
   const userRole = request.cookies.get("userRole")?.value;
@@ -39,8 +62,10 @@ export default function middleware(request: NextRequest): NextResponse {
   // Redirect authenticated users away from public routes (e.g. /login)
   if (isAuthenticated && isPublicRoute) {
     const target = getDashboardPath(userRole);
-    console.log(`[Middleware] Redirecting auth user from ${pathname} to ${target}`);
-    return NextResponse.redirect(new URL(target, request.url));
+    if (target !== pathname) {
+      console.log(`[Middleware] Redirecting auth user from ${pathname} to ${target}`);
+      return NextResponse.redirect(new URL(target, request.url));
+    }
   }
 
   // Redirect unauthenticated users trying to access protected routes
@@ -54,10 +79,39 @@ export default function middleware(request: NextRequest): NextResponse {
   if (isAuthenticated) {
     const role = userRole;
 
-    // Super Admin / Admin only areas
+    // --- SUBDOMAIN ENFORCEMENT ---
+    let portalType = "admin";
+    if (host.startsWith("dealer.")) portalType = "dealer";
+    else if (host.startsWith("customer.")) portalType = "customer";
+
     const isSuperAdminRoute =
       pathname.startsWith("/super-admin") ||
       pathname.startsWith("/dashboard/admin");
+    const isDealerRoute = pathname.startsWith("/dealer");
+    const isCustomerRoute = pathname.startsWith("/customer"); 
+    const isDashboardRoute = pathname.startsWith("/dashboard");
+
+    // 1. Enforce Portal Boundaries (Prevent Portal Crossing)
+    if (portalType === "dealer") {
+        if (isSuperAdminRoute || isCustomerRoute) {
+             console.log(`[Middleware] Blocked access to ${pathname} from Dealer Portal`);
+             return NextResponse.redirect(new URL("/dealer/dashboard", request.url));
+        }
+    } else if (portalType === "customer") {
+        // Block customers from accessing super-admin, dealer, and master dashboard routes
+        if (isSuperAdminRoute || isDealerRoute || isDashboardRoute) {
+             console.log(`[Middleware] Blocked access to ${pathname} from Customer Portal`);
+             return NextResponse.redirect(new URL("/customer/dashboard", request.url));
+        }
+    } else {
+        // Admin Portal (Main Domain)
+        if (isDealerRoute || isCustomerRoute) {
+             console.log(`[Middleware] Blocked access to ${pathname} from Admin Portal`);
+             return NextResponse.redirect(new URL("/super-admin/dashboard", request.url));
+        }
+    }
+
+    // 2. Enforce Role Access (Existing Logic)
     if (
       isSuperAdminRoute &&
       role !== "super_admin" &&
@@ -67,15 +121,11 @@ export default function middleware(request: NextRequest): NextResponse {
       return NextResponse.redirect(new URL(target, request.url));
     }
 
-    // Dealer-only routes
-    const isDealerRoute = pathname.startsWith("/dealer");
     if (isDealerRoute && role !== "dealer") {
       const target = getDashboardPath(role);
       return NextResponse.redirect(new URL(target, request.url));
     }
 
-    // Customer-only routes
-    const isCustomerRoute = pathname.startsWith("/customer");
     if (isCustomerRoute && role !== "customer") {
       const target = getDashboardPath(role);
       return NextResponse.redirect(new URL(target, request.url));
@@ -114,4 +164,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\..*|api).*)",
   ],
 };
-

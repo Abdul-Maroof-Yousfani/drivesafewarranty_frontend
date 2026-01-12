@@ -1,5 +1,7 @@
 "use server";
 
+import { headers } from "next/headers";
+
 import { getAccessToken } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { WarrantyPackage } from "@/lib/actions/warranty-package";
@@ -68,13 +70,25 @@ export interface CreateDealerResponse {
   };
 }
 
+export interface DealerLoginCredentials {
+  email: string;
+  password: string;
+  loginUrl: string;
+  businessName?: string;
+}
+
 export async function getDealers(): Promise<{ status: boolean; data?: Dealer[]; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dealers`, {
       cache: "no-store",
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
       },
     });
     
@@ -94,10 +108,20 @@ export async function getDealers(): Promise<{ status: boolean; data?: Dealer[]; 
     // Normalize so that frontend always gets Dealer[] in data
     let dealers: Dealer[] = [];
 
+    // Debug logging
+    console.log("getDealers API Response Data Keys:", Object.keys(result?.data || {}));
+
     if (Array.isArray(result?.data)) {
+      console.log("getDealers: result.data is Array");
       dealers = result.data as Dealer[];
+    } else if (Array.isArray(result?.data?.data)) {
+      console.log("getDealers: result.data.data is Array (Correct for new Interceptor)");
+      dealers = result.data.data as Dealer[];
     } else if (Array.isArray(result?.data?.dealers)) {
-      dealers = result.data.dealers as Dealer[];
+         console.log("getDealers: result.data.dealers is Array (Legacy)");
+         dealers = result.data.dealers as Dealer[];
+    } else {
+        console.warn("getDealers: Could not find dealers array in response", result);
     }
 
     return {
@@ -114,10 +138,15 @@ export async function getDealers(): Promise<{ status: boolean; data?: Dealer[]; 
 export async function getDealerById(id: string): Promise<{ status: boolean; data?: Dealer | null; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dealers/${id}`, {
       cache: "no-store",
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
       },
     });
     
@@ -161,11 +190,16 @@ export async function createDealer(data: {
 }): Promise<{ status: boolean; data?: CreateDealerResponse; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dealers`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
       },
       body: JSON.stringify(data),
     });
@@ -208,11 +242,16 @@ export async function updateDealer(
 ): Promise<{ status: boolean; data?: Dealer; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dealers/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
       },
       body: JSON.stringify(data),
     });
@@ -238,10 +277,15 @@ export async function updateDealer(
 export async function deleteDealer(id: string): Promise<{ status: boolean; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dealers/${id}`, {
       method: "DELETE",
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
       },
     });
     
@@ -266,9 +310,14 @@ export async function deleteDealer(id: string): Promise<{ status: boolean; messa
 export async function downloadDealerCredentials(id: string): Promise<{ status: boolean; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dealers/${id}/credentials/download`, {
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
       },
     });
     
@@ -298,6 +347,54 @@ export async function downloadDealerCredentials(id: string): Promise<{ status: b
   } catch (error) {
     console.error("Failed to download credentials:", error);
     return { status: false, message: error instanceof Error ? error.message : "Failed to download credentials" };
+  }
+}
+
+export async function verifyDealerCredentials(
+  id: string,
+  adminPassword: string
+): Promise<{ status: boolean; data?: DealerLoginCredentials; message?: string }> {
+  try {
+    const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/dealers/${id}/verify-credentials`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host,
+      },
+      body: JSON.stringify({ adminPassword }),
+    });
+
+    const result = await res.json().catch(() => ({} as any));
+
+    if (!res.ok) {
+      return {
+        status: false,
+        message: result?.message || result?.data?.message || `Error: ${res.status} ${res.statusText}`,
+      };
+    }
+
+    const candidate =
+      (result?.data?.email ? result.data : undefined) ||
+      (result?.data?.data?.email ? result.data.data : undefined) ||
+      (result?.data?.data?.data?.email ? result.data.data.data : undefined);
+
+    return {
+      status: !!result?.status,
+      data: candidate as DealerLoginCredentials | undefined,
+      message: result?.message || result?.data?.message,
+    };
+  } catch (error) {
+    console.error("Failed to verify dealer credentials:", error);
+    return {
+      status: false,
+      message: error instanceof Error ? error.message : "Failed to verify dealer credentials",
+    };
   }
 }
 

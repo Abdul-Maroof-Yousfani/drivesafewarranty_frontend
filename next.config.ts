@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  
+  // Experimental features
+  experimental: {
+    // Increase server action body size limit for file uploads
+    serverActions: {
+      bodySizeLimit: "2mb",
+    },
+  },
 
   async rewrites() {
     // Extract base URL without /api suffix for static file serving
@@ -28,6 +36,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-};
+} satisfies NextConfig;
 
 export default nextConfig;

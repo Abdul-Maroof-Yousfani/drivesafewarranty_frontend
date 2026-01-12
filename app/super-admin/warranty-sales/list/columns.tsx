@@ -52,14 +52,17 @@ export const columns: ColumnDef<WarrantySale>[] = [
     id: "soldTo",
     header: "Sold To",
     cell: ({ row }) => {
+      const customer = row.original.customer;
+      if (customer) {
+        return `${customer.firstName} ${customer.lastName}`;
+      }
       const dealer = row.original.dealer;
       if (dealer) {
         const legal = dealer.businessNameLegal || "";
         const trading = dealer.businessNameTrading || "";
         return trading ? `${legal} (${trading})` : legal || "N/A";
       }
-      const customer = row.original.customer;
-      return customer ? `${customer.firstName} ${customer.lastName}` : "N/A";
+      return "N/A";
     },
   },
   {
@@ -92,7 +95,9 @@ export const columns: ColumnDef<WarrantySale>[] = [
     header: "Sale Date",
     size: 140,
     cell: ({ row }) => {
-      return format(new Date(row.getValue("saleDate")), "MMM d, yyyy");
+      const date = row.getValue("saleDate");
+      if (!date) return "N/A";
+      return format(new Date(date as string), "MMM d, yyyy");
     },
   },
   {
@@ -145,6 +150,3 @@ export const columns: ColumnDef<WarrantySale>[] = [
     },
   },
 ];
-export const dealerColumns: ColumnDef<WarrantySale>[] = columns.filter(
-  (col) => col.id !== "vehicle"
-);

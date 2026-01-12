@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Users, ShieldCheck, DollarSign, Receipt, Car, PlusCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { getDealerDashboardStatsAction } from "@/lib/actions/dashboard";
+import { getStorageUsageAction } from "@/lib/actions/storage";
+import { StorageUsageCard } from "@/components/dealer/storage-usage-card";
 
 export default function DealerDashboard() {
   const [stats, setStats] = useState({
@@ -17,9 +19,17 @@ export default function DealerDashboard() {
     pendingInvoicesAmount: 0,
   });
 
+  const [storage, setStorage] = useState<{
+    usedGB: number;
+    limitGB: number;
+    percentageUsed: number;
+    availableGB: number;
+  } | null>(null);
+
   useEffect(() => {
     let mounted = true;
     (async () => {
+      // Fetch dashboard stats
       const res = await getDealerDashboardStatsAction();
       if (!mounted) return;
       if (res.status && res.data) {
@@ -33,6 +43,18 @@ export default function DealerDashboard() {
           profit: res.data.profit ?? 0,
           pendingInvoices: res.data.pendingInvoices,
           pendingInvoicesAmount,
+        });
+      }
+
+      // Fetch storage usage
+      const storageRes = await getStorageUsageAction();
+      if (!mounted) return;
+      if (storageRes.status && storageRes.data) {
+        setStorage({
+          usedGB: storageRes.data.usedGB,
+          limitGB: storageRes.data.limitGB,
+          percentageUsed: storageRes.data.percentageUsed,
+          availableGB: storageRes.data.availableGB,
         });
       }
     })();
@@ -148,6 +170,18 @@ export default function DealerDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Storage Usage Card */}
+      {storage && (
+        <div className="lg:w-1/2">
+          <StorageUsageCard
+            usedGB={storage.usedGB}
+            limitGB={storage.limitGB}
+            percentageUsed={storage.percentageUsed}
+            availableGB={storage.availableGB}
+          />
+        </div>
+      )}
 
       {/* Quick Actions */}
       <Card>

@@ -123,6 +123,41 @@ export default async function WarrantyPackageViewPage({
                <p className="text-muted-foreground">{pkg.eligibility || "No specific eligibility criteria."}</p>
              </div>
 
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="p-4 bg-muted/30 rounded-lg">
+                 <p className="text-sm font-medium text-muted-foreground mb-1">Mileage Comparator</p>
+                 <p className="text-xl font-bold">
+                   {pkg.eligibilityMileageComparator === "gt"
+                     ? "Greater Than"
+                     : pkg.eligibilityMileageComparator === "lt"
+                     ? "Less Than"
+                     : "—"}
+                 </p>
+               </div>
+               <div className="p-4 bg-muted/30 rounded-lg">
+                 <p className="text-sm font-medium text-muted-foreground mb-1">Mileage Value</p>
+                 <p className="text-xl font-bold">
+                   {typeof pkg.eligibilityMileageValue === "number"
+                     ? `${pkg.eligibilityMileageValue.toLocaleString()} km`
+                     : "—"}
+                 </p>
+               </div>
+               <div className="p-4 bg-muted/30 rounded-lg">
+                 <p className="text-sm font-medium text-muted-foreground mb-1">Vehicle Age (Max Years)</p>
+                 <p className="text-xl font-bold">
+                   {typeof pkg.eligibilityVehicleAgeYearsMax === "number"
+                     ? `${pkg.eligibilityVehicleAgeYearsMax} years`
+                     : "—"}
+                 </p>
+               </div>
+               <div className="p-4 bg-muted/30 rounded-lg">
+                 <p className="text-sm font-medium text-muted-foreground mb-1">Required Transmission</p>
+                 <p className="text-xl font-bold capitalize">
+                   {pkg.eligibilityTransmission || "—"}
+                 </p>
+               </div>
+             </div>
+
              <div className="grid md:grid-cols-2 gap-6">
                <div>
                  <h3 className="font-semibold mb-2">Key Benefits</h3>

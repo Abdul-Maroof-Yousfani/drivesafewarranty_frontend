@@ -342,7 +342,14 @@ export default function CreateDealerPage() {
                     <FormItem>
                       <FormLabel>Phone Number *</FormLabel>
                       <FormControl>
-                        <Input placeholder="+1234567890" {...field} />
+                        <Input
+          placeholder="1234567890"
+          value={field.value || ''}
+          onChange={(e) => {
+            const numericValue = e.target.value.replace(/[^0-9]/g, '');
+            field.onChange(numericValue);
+          }}
+        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -381,9 +388,9 @@ export default function CreateDealerPage() {
                   name="accountNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Account Number *</FormLabel>
+                      <FormLabel>Account Number/IBAN *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter account number" {...field} />
+                        <Input placeholder="Enter account number/IBAN" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -489,18 +496,26 @@ export default function CreateDealerPage() {
                 />
 
                 <FormField
-                  control={form.control}
-                  name="authorizedSignatoryPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Signatory Phone (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+1234567890" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+  control={form.control}
+  name="authorizedSignatoryPhone"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Signatory Phone (Optional)</FormLabel>
+      <FormControl>
+        <Input
+          placeholder="1234567890"
+          value={field.value || ''}
+          onChange={(e) => {
+            const numericValue = e.target.value.replace(/[^0-9]/g, '');
+            field.onChange(numericValue);
+          }}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
               </div>
             </CardContent>
           </Card>

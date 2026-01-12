@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Card,
@@ -10,6 +10,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   ArrowLeft,
   Edit,
@@ -18,9 +28,15 @@ import {
   Phone,
   MapPin,
   User,
+  KeyRound,
+  Clipboard,
 } from "lucide-react";
 import Link from "next/link";
-import { getDealerById } from "@/lib/actions/dealer";
+import {
+  getDealerById,
+  type DealerLoginCredentials,
+  verifyDealerCredentials,
+} from "@/lib/actions/dealer";
 import { toast } from "sonner";
 
 export default function DealerViewPage() {
@@ -28,6 +44,15 @@ export default function DealerViewPage() {
   const router = useRouter();
   const [dealer, setDealer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [credentialsOpen, setCredentialsOpen] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [verifyingCredentials, setVerifyingCredentials] = useState(false);
+  const [credentials, setCredentials] = useState<DealerLoginCredentials | null>(
+    null
+  );
+  const [credentialsHideAt, setCredentialsHideAt] = useState<number | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchDealer = async () => {
@@ -49,6 +74,90 @@ export default function DealerViewPage() {
     };
     fetchDealer();
   }, [params.id]);
+
+  useEffect(() => {
+    if (!credentialsHideAt) return;
+    const remainingMs = credentialsHideAt - Date.now();
+    if (remainingMs <= 0) {
+      setCredentials(null);
+      setCredentialsHideAt(null);
+      setAdminPassword("");
+      setCredentialsOpen(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCredentials(null);
+      setCredentialsHideAt(null);
+      setAdminPassword("");
+      setCredentialsOpen(false);
+    }, remainingMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [credentialsHideAt]);
+
+  const credentialsVisible = useMemo(() => {
+    if (!credentials || !credentialsHideAt) return false;
+    return Date.now() < credentialsHideAt;
+  }, [credentials, credentialsHideAt]);
+
+  const handleVerifyCredentials = async () => {
+    const dealerId = params.id as string | undefined;
+    if (!dealerId) return;
+
+    if (!adminPassword.trim()) {
+      toast.error("Please enter your password");
+      return;
+    }
+
+    setVerifyingCredentials(true);
+    try {
+      const result = await verifyDealerCredentials(dealerId, adminPassword);
+      if (result.status && result.data) {
+        setCredentials(result.data);
+        setAdminPassword("");
+        setCredentialsHideAt(Date.now() + 8000);
+        setCredentialsOpen(false);
+        toast.success("Credentials revealed briefly");
+      } else {
+        toast.error(result.message || "Invalid password");
+      }
+    } catch (error) {
+      console.error("Error verifying credentials:", error);
+      toast.error("Failed to verify password");
+    } finally {
+      setVerifyingCredentials(false);
+    }
+  };
+
+  const handleCopyCredentials = async () => {
+    if (!credentialsVisible || !credentials) return;
+
+    const text = `Login URL: ${credentials.loginUrl}\nEmail: ${credentials.email}\nPassword: ${credentials.password}`;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        toast.success("Copied to clipboard");
+        return;
+      }
+    } catch {}
+
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (ok) toast.success("Copied to clipboard");
+      else toast.error("Copy failed");
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
 
   if (loading) {
     return (
@@ -90,13 +199,58 @@ export default function DealerViewPage() {
             </p>
           </div>
         </div>
-        <Button asChild>
-          <Link href={`/super-admin/dealers/edit/${params.id}`}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Dealer
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild>
+            <Link href={`/super-admin/dealers/edit/${params.id}`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Dealer
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      <Dialog
+        open={credentialsOpen}
+        onOpenChange={(open) => {
+          setCredentialsOpen(open);
+          if (!open) {
+            setCredentials(null);
+            setCredentialsHideAt(null);
+            setAdminPassword("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Dealer Login Credentials</DialogTitle>
+            <DialogDescription>
+              Enter your password to reveal credentials briefly.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2">
+              <Label htmlFor="adminPassword">Your Password</Label>
+              <Input
+                id="adminPassword"
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleVerifyCredentials}
+                disabled={verifyingCredentials}
+              >
+                {verifyingCredentials ? "Verifying..." : "Verify & Reveal"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -209,10 +363,7 @@ export default function DealerViewPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Warranty Packages </CardTitle>
-            <CardDescription>
-              Packages available in the dealer tenant
-            </CardDescription>
+            <CardTitle>Warranty Packages</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {Array.isArray(dealer.warrantyPackages) &&
@@ -221,7 +372,6 @@ export default function DealerViewPage() {
                 <div key={pkg.id} className="border rounded p-3">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">{pkg.name}</p>
-                    
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     <div className="text-xs">
@@ -241,7 +391,9 @@ export default function DealerViewPage() {
                         : "—"}
                     </div>
                     <div className="text-xs">
-                      <span className="text-muted-foreground">36 Months Price:</span>{" "}
+                      <span className="text-muted-foreground">
+                        36 Months Price:
+                      </span>{" "}
                       {pkg.price36Months != null
                         ? `£${Number(pkg.price36Months).toFixed(2)}`
                         : "—"}
@@ -254,6 +406,63 @@ export default function DealerViewPage() {
                 No SA-assigned packages found for this dealer.
               </p>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Dealer Credentials</CardTitle>
+            <CardDescription>
+              Reveal briefly after verifying your password.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3 rounded-md border p-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Login URL</p>
+                <p className="text-sm text-muted-foreground break-all">
+                  {credentialsVisible && credentials
+                    ? credentials.loginUrl
+                    : "••••••••••••••••••••••••••••••"}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Email</p>
+                <p className="text-sm text-muted-foreground break-all">
+                  {credentialsVisible && credentials
+                    ? credentials.email
+                    : "••••••••••••••••••••••••••••••"}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Password</p>
+                <p className="text-sm text-muted-foreground break-all">
+                  {credentialsVisible && credentials
+                    ? credentials.password
+                    : "••••••••••••••••••••••••••••••"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCredentialsOpen(true);
+                  setAdminPassword("");
+                }}
+              >
+                <KeyRound className="mr-2 h-4 w-4" />
+                Show
+              </Button>
+              <Button
+                onClick={handleCopyCredentials}
+                disabled={!credentialsVisible || !credentials}
+              >
+                <Clipboard className="mr-2 h-4 w-4" />
+                Copy
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

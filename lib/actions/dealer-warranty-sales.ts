@@ -1,5 +1,7 @@
 "use server";
 
+import { headers } from "next/headers";
+
 import { getAccessToken } from "@/lib/auth";
 import { API_BASE } from "./constants";
 
@@ -10,9 +12,16 @@ export async function getDealerWarrantySalesAction(): Promise<{
 }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dealer/warranty-sales`, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: { 
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
+      },
     });
 
     if (!res.ok) {
@@ -57,11 +66,16 @@ export async function createDealerWarrantySaleAction(
 ): Promise<{ status: boolean; data?: any; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/dealer/warranty-sales`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
       },
       body: JSON.stringify(payload),
     });

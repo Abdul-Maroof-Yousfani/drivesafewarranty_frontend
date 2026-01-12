@@ -31,17 +31,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createWarrantyPackageAction, getWarrantyItemsAction } from "@/lib/actions/warranty-package";
+import {
+  createWarrantyPackageAction,
+  getWarrantyItemsAction,
+} from "@/lib/actions/warranty-package";
 import { toast } from "sonner";
 import { Plus, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const packageSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters").max(500, "Description is too long"),
+  name: z
+    .string()
+    .min(3, "Name must be at least 3 characters")
+    .max(50, "Name must be less than 50 characters"),
+  description: z
+    .string()
+    .min(10, "Description must be at least 10 characters")
+    .max(500, "Description is too long"),
   planLevel: z.enum(["Silver", "Gold", "Platinum"]),
-  eligibility: z.string().min(5, "Eligibility criteria must be at least 5 characters"),
-  excess: z.coerce.number().min(0, "Excess must be non‑negative").max(1000, "Excess is too high"),
+  eligibility: z
+    .string()
+    .min(5, "Eligibility criteria must be at least 5 characters"),
+  eligibilityMileageComparator: z
+    .enum(["gt", "lt"])
+    .optional()
+    .or(z.literal("")),
+  eligibilityMileageValue: z.coerce.number().min(0).optional(),
+  eligibilityVehicleAgeYearsMax: z.coerce.number().min(0).optional(),
+  eligibilityTransmission: z
+    .enum(["manual", "automatic"])
+    .optional()
+    .or(z.literal("")),
+  excess: z.coerce
+    .number()
+    .min(0, "Excess must be non‑negative")
+    .max(1000, "Excess is too high"),
   labourRatePerHour: z.coerce
     .number()
     .min(0, "Labour rate must be non‑negative")
@@ -76,6 +100,10 @@ export default function CreateWarrantyPackagePage() {
       description: "",
       planLevel: "Silver",
       eligibility: "",
+      eligibilityMileageComparator: "",
+      eligibilityMileageValue: undefined,
+      eligibilityVehicleAgeYearsMax: undefined,
+      eligibilityTransmission: "",
       excess: 100,
       labourRatePerHour: 50,
       fixedClaimLimit: 2000,
@@ -87,13 +115,17 @@ export default function CreateWarrantyPackagePage() {
     },
   });
 
-  const [warrantyItems, setWarrantyItems] = useState<Array<{ id: string; label: string; type: string }>>([]);
+  const [warrantyItems, setWarrantyItems] = useState<
+    Array<{ id: string; label: string; type: string }>
+  >([]);
 
   useEffect(() => {
     (async () => {
       const res = await getWarrantyItemsAction();
       if (res.status && Array.isArray(res.data)) {
-        setWarrantyItems(res.data.map((x) => ({ id: x.id, label: x.label, type: x.type })));
+        setWarrantyItems(
+          res.data.map((x) => ({ id: x.id, label: x.label, type: x.type }))
+        );
       }
     })();
   }, []);
@@ -106,6 +138,11 @@ export default function CreateWarrantyPackagePage() {
         description: data.description,
         planLevel: data.planLevel,
         eligibility: data.eligibility,
+        eligibilityMileageComparator:
+          data.eligibilityMileageComparator || undefined,
+        eligibilityMileageValue: data.eligibilityMileageValue,
+        eligibilityVehicleAgeYearsMax: data.eligibilityVehicleAgeYearsMax,
+        eligibilityTransmission: data.eligibilityTransmission || undefined,
         excess: data.excess,
         labourRatePerHour: data.labourRatePerHour,
         fixedClaimLimit: data.fixedClaimLimit,
@@ -123,11 +160,16 @@ export default function CreateWarrantyPackagePage() {
         );
         router.push("/super-admin/warranty-packages/list");
       } else {
-        toast.error(result.message || "Failed to create warranty package. Please check the details and try again.");
+        toast.error(
+          result.message ||
+            "Failed to create warranty package. Please check the details and try again."
+        );
       }
     } catch (error) {
       console.error("Error creating package:", error);
-      toast.error("An unexpected error occurred. Please check your connection and try again.");
+      toast.error(
+        "An unexpected error occurred. Please check your connection and try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -274,7 +316,10 @@ export default function CreateWarrantyPackagePage() {
                                     checked={field.value?.includes(item.id)}
                                     onCheckedChange={(checked) => {
                                       return checked
-                                        ? field.onChange([...field.value, item.id])
+                                        ? field.onChange([
+                                            ...field.value,
+                                            item.id,
+                                          ])
                                         : field.onChange(
                                             field.value?.filter(
                                               (value) => value !== item.id
@@ -312,6 +357,83 @@ export default function CreateWarrantyPackagePage() {
                         rows={2}
                         {...field}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="eligibilityMileageComparator"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mileage Comparator</FormLabel>
+                      <FormControl>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select comparator" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="gt">Greater Than</SelectItem>
+                            <SelectItem value="lt">Less Than</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="eligibilityMileageValue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mileage Value (miles)</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={0} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="eligibilityVehicleAgeYearsMax"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Max Vehicle Age (years)</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={0} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="eligibilityTransmission"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Required Transmission</FormLabel>
+                    <FormControl>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Optional" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="manual">Manual</SelectItem>
+                          <SelectItem value="automatic">Automatic</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

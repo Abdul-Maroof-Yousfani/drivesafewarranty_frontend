@@ -1,5 +1,7 @@
 "use server";
 
+import { headers } from "next/headers";
+
 import { getAccessToken } from "@/lib/auth";
 import { API_BASE } from "./constants";
 
@@ -101,9 +103,16 @@ export async function getAllInvoicesAction(params?: {
     const url = `${API_BASE}/invoices${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(url, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: { 
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
+      },
     });
 
     if (!res.ok) {
@@ -144,9 +153,16 @@ export async function getDealerInvoicesAction(params?: {
     const url = `${API_BASE}/invoices/dealer${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(url, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: { 
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
+      },
     });
 
     if (!res.ok) {
@@ -179,9 +195,16 @@ export async function getInvoiceByIdAction(
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
 
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(url, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: { 
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
+      },
     });
 
     if (!res.ok) {
@@ -217,11 +240,16 @@ export async function updateInvoiceAction(
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
 
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(url, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
       },
       body: JSON.stringify(payload),
     });
@@ -238,5 +266,51 @@ export async function updateInvoiceAction(
   } catch (error) {
     console.error("Failed to update invoice:", error);
     return { status: false, message: "Failed to update invoice" };
+  }
+}
+
+/**
+ * Get dealer invoice statistics
+ */
+export async function getDealerInvoiceStatisticsAction(
+  dealerId: string
+): Promise<{
+  status: boolean;
+  data?: {
+    totalAmount: number;
+    totalCount: number;
+    pendingAmount: number;
+    pendingCount: number;
+    paidAmount: number;
+    paidCount: number;
+  };
+  message?: string;
+}> {
+  try {
+    const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/invoices/statistics/dealer/${dealerId}`, {
+      cache: "no-store",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
+      },
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error("Failed to fetch dealer statistics:", error);
+    return { status: false, message: "Failed to fetch dealer statistics" };
   }
 }

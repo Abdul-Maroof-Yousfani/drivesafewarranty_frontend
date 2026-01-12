@@ -20,10 +20,20 @@ import { login } from "@/lib/auth";
 export default function LoginPage() {
   const router = useRouter();
   const [callbackUrl, setCallbackUrl] = useState("/dashboard");
+  
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const cb = params.get("callbackUrl");
-    if (cb) setCallbackUrl(cb);
+    if (cb) {
+      try {
+        // Decode the callback URL
+        const decoded = decodeURIComponent(cb);
+        setCallbackUrl(decoded);
+      } catch (e) {
+        console.error("Failed to decode callbackUrl:", e);
+        setCallbackUrl("/dashboard");
+      }
+    }
   }, []);
 
   const [isPending, startTransition] = useTransition();
@@ -40,20 +50,27 @@ export default function LoginPage() {
       const result = await login(formData);
 
       if (result.status) {
+        // Determine the redirect URL based on role and callbackUrl
+        let redirectUrl = callbackUrl;
+        
+        // If callbackUrl is generic "/dashboard", redirect to role-specific dashboard
         if (callbackUrl === "/dashboard" && result.role) {
           if (result.role === "super_admin" || result.role === "admin") {
-            router.push("/super-admin/dashboard");
+            redirectUrl = "/super-admin/dashboard";
           } else if (result.role === "dealer") {
-            router.push("/dealer/dashboard");
+            redirectUrl = "/dealer/dashboard";
           } else if (result.role === "customer") {
-            router.push("/customer/dashboard");
-          } else {
-            router.push(callbackUrl);
+            redirectUrl = "/customer/dashboard";
           }
-        } else {
-          router.push(callbackUrl);
         }
-        router.refresh();
+        
+        // Ensure redirectUrl is valid (starts with /)
+        if (!redirectUrl.startsWith("/")) {
+          redirectUrl = "/dashboard";
+        }
+        
+        // Use window.location for a hard redirect to ensure clean state
+        window.location.href = redirectUrl;
       } else {
         setError(result.message);
       }

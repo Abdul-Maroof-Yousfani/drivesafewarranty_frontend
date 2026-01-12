@@ -1,5 +1,7 @@
 "use server";
 
+import { headers } from "next/headers";
+
 import { revalidatePath } from "next/cache";
 import { getAccessToken } from "@/lib/auth";
 import { API_BASE } from "./constants";
@@ -27,6 +29,7 @@ export interface Customer {
     vin?: string | null;
     registrationNumber?: string | null;
     mileage: number;
+    transmission?: "manual" | "automatic" | null;
   }[];
   status: string;
   dealerId?: string | null;
@@ -63,11 +66,36 @@ export async function getCustomers(): Promise<{
 }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/customers`, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
     });
-    return res.json();
+
+    const result = await res.json();
+
+    // Handle ResponseInterceptor format: { status: true, data: { data: [...], meta: ... } }
+    let customers: Customer[] = [];
+
+    if (result.status && result.data) {
+      if (Array.isArray(result.data)) {
+        customers = result.data;
+      } else if (result.data.data && Array.isArray(result.data.data)) {
+        customers = result.data.data;
+      }
+    }
+
+    return {
+      status: result.status,
+      message: result.message,
+      data: customers,
+    };
   } catch (error) {
     console.error("Failed to fetch customers:", error);
     return { status: false, data: [], message: "Failed to fetch customers" };
@@ -79,9 +107,16 @@ export async function getCustomerById(
 ): Promise<{ status: boolean; data: Customer | null; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/customers/${id}`, {
       cache: "no-store",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
     });
 
     if (!res.ok) {
@@ -129,24 +164,33 @@ export async function createCustomer(data: {
     vin?: string | null;
     registrationNumber?: string | null;
     mileage?: number;
+    transmission?: "manual" | "automatic";
   }[];
   dealerId?: string | null;
   password: string;
 }): Promise<{ status: boolean; data?: Customer; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/customers`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
       },
       body: JSON.stringify(data),
     });
-    
+
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     const result = await res.json();
@@ -180,18 +224,26 @@ export async function updateCustomer(
 ): Promise<{ status: boolean; data?: Customer; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/customers/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
       },
       body: JSON.stringify(data),
     });
 
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     const result = await res.json();
@@ -210,14 +262,24 @@ export async function deleteCustomer(
 ): Promise<{ status: boolean; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/customers/${id}`, {
       method: "DELETE",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
     });
 
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     const result = await res.json();
@@ -236,18 +298,26 @@ export async function deleteCustomers(
 ): Promise<{ status: boolean; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/customers/bulk`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
       },
       body: JSON.stringify({ ids }),
     });
 
     if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
     }
 
     const result = await res.json();
@@ -272,15 +342,21 @@ export async function createCustomerVehicleAction(
     vin?: string | null;
     registrationNumber?: string | null;
     mileage?: number;
+    transmission?: "manual" | "automatic";
   }
 ): Promise<{ status: boolean; data?: any; message?: string }> {
   try {
     const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
     const res = await fetch(`${API_BASE}/customers/${customerId}/vehicles`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
       },
       body: JSON.stringify(data),
     });
@@ -304,15 +380,21 @@ export async function updateCustomerVehicleAction(
     vin?: string | null;
     registrationNumber?: string | null;
     mileage?: number;
+    transmission?: "manual" | "automatic";
   }
 ): Promise<{ status: boolean; data?: any; message?: string }> {
   try {
     const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/vehicles/${vehicleId}`, {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/customers/vehicles/${vehicleId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
       },
       body: JSON.stringify(data),
     });
@@ -329,9 +411,16 @@ export async function deleteCustomerVehicleAction(
 ): Promise<{ status: boolean; message?: string }> {
   try {
     const token = await getAccessToken();
-    const res = await fetch(`${API_BASE}/vehicles/${vehicleId}`, {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/customers/vehicles/${vehicleId}`, {
       method: "DELETE",
-      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
     });
     const result = await res.json();
     return result;

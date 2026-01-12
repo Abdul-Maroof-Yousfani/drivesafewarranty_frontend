@@ -25,30 +25,60 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 
 const vehicleSchema = z.object({
   make: z.string().min(1, "Vehicle make is required"),
   model: z.string().min(1, "Vehicle model is required"),
-  year: z.coerce.number().min(1900, "Year must be 1900 or later").max(new Date().getFullYear() + 1, "Year is too far in future"),
-  vin: z.string().optional().or(z.literal("")).superRefine((val, ctx) => {
-    if (val && val.length > 0 && val.length < 11) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "VIN must be at least 11 characters if provided",
-      });
-    }
-  }),
+  year: z.coerce
+    .number()
+    .min(1900, "Year must be 1900 or later")
+    .max(new Date().getFullYear() + 1, "Year is too far in future"),
+  vin: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .superRefine((val, ctx) => {
+      if (val && val.length > 0 && val.length < 11) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "VIN must be at least 11 characters if provided",
+        });
+      }
+    }),
   registrationNumber: z.string().optional().or(z.literal("")),
-  mileage: z.coerce.number().min(0, "Mileage must be a non-negative number").max(1000000, "Mileage is too high"),
+  mileage: z.coerce
+    .number()
+    .min(0, "Mileage must be a non-negative number")
+    .max(1000000, "Mileage is too high"),
+  transmission: z.enum(["manual", "automatic"]).optional().or(z.literal("")),
 });
 
 const customerSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters").max(50, "First name is too long"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters").max(50, "Last name is too long"),
+  firstName: z
+    .string()
+    .min(2, "First name must be at least 2 characters")
+    .max(50, "First name is too long"),
+  lastName: z
+    .string()
+    .min(2, "Last name must be at least 2 characters")
+    .max(50, "Last name is too long"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().min(10, "Phone number must be at least 10 characters").max(15, "Phone number is too long"),
-  address: z.string().min(5, "Address must be at least 5 characters").max(255, "Address is too long"),
+  phone: z
+    .string()
+    .min(10, "Phone number must be at least 10 characters")
+    .max(15, "Phone number is too long"),
+  address: z
+    .string()
+    .min(5, "Address must be at least 5 characters")
+    .max(255, "Address is too long"),
   vehicles: z.array(vehicleSchema).min(1, "At least one vehicle is required"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
@@ -76,6 +106,7 @@ export default function CreateCustomerPage() {
           vin: "",
           registrationNumber: "",
           mileage: 0,
+          transmission: "",
         },
       ],
       password: "",
@@ -93,17 +124,18 @@ export default function CreateCustomerPage() {
       const { createDealerCustomerAction } = await import(
         "@/lib/actions/dealer-customer"
       );
-      
+
       // Ensure vehicles array is properly formatted
-      const vehiclesData = data.vehicles.map(vehicle => ({
+      const vehiclesData = data.vehicles.map((vehicle) => ({
         make: vehicle.make.trim(),
         model: vehicle.model.trim(),
         year: vehicle.year,
         vin: vehicle.vin?.trim() || null,
         registrationNumber: vehicle.registrationNumber?.trim() || null,
         mileage: vehicle.mileage || 0,
+        transmission: vehicle.transmission || undefined,
       }));
-      
+
       // Map form data to action expected format
       const result = await createDealerCustomerAction({
         firstName: data.firstName.trim(),
@@ -114,7 +146,7 @@ export default function CreateCustomerPage() {
         vehicles: vehiclesData,
         password: data.password,
       });
-      
+
       if (result.status) {
         toast.success(result.message || "Customer created successfully");
         router.push(`/dealer/customers/list?newItemId=${result.data?.id}`);
@@ -128,7 +160,8 @@ export default function CreateCustomerPage() {
       }
     } catch (error) {
       console.error("Error creating customer:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       toast.error(errorMessage);
       form.setError("root", { message: errorMessage });
     } finally {
@@ -209,9 +242,19 @@ export default function CreateCustomerPage() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="+1234567890" {...field} />
+                      <Input
+                        placeholder="1234567890"
+                        value={field.value || ""}
+                        onChange={(e) => {
+                          const numericValue = e.target.value.replace(
+                            /[^0-9]/g,
+                            ""
+                          );
+                          field.onChange(numericValue);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -236,7 +279,7 @@ export default function CreateCustomerPage() {
               />
 
               <div className="border-t pt-3">
-                <h3 className="text-lg font-semibold mb-2"> 
+                <h3 className="text-lg font-semibold mb-2">
                   Account Information
                 </h3>
               </div>
@@ -291,6 +334,7 @@ export default function CreateCustomerPage() {
                         vin: "",
                         registrationNumber: "",
                         mileage: 0,
+                        transmission: "",
                       })
                     }
                   >
@@ -360,11 +404,11 @@ export default function CreateCustomerPage() {
                                   <Input
                                     type="number"
                                     {...field}
-                                    // onChange={(e) =>
-                                    //   field.onChange(
-                                    //     parseInt(e.target.value) || 0
-                                    //   )
-                                    // }
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        parseInt(e.target.value) || 0
+                                      )
+                                    }
                                     value={field.value}
                                   />
                                 </FormControl>
@@ -383,13 +427,43 @@ export default function CreateCustomerPage() {
                                   <Input
                                     type="number"
                                     {...field}
-                                    // onChange={(e) =>
-                                    //   field.onChange(
-                                    //     parseInt(e.target.value) || "0"
-                                    //   )
-                                    // }
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        parseInt(e.target.value) || 0
+                                      )
+                                    }
                                     value={field.value}
                                   />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                          <FormField
+                            control={form.control}
+                            name={`vehicles.${index}.transmission`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Transmission</FormLabel>
+                                <FormControl>
+                                  <Select
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select transmission" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="manual">
+                                        Manual
+                                      </SelectItem>
+                                      <SelectItem value="automatic">
+                                        Automatic
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -403,7 +477,7 @@ export default function CreateCustomerPage() {
                             name={`vehicles.${index}.vin`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>VIN (Optional)</FormLabel>
+                                <FormLabel>VIN</FormLabel>
                                 <FormControl>
                                   <Input placeholder="VIN..." {...field} />
                                 </FormControl>
@@ -417,9 +491,12 @@ export default function CreateCustomerPage() {
                             name={`vehicles.${index}.registrationNumber`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Reg Number (Optional)</FormLabel>
+                                <FormLabel>Registration Number </FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Registration..." {...field} />
+                                  <Input
+                                    placeholder="Registration..."
+                                    {...field}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -456,4 +533,3 @@ export default function CreateCustomerPage() {
     </div>
   );
 }
-
