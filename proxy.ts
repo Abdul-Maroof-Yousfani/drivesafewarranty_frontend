@@ -26,26 +26,38 @@ export default function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   console.log(`[Middleware] Request: ${pathname}`);
 
-  // --- SUBDOMAIN VALIDATION (FIRST - Before anything else) ---
+  // --- SUBDOMAIN VALIDATION (STRICT) ---
   const host = request.headers.get("host") || "";
   const hostname = host.split(":")[0]; // Remove port
-  const parts = hostname.split(".");
   
-  // Check if there's a subdomain
-  const hasSubdomain = parts.length > 1 && parts[0] !== "localhost" && parts[0] !== "127";
+  // Detect environment and define base domain
+  const isProd = hostname.endsWith("inplsoftwares.com") || (!hostname.includes("localhost") && !hostname.includes("127.0.0.1"));
+  const baseDomain = isProd ? "drivesafewarranty.inplsoftwares.com" : "localhost";
   
-  if (hasSubdomain) {
-    const subdomain = parts[0];
+  // Protocol and Port for redirects
+  const protocol = isProd ? "https:" : request.nextUrl.protocol;
+  const port = (request.nextUrl.port && !isProd) ? `:${request.nextUrl.port}` : "";
+
+  // 1. Ensure we are on the correct base domain in production (e.g. prevent hits on raw inplsoftwares.com)
+  if (isProd && hostname !== baseDomain && !hostname.endsWith(`.${baseDomain}`)) {
+      console.log(`[Middleware] Redirecting unknown domain ${hostname} to ${baseDomain}`);
+      return NextResponse.redirect(`${protocol}//${baseDomain}${port}${pathname}`);
+  }
+
+  // 2. Extract Subdomain
+  let subdomain = "";
+  if (hostname !== baseDomain && hostname.endsWith(`.${baseDomain}`)) {
+    subdomain = hostname.replace(`.${baseDomain}`, "");
+  }
+  
+  if (subdomain) {
     const allowedSubdomains = ["dealer", "customer"];
     
     // Block any subdomain that's not in the allowed list
     if (!allowedSubdomains.includes(subdomain)) {
       console.log(`[Middleware] Blocked invalid subdomain: ${subdomain}`);
-      // Redirect to main domain (no subdomain)
-      const mainDomain = parts.slice(1).join(".");
-      const port = request.nextUrl.port ? `:${request.nextUrl.port}` : "";
-      const mainUrl = `${request.nextUrl.protocol}//${mainDomain}${port}/login`;
-      return NextResponse.redirect(mainUrl);
+      // Redirect to main domain login
+      return NextResponse.redirect(`${protocol}//${baseDomain}${port}/login`);
     }
   }
 
@@ -81,8 +93,8 @@ export default function middleware(request: NextRequest): NextResponse {
 
     // --- SUBDOMAIN ENFORCEMENT ---
     let portalType = "admin";
-    if (host.startsWith("dealer.")) portalType = "dealer";
-    else if (host.startsWith("customer.")) portalType = "customer";
+    if (subdomain === "dealer") portalType = "dealer";
+    else if (subdomain === "customer") portalType = "customer";
 
     const isSuperAdminRoute =
       pathname.startsWith("/super-admin") ||

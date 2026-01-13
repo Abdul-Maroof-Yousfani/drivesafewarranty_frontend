@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  
+
   // Experimental features
   experimental: {
     // Increase server action body size limit for file uploads
@@ -18,8 +18,7 @@ const nextConfig: NextConfig = {
 
   async rewrites() {
     // Extract base URL without /api suffix for static file serving
-    const backendBaseUrl = backendUrl?.replace(/\/api\/?$/, "") ;
-    
+    const backendBaseUrl = backendUrl?.replace(/\/api\/?$/, "");
 
     return [
       {
@@ -33,6 +32,10 @@ const nextConfig: NextConfig = {
       {
         source: "/dealers/:path*",
         destination: `${backendBaseUrl}/dealers/:path*`,
+      },
+      {
+        source: "/master/:path*",
+        destination: `${backendBaseUrl}/master/:path*`,
       },
     ];
   },

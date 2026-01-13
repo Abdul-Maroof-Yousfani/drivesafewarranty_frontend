@@ -9,7 +9,10 @@ export async function POST(req: NextRequest) {
     const fd = new FormData();
     const file = incoming.get("file");
     if (!(file instanceof Blob)) {
-      return NextResponse.json({ status: false, message: "No file provided" }, { status: 400 });
+      return NextResponse.json(
+        { status: false, message: "No file provided" },
+        { status: 400 }
+      );
     }
     const name = (file as any).name || "upload";
     fd.append("file", file, name);
@@ -24,9 +27,31 @@ export async function POST(req: NextRequest) {
     if (!json.status) {
       return NextResponse.json(json, { status: res.status });
     }
-    const url = json.data?.url || apiUrl(`/upload/${json.data?.id}/download`);
+    const rawUrl = json.data?.url as string | undefined;
+    const url = rawUrl
+      ? /^https?:\/\//i.test(rawUrl)
+        ? (() => {
+            try {
+              const u = new URL(rawUrl);
+              u.pathname = u.pathname.replace(
+                /^\/api(?=\/(uploads|dealer-storage|dealers|master)(\/|$))/,
+                ""
+              );
+              return u.toString();
+            } catch {
+              return rawUrl;
+            }
+          })()
+        : rawUrl.startsWith("/")
+        ? rawUrl
+        : `/${rawUrl}`
+      : apiUrl(`/upload/${json.data?.id}/download`);
+
     return NextResponse.json({ status: true, data: { ...json.data, url } });
   } catch (error: any) {
-    return NextResponse.json({ status: false, message: error?.message || "Upload failed" }, { status: 500 });
+    return NextResponse.json(
+      { status: false, message: error?.message || "Upload failed" },
+      { status: 500 }
+    );
   }
 }

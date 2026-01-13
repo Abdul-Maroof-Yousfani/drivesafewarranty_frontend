@@ -144,12 +144,20 @@ export function InvoiceRenderer({
   // Ensure logoUrl is handled correctly for preview
   const getAbsoluteUrl = (url?: string) => {
     if (!url) return undefined;
-    if (
-      url.startsWith("http") ||
-      url.startsWith("data:") ||
-      url.startsWith("blob:")
-    )
-      return url;
+    if (url.startsWith("data:") || url.startsWith("blob:")) return url;
+
+    if (url.startsWith("http")) {
+      try {
+        const u = new URL(url);
+        u.pathname = u.pathname.replace(
+          /^\/api(?=\/(uploads|dealer-storage|dealers|master)(\/|$))/,
+          ""
+        );
+        return u.toString();
+      } catch {
+        return url;
+      }
+    }
 
     // For preview in browser, use relative paths for uploads to keep them on same-origin (satisfy CSP)
     // Next.js rewrites will handle the proxying to the backend.
@@ -159,7 +167,9 @@ export function InvoiceRenderer({
       url.startsWith("/dealer-storage/") ||
       url.startsWith("dealer-storage/") ||
       url.startsWith("/dealers/") ||
-      url.startsWith("dealers/")
+      url.startsWith("dealers/") ||
+      url.startsWith("/master/") ||
+      url.startsWith("master/")
     ) {
       return url.startsWith("/") ? url : `/${url}`;
     }

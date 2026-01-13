@@ -490,7 +490,7 @@ export const warrantyPortalMenuData: MenuItem[] = [
         title: "Warranty Packages",
         href: "/super-admin/warranty-packages/list",
       },
-      // { title: "Plan Presets", href: "/super-admin/warranty-plan-presets" },
+      { title: "Plan Levels", href: "/super-admin/warranty-plan-levels" },
       { title: "Warranty Sales", href: "/super-admin/warranty-sales/list" },
     ],
   },

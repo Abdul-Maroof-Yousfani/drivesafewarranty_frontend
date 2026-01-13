@@ -35,6 +35,7 @@ import {
   createWarrantyPackageAction,
   getWarrantyItemsAction,
 } from "@/lib/actions/warranty-package";
+import { getWarrantyPlanLevelsAction } from "@/lib/actions/warranty-plan-level";
 import { toast } from "sonner";
 import { Plus, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -48,7 +49,10 @@ const packageSchema = z.object({
     .string()
     .min(10, "Description must be at least 10 characters")
     .max(500, "Description is too long"),
-  planLevel: z.enum(["Silver", "Gold", "Platinum"]),
+  planLevel: z
+    .string()
+    .min(1, "Plan level is required")
+    .max(50, "Plan level is too long"),
   eligibility: z
     .string()
     .min(5, "Eligibility criteria must be at least 5 characters"),
@@ -118,13 +122,44 @@ export default function CreateWarrantyPackagePage() {
   const [warrantyItems, setWarrantyItems] = useState<
     Array<{ id: string; label: string; type: string }>
   >([]);
+  const [planLevels, setPlanLevels] = useState<
+    Array<{
+      id: string;
+      name: string;
+      benefitIds: string[];
+    }>
+  >([]);
 
   useEffect(() => {
     (async () => {
-      const res = await getWarrantyItemsAction();
-      if (res.status && Array.isArray(res.data)) {
+      const [itemsRes, levelsRes] = await Promise.all([
+        getWarrantyItemsAction(),
+        getWarrantyPlanLevelsAction(),
+      ]);
+
+      if (itemsRes.status && Array.isArray(itemsRes.data)) {
         setWarrantyItems(
-          res.data.map((x) => ({ id: x.id, label: x.label, type: x.type }))
+          itemsRes.data.map((x) => ({
+            id: x.id,
+            label: x.label,
+            type: x.type,
+          }))
+        );
+      }
+
+      if (levelsRes.status && Array.isArray(levelsRes.data)) {
+        setPlanLevels(
+          levelsRes.data.map((level: any) => ({
+            id: level.id,
+            name: level.name,
+            benefitIds:
+              level.benefits
+                ?.map(
+                  (b: any) =>
+                    b.warrantyItemId || b.warrantyItem?.id || undefined
+                )
+                .filter(Boolean) ?? [],
+          }))
         );
       }
     })();
@@ -234,16 +269,34 @@ export default function CreateWarrantyPackagePage() {
                   <FormItem>
                     <FormLabel>Plan Level</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      onValueChange={(val) => {
+                        field.onChange(val);
+                        // Auto-select default benefits for this plan level (if defined)
+                        const level = planLevels.find((l) => l.name === val);
+                        if (level && level.benefitIds.length > 0) {
+                          form.setValue("keyBenefits", level.benefitIds, {
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
+                      value={field.value}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select plan level" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Silver">Silver</SelectItem>
-                        <SelectItem value="Gold">Gold</SelectItem>
-                        <SelectItem value="Platinum">Platinum</SelectItem>
+                        {planLevels.map((level) => (
+                          <SelectItem key={level.id} value={level.name}>
+                            {level.name}
+                          </SelectItem>
+                        ))}
+                        {/* Fallback for custom/legacy levels that are not in planLevels */}
+                        {field.value &&
+                          !planLevels.some((l) => l.name === field.value) && (
+                            <SelectItem value={field.value}>
+                              {field.value}
+                            </SelectItem>
+                          )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -259,7 +312,20 @@ export default function CreateWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>12 Months Price</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? undefined
+                                : Number(e.target.value)
+                            )
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -272,7 +338,20 @@ export default function CreateWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>24 Months Price</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? undefined
+                                : Number(e.target.value)
+                            )
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -285,7 +364,20 @@ export default function CreateWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>36 Months Price</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? undefined
+                                : Number(e.target.value)
+                            )
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

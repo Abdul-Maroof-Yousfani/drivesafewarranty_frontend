@@ -37,12 +37,16 @@ import {
   getWarrantyItemsAction,
   updateWarrantyPackageAction,
 } from "@/lib/actions/warranty-package";
+import { getWarrantyPlanLevelsAction } from "@/lib/actions/warranty-plan-level";
 import { toast } from "sonner";
 
 const packageSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().min(1, "Description is required"),
-  planLevel: z.enum(["Silver", "Gold", "Platinum"]),
+  planLevel: z
+    .string()
+    .min(1, "Plan level is required")
+    .max(50, "Plan level is too long"),
   eligibility: z.string().min(1, "Eligibility is required"),
   eligibilityMileageComparator: z
     .enum(["gt", "lt"])
@@ -84,6 +88,13 @@ export default function EditWarrantyPackagePage() {
   const [warrantyItems, setWarrantyItems] = useState<
     Array<{ id: string; label: string; type: string }>
   >([]);
+  const [planLevels, setPlanLevels] = useState<
+    Array<{
+      id: string;
+      name: string;
+      benefitIds: string[];
+    }>
+  >([]);
 
   const form = useForm<PackageFormValues>({
     resolver: zodResolver(packageSchema),
@@ -111,13 +122,29 @@ export default function EditWarrantyPackagePage() {
     const loadData = async () => {
       const id = params.id as string | undefined;
       if (!id) return;
-      const [itemsRes, pkgRes] = await Promise.all([
+      const [itemsRes, pkgRes, levelsRes] = await Promise.all([
         getWarrantyItemsAction(),
         getWarrantyPackageByIdAction(id),
+        getWarrantyPlanLevelsAction(),
       ]);
       if (itemsRes.status && Array.isArray(itemsRes.data)) {
         setWarrantyItems(
           itemsRes.data.map((x) => ({ id: x.id, label: x.label, type: x.type }))
+        );
+      }
+      if (levelsRes.status && Array.isArray(levelsRes.data)) {
+        setPlanLevels(
+          levelsRes.data.map((level: any) => ({
+            id: level.id,
+            name: level.name,
+            benefitIds:
+              level.benefits
+                ?.map(
+                  (b: any) =>
+                    b.warrantyItemId || b.warrantyItem?.id || undefined
+                )
+                .filter(Boolean) ?? [],
+          }))
         );
       }
       if (pkgRes.status && pkgRes.data) {
@@ -262,16 +289,32 @@ export default function EditWarrantyPackagePage() {
                   <FormItem>
                     <FormLabel>Plan Level</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(val) => {
+                        field.onChange(val);
+                        const level = planLevels.find((l) => l.name === val);
+                        if (level && level.benefitIds.length > 0) {
+                          form.setValue("keyBenefits", level.benefitIds, {
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
                       defaultValue={field.value}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select plan level" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Silver">Silver</SelectItem>
-                        <SelectItem value="Gold">Gold</SelectItem>
-                        <SelectItem value="Platinum">Platinum</SelectItem>
+                        {planLevels.map((level) => (
+                          <SelectItem key={level.id} value={level.name}>
+                            {level.name}
+                          </SelectItem>
+                        ))}
+                        {field.value &&
+                          !planLevels.some((l) => l.name === field.value) && (
+                            <SelectItem value={field.value}>
+                              {field.value}
+                            </SelectItem>
+                          )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

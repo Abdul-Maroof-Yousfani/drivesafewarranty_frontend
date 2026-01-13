@@ -29,6 +29,7 @@ export interface WarrantyPackage {
     warrantyItem: {
       id: string;
       label: string;
+      description?: string | null;
       type: string;
     };
   }> | null;
@@ -49,7 +50,15 @@ interface ApiResponse<T> {
 }
 
 export async function getWarrantyItemsAction(): Promise<
-  ApiResponse<{ id: string; label: string; type: string; status: string }[]>
+  ApiResponse<
+    {
+      id: string;
+      label: string;
+      description?: string | null;
+      type: string;
+      status: string;
+    }[]
+  >
 > {
   const cookieStore = await cookies();
   const token = cookieStore.get("accessToken")?.value;
@@ -78,7 +87,13 @@ export async function createWarrantyItemAction(payload: {
   label: string;
   type: string;
 }): Promise<
-  ApiResponse<{ id: string; label: string; type: string; status: string }>
+  ApiResponse<{
+    id: string;
+    label: string;
+    description?: string | null;
+    type: string;
+    status: string;
+  }>
 > {
   const cookieStore = await cookies();
   const token = cookieStore.get("accessToken")?.value;
@@ -540,89 +555,3 @@ export async function deleteDealerWarrantyPackages(
 /**
  * Get all warranty plan presets
  */
-export async function getWarrantyPresetsAction(): Promise<
-  ApiResponse<WarrantyPackage[]>
-> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("accessToken")?.value;
-
-  if (!token) {
-    return { status: false, message: "Not authenticated" };
-  }
-
-  try {
-    const headersList = await headers();
-    const host = headersList.get("host") || "";
-
-    const res = await fetch(`${API_BASE}/warranty-packages/presets`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Host: host,
-        "X-Forwarded-Host": host,
-      },
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      return { status: false, message: "Failed to fetch presets" };
-    }
-
-    const json = await res.json();
-    return json;
-  } catch (error) {
-    return { status: false, message: "Failed to fetch presets" };
-  }
-}
-
-/**
- * Create warranty package from preset with customizable benefits
- */
-export async function createPackageFromPresetAction(
-  presetId: string,
-  payload: {
-    name: string;
-    keyBenefits?: string[];
-    includedFeatures?: string[];
-    dealerId?: string;
-  }
-): Promise<ApiResponse<WarrantyPackage>> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("accessToken")?.value;
-
-  if (!token) {
-    return { status: false, message: "Not authenticated" };
-  }
-
-  try {
-    const headersList = await headers();
-    const host = headersList.get("host") || "";
-
-    const res = await fetch(
-      `${API_BASE}/warranty-packages/from-preset/${presetId}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          Host: host,
-          "X-Forwarded-Host": host,
-        },
-        body: JSON.stringify(payload),
-        cache: "no-store",
-      }
-    );
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      return {
-        status: false,
-        message: errorData.message || "Failed to create package from preset",
-      };
-    }
-
-    const json = await res.json();
-    return json;
-  } catch (error) {
-    return { status: false, message: "Failed to create package from preset" };
-  }
-}

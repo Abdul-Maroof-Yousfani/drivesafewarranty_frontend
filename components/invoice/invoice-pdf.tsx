@@ -415,12 +415,20 @@ export const InvoicePDF = ({ settings, data }: InvoicePDFProps) => {
   // Ensure logoUrl is absolute if it's a relative path
   const getAbsoluteUrl = (url?: string) => {
     if (!url) return undefined;
-    if (
-      url.startsWith("http") ||
-      url.startsWith("data:") ||
-      url.startsWith("blob:")
-    )
-      return url;
+    if (url.startsWith("data:") || url.startsWith("blob:")) return url;
+
+    if (url.startsWith("http")) {
+      try {
+        const u = new URL(url);
+        u.pathname = u.pathname.replace(
+          /^\/api(?=\/(uploads|dealer-storage|dealers|master)(\/|$))/,
+          ""
+        );
+        return u.toString();
+      } catch {
+        return url;
+      }
+    }
 
     // In browser, use relative paths for uploads to leverage Next.js proxy (satisfies browser context)
     if (typeof window !== "undefined") {
@@ -430,7 +438,9 @@ export const InvoicePDF = ({ settings, data }: InvoicePDFProps) => {
         url.startsWith("/dealer-storage/") ||
         url.startsWith("dealer-storage/") ||
         url.startsWith("/dealers/") ||
-        url.startsWith("dealers/")
+        url.startsWith("dealers/") ||
+        url.startsWith("/master/") ||
+        url.startsWith("master/")
       ) {
         return url.startsWith("/") ? url : `/${url}`;
       }
@@ -444,9 +454,17 @@ export const InvoicePDF = ({ settings, data }: InvoicePDFProps) => {
       url.startsWith("/dealer-storage/") ||
       url.startsWith("dealer-storage/") ||
       url.startsWith("/dealers/") ||
-      url.startsWith("dealers/")
+      url.startsWith("dealers/") ||
+      url.startsWith("/master/") ||
+      url.startsWith("master/")
     ) {
-      const backendBase = "http://localhost:8080";
+      const backendApi = (
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3004/api"
+      ).replace(/\/+$/, "");
+      let backendBase = backendApi.replace(/\/api\/?$/, "");
+      try {
+        backendBase = new URL(backendApi).origin;
+      } catch {}
       return `${backendBase}${url.startsWith("/") ? "" : "/"}${url}`;
     }
 
