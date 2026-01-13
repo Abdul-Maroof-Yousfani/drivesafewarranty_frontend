@@ -241,7 +241,9 @@ export default function CreateWarrantySalePage() {
         selectedPackage.eligibilityTransmission &&
         selectedVehicle.transmission
       ) {
-        const packageTransmission = String(selectedPackage.eligibilityTransmission);
+        const packageTransmission = String(
+          selectedPackage.eligibilityTransmission
+        );
         if (
           packageTransmission.toLowerCase() !==
           String(selectedVehicle.transmission || "").toLowerCase()
@@ -466,8 +468,12 @@ export default function CreateWarrantySalePage() {
             ? { price36Months: data.price36Months }
             : {}),
           ...(data.paymentMethod ? { paymentMethod: data.paymentMethod } : {}),
-          ...(data.customerConsent ? { customerConsent: data.customerConsent } : {}),
-          ...(data.mileageAtSale != null ? { mileageAtSale: data.mileageAtSale } : {}),
+          ...(data.customerConsent
+            ? { customerConsent: data.customerConsent }
+            : {}),
+          ...(data.mileageAtSale != null
+            ? { mileageAtSale: data.mileageAtSale }
+            : {}),
           ...(data.coverageStartDate
             ? { coverageStartDate: data.coverageStartDate }
             : {}),
@@ -631,7 +637,7 @@ export default function CreateWarrantySalePage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {selectedCustomer.vehicles.map((v) => (
+                                {selectedCustomer.vehicles?.map((v) => (
                                   <SelectItem key={v.id} value={v.id}>
                                     {v.make} {v.model} (
                                     {v.registrationNumber || v.vin || v.year})
@@ -1181,10 +1187,10 @@ export default function CreateWarrantySalePage() {
                                       )}
                                     </FormLabel>
                                   </FormItem>
-                  {assignType === "customer" && (
-                    <div className="space-y-4 pt-4 border-t mt-4">
-                      <h4 className="font-medium text-sm">Sale Details</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                )}
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -1274,27 +1280,13 @@ export default function CreateWarrantySalePage() {
                               <div className="space-y-1 leading-none">
                                 <FormLabel>
                                   Customer Agreement & Acceptance of Terms
-                      </div>
-                    </div>
-                  )}
-                                    >
-                                      <Checkbox
-            </CardContent>
-          </Card>
-                  )}
-                />
-              </CardContent>
-            </Card>
-          )}
-                                    </label>
-                                  );
-                                })}
+                                </FormLabel>
                               </div>
                               <FormMessage />
                             </FormItem>
-                          );
-                        }}
-                      />
+                          )}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
