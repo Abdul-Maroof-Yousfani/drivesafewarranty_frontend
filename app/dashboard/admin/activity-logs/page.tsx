@@ -31,37 +31,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
-
-interface ActivityLog {
-  id: number;
-  userId: number | null;
-  user: {
-    id: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-  } | null;
-  action: string;
-  module: string | null;
-  entity: string | null;
-  entityId: string | null;
-  description: string | null;
-  oldValues: string | null;
-  newValues: string | null;
-  ipAddress: string | null;
-  userAgent: string | null;
-  status: string;
-  errorMessage: string | null;
-  createdAt: string;
-}
-
-interface PaginationData {
-  logs: ActivityLog[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+import { getActivityLogsAction, ActivityLog } from "@/lib/actions/activity-logs";
 
 const actionColors: Record<string, string> = {
   login: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
@@ -75,27 +45,28 @@ const actionColors: Record<string, string> = {
 };
 
 const modules = [
+  "customers",
+  "vehicles",
+  "dealers",
+  "warranty-sales",
+  "invoices",
+  "direct-purchases",
   "auth",
-  "employees",
-  "departments",
-  "payroll",
-  "leaves",
-  "attendance",
-  "roles",
-  "users",
 ];
+
 const actions = [
-  "login",
-  "logout",
   "create",
   "update",
   "delete",
-  "password_change",
-  "logout_all_devices",
+  "login",
+  "logout",
+  "status_change",
 ];
 
 export default function ActivityLogsPage() {
-  const [data, setData] = useState<PaginationData | null>(null);
+  const [logs, setLogs] = useState<ActivityLog[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
@@ -108,174 +79,23 @@ export default function ActivityLogsPage() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      // In real app, call API
-      // const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-      // if (actionFilter && actionFilter !== "all") params.append('action', actionFilter);
-      // if (moduleFilter && moduleFilter !== "all") params.append('module', moduleFilter);
-      // if (startDate) params.append('startDate', startDate);
-      // if (endDate) params.append('endDate', endDate);
-      // const res = await fetch(`/api/auth/activity-logs?${params}`);
-      // const result = await res.json();
-      // setData(result.data);
-
-      // Sample data
-      setData({
-        logs: [
-          {
-            id: 1,
-            userId: 1,
-            user: {
-              id: 1,
-              email: "admin@company.com",
-              firstName: "Admin",
-              lastName: "User",
-            },
-            action: "login",
-            module: "auth",
-            entity: null,
-            entityId: null,
-            description: "User logged in",
-            oldValues: null,
-            newValues: null,
-            ipAddress: "192.168.1.100",
-            userAgent: "Mozilla/5.0",
-            status: "success",
-            errorMessage: null,
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: 2,
-            userId: 1,
-            user: {
-              id: 1,
-              email: "admin@company.com",
-              firstName: "Admin",
-              lastName: "User",
-            },
-            action: "create",
-            module: "employees",
-            entity: "Employee",
-            entityId: "5",
-            description: "Created employee: Ahmed Khan",
-            oldValues: null,
-            newValues: '{"name":"Ahmed Khan"}',
-            ipAddress: "192.168.1.100",
-            userAgent: "Mozilla/5.0",
-            status: "success",
-            errorMessage: null,
-            createdAt: new Date(Date.now() - 3600000).toISOString(),
-          },
-          {
-            id: 3,
-            userId: 2,
-            user: {
-              id: 2,
-              email: "hr@company.com",
-              firstName: "HR",
-              lastName: "Manager",
-            },
-            action: "update",
-            module: "employees",
-            entity: "Employee",
-            entityId: "3",
-            description: "Updated employee: Sara Ali",
-            oldValues: '{"status":"active"}',
-            newValues: '{"status":"inactive"}',
-            ipAddress: "192.168.1.101",
-            userAgent: "Mozilla/5.0",
-            status: "success",
-            errorMessage: null,
-            createdAt: new Date(Date.now() - 7200000).toISOString(),
-          },
-          {
-            id: 4,
-            userId: 1,
-            user: {
-              id: 1,
-              email: "admin@company.com",
-              firstName: "Admin",
-              lastName: "User",
-            },
-            action: "delete",
-            module: "departments",
-            entity: "Department",
-            entityId: "2",
-            description: "Deleted department: Marketing",
-            oldValues: '{"name":"Marketing"}',
-            newValues: null,
-            ipAddress: "192.168.1.100",
-            userAgent: "Mozilla/5.0",
-            status: "success",
-            errorMessage: null,
-            createdAt: new Date(Date.now() - 10800000).toISOString(),
-          },
-          {
-            id: 5,
-            userId: null,
-            user: null,
-            action: "login",
-            module: "auth",
-            entity: null,
-            entityId: null,
-            description: "Login failed",
-            oldValues: null,
-            newValues: null,
-            ipAddress: "192.168.1.200",
-            userAgent: "Mozilla/5.0",
-            status: "failure",
-            errorMessage: "Invalid password",
-            createdAt: new Date(Date.now() - 14400000).toISOString(),
-          },
-          {
-            id: 6,
-            userId: 1,
-            user: {
-              id: 1,
-              email: "admin@company.com",
-              firstName: "Admin",
-              lastName: "User",
-            },
-            action: "password_change",
-            module: "auth",
-            entity: null,
-            entityId: null,
-            description: "Password changed",
-            oldValues: null,
-            newValues: null,
-            ipAddress: "192.168.1.100",
-            userAgent: "Mozilla/5.0",
-            status: "success",
-            errorMessage: null,
-            createdAt: new Date(Date.now() - 18000000).toISOString(),
-          },
-          {
-            id: 7,
-            userId: 2,
-            user: {
-              id: 2,
-              email: "hr@company.com",
-              firstName: "HR",
-              lastName: "Manager",
-            },
-            action: "logout",
-            module: "auth",
-            entity: null,
-            entityId: null,
-            description: "User logged out",
-            oldValues: null,
-            newValues: null,
-            ipAddress: "192.168.1.101",
-            userAgent: "Mozilla/5.0",
-            status: "success",
-            errorMessage: null,
-            createdAt: new Date(Date.now() - 21600000).toISOString(),
-          },
-        ],
-        total: 7,
-        page: 1,
-        limit: 20,
-        totalPages: 1,
+      const res = await getActivityLogsAction({
+        page,
+        limit,
+        search,
+        action: actionFilter,
+        module: moduleFilter,
+        startDate,
+        endDate,
       });
+
+      if (res.status && res.data) {
+        setLogs(res.data.logs);
+        setTotal(res.data.total);
+        setTotalPages(res.data.totalPages);
+      } else {
+        toast.error(res.message || "Failed to fetch activity logs");
+      }
     } catch (error) {
       toast.error("Failed to fetch activity logs");
     } finally {
@@ -287,31 +107,12 @@ export default function ActivityLogsPage() {
     fetchLogs();
   }, [page, actionFilter, moduleFilter, startDate, endDate]);
 
-  const filteredLogs =
-    data?.logs.filter((log) => {
-      // Filter by search
-      if (search) {
-        const searchLower = search.toLowerCase();
-        const matchesSearch =
-          log.user?.email.toLowerCase().includes(searchLower) ||
-          log.user?.firstName.toLowerCase().includes(searchLower) ||
-          log.description?.toLowerCase().includes(searchLower) ||
-          log.ipAddress?.toLowerCase().includes(searchLower);
-        if (!matchesSearch) return false;
-      }
-
-      // Filter by action
-      if (actionFilter && actionFilter !== "all") {
-        if (log.action !== actionFilter) return false;
-      }
-
-      // Filter by module
-      if (moduleFilter && moduleFilter !== "all") {
-        if (log.module !== moduleFilter) return false;
-      }
-
-      return true;
-    }) || [];
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      setPage(1);
+      fetchLogs();
+    }
+  };
 
   const handlePrint = () => {
     const printWindow = window.open("", "_blank");
@@ -321,7 +122,7 @@ export default function ActivityLogsPage() {
       <style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse;font-size:10px}th,td{border:1px solid #ddd;padding:4px;text-align:left}th{background:#f4f4f4}h1{text-align:center}</style>
       </head><body><h1>Activity Logs</h1>
       <table><thead><tr><th>Date/Time</th><th>User</th><th>Action</th><th>Module</th><th>Description</th><th>IP Address</th><th>Status</th></tr></thead>
-      <tbody>${filteredLogs
+      <tbody>${logs
         .map(
           (log) =>
             `<tr><td>${new Date(log.createdAt).toLocaleString()}</td><td>${
@@ -349,7 +150,7 @@ export default function ActivityLogsPage() {
       "Status",
       "Error",
     ];
-    const rows = filteredLogs.map((log) => [
+    const rows = logs.map((log) => [
       new Date(log.createdAt).toLocaleString(),
       log.user ? `${log.user.firstName} ${log.user.lastName}` : "System",
       log.user?.email || "",
@@ -421,6 +222,7 @@ export default function ActivityLogsPage() {
                 placeholder="Search..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
                 className="pl-9"
               />
             </div>
@@ -469,7 +271,7 @@ export default function ActivityLogsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <CardTitle>Logs ({data?.total || 0} total)</CardTitle>
+            <CardTitle>Logs ({total || 0} total)</CardTitle>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -495,7 +297,7 @@ export default function ActivityLogsPage() {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredLogs.length === 0 ? (
+          ) : logs.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No activity logs found
             </div>
@@ -515,7 +317,7 @@ export default function ActivityLogsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredLogs.map((log) => (
+                    {logs.map((log) => (
                       <TableRow key={log.id}>
                         <TableCell className="text-sm whitespace-nowrap">
                           {new Date(log.createdAt).toLocaleString()}
@@ -574,10 +376,10 @@ export default function ActivityLogsPage() {
               </div>
 
               {/* Pagination */}
-              {data && data.totalPages > 1 && (
+              {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <p className="text-sm text-muted-foreground">
-                    Page {data.page} of {data.totalPages}
+                    Page {page} of {totalPages}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -592,9 +394,9 @@ export default function ActivityLogsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        setPage((p) => Math.min(data.totalPages, p + 1))
+                        setPage((p) => Math.min(totalPages, p + 1))
                       }
-                      disabled={page === data.totalPages}
+                      disabled={page === totalPages}
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>

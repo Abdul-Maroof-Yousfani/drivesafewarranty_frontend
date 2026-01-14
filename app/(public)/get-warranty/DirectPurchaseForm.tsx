@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Car, User, Shield, CreditCard, Check, Mail, Key, ExternalLink, Star, Pencil } from "lucide-react";
+import { ArrowLeft, ArrowRight, Car, User, Shield, CreditCard, Check, Mail, Key, ExternalLink, Star, Pencil, ChevronDown, ChevronUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -45,16 +45,10 @@ const STEPS = ["Vehicle Details", "Customer Info", "Select Plan", "Checkout"];
 const vehicleSchema = z.object({
   make: z.string().min(1, "Make is required"),
   model: z.string().min(1, "Model is required"),
-  year: z.preprocess(
-    (val) => (val === "" ? undefined : Number(val)),
-    z.number().min(1900, "Year must be 1900 or later").max(2030, "Invalid year (max 2030)")
-  ),
-  vin: z.string().optional(),
+  year: z.coerce.number().min(1900, "Year must be 1900 or later").max(2030, "Invalid year (max 2030)"),
+  vin: z.string().min(1, "VIN is required"),
   registrationNumber: z.string().optional(),
-  mileage: z.preprocess(
-    (val) => (val === "" ? undefined : Number(val)),
-    z.number().min(0, "Mileage must be positive")
-  ),
+  mileage: z.coerce.number().min(0, "Mileage must be positive"),
   transmission: z.enum(["manual", "automatic"]).optional(),
 });
 
@@ -76,46 +70,44 @@ type CustomerFormValues = z.infer<typeof customerSchema>;
 // Step Indicator Component - Light Mode with clickable completed steps
 function StepIndicator({ steps, currentStep, onStepClick }: { steps: string[]; currentStep: number; onStepClick?: (step: number) => void }) {
   return (
-    <div className="w-full mb-8">
-      <div className="flex items-center justify-between">
+    <div className="w-full mb-10 px-4">
+      <div className="flex items-center w-full">
         {steps.map((step, index) => {
           const isCompleted = index < currentStep;
           const isCurrent = index === currentStep;
           const stepNumber = index + 1;
           const isClickable = isCompleted && onStepClick;
+          const isLast = index === steps.length - 1;
 
           return (
-            <div key={step} className="flex-1 flex items-center">
-              <div className="flex flex-col items-center flex-1">
+            <div key={step} className={cn("flex items-center", isLast ? "flex-none" : "flex-1")}>
+              <div className="relative flex flex-col items-center group">
                 <div
                   className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300",
+                    "w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300 z-10 relative",
                     isCompleted && "bg-gradient-to-r from-[#00C853] to-[#00B4D8] text-white",
                     isCurrent && "bg-gradient-to-r from-[#00C853] to-[#00B4D8] text-white ring-4 ring-[#00C853]/20",
                     !isCompleted && !isCurrent && "bg-gray-200 text-gray-500",
                     isClickable && "cursor-pointer hover:scale-110 hover:shadow-lg"
                   )}
                   onClick={() => isClickable && onStepClick(index)}
-                  title={isClickable ? `Click to edit ${step}` : undefined}
                 >
                   {isCompleted ? <Check className="h-5 w-5" /> : stepNumber}
                 </div>
                 <span
                   className={cn(
-                    "mt-2 text-xs font-medium text-center max-w-[100px]",
-                    (isCompleted || isCurrent) && "text-gray-900",
-                    !isCompleted && !isCurrent && "text-gray-500",
-                    isClickable && "cursor-pointer hover:text-[#00C853]"
+                    "absolute top-12 whitespace-nowrap text-xs font-medium transition-colors",
+                    (isCompleted || isCurrent) ? "text-gray-900" : "text-gray-500",
+                    isClickable && "group-hover:text-[#00C853]"
                   )}
-                  onClick={() => isClickable && onStepClick(index)}
                 >
                   {step}
                 </span>
               </div>
-              {index < steps.length - 1 && (
+              {!isLast && (
                 <div
                   className={cn(
-                    "flex-1 h-1 mx-2 rounded-full transition-all duration-300",
+                    "flex-1 h-1 mx-4 rounded-full transition-all duration-300",
                     isCompleted ? "bg-gradient-to-r from-[#00C853] to-[#00B4D8]" : "bg-gray-200"
                   )}
                 />
@@ -144,6 +136,8 @@ function PlanCard({
   onDurationChange: (duration: 12 | 24 | 36) => void;
   isFeatured?: boolean;
 }) {
+  const [showAllBenefits, setShowAllBenefits] = useState(false);
+
   const getPrice = () => {
     switch (selectedDuration) {
       case 12: return Number(pkg.price12Months) || 0;
@@ -154,7 +148,12 @@ function PlanCard({
   };
 
   const price = getPrice();
-  const benefits = pkg.items?.filter((item) => item.type === "benefit") || [];
+  // Filter benefits slightly more loosely to catch 'benefit' and 'feature'
+  const allBenefits = pkg.items?.filter((item) => 
+    item.type.toLowerCase() === "benefit" || 
+    item.type.toLowerCase() === "feature"
+  ) || [];
+  const visibleBenefits = showAllBenefits ? allBenefits : allBenefits.slice(0, 6);
 
   return (
     <div
@@ -212,20 +211,40 @@ function PlanCard({
       </div>
 
       <div className="space-y-3 mb-6">
-        {benefits.slice(0, 5).map((item) => (
-          <div key={item.id} className="flex items-start gap-2">
-            <div className={cn("w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5", isFeatured ? "bg-white/20" : "bg-[#00C853]/10")}>
-              <Check className={cn("h-3 w-3", isFeatured ? "text-white" : "text-[#00C853]")} />
+        {visibleBenefits.length > 0 ? (
+          visibleBenefits.map((item) => (
+            <div key={item.id} className="flex items-start gap-2">
+              <div className={cn("w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5", isFeatured ? "bg-white/20" : "bg-[#00C853]/10")}>
+                <Check className={cn("h-3 w-3", isFeatured ? "text-white" : "text-[#00C853]")} />
+              </div>
+              <span className={cn("text-sm", isFeatured ? "text-white/90" : "text-gray-700")}>
+                {item.warrantyItem?.label || "Benefit"}
+              </span>
             </div>
-            <span className={cn("text-sm", isFeatured ? "text-white/90" : "text-gray-700")}>
-              {item.warrantyItem.label}
-            </span>
-          </div>
-        ))}
-        {benefits.length > 5 && (
-          <div className={cn("text-sm text-center", isFeatured ? "text-white/70" : "text-gray-500")}>
-            +{benefits.length - 5} more benefits
-          </div>
+          ))
+        ) : (
+           <div className={cn("text-sm italic", isFeatured ? "text-white/70" : "text-gray-500")}>
+             Includes comprehensive coverage.
+           </div>
+        )}
+        
+        {allBenefits.length > 6 && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowAllBenefits(!showAllBenefits);
+            }}
+            className={cn(
+              "text-sm font-medium hover:underline flex items-center gap-1 mt-4 transition-colors focus:outline-none",
+              isFeatured ? "text-white/90 hover:text-white" : "text-[#00C853] hover:text-[#00C853]/80"
+            )}
+          >
+            {showAllBenefits ? (
+              <>Show Less <ChevronUp className="h-4 w-4" /></>
+            ) : (
+              <>View all {allBenefits.length} benefits <ChevronDown className="h-4 w-4" /></>
+            )}
+          </button>
         )}
       </div>
 
@@ -284,36 +303,20 @@ function SuccessModal({
           <Separator />
 
           <div className="space-y-4">
-            <h3 className="font-semibold flex items-center gap-2 text-gray-900">
-              <Key className="h-4 w-4 text-[#00C853]" />
-              Your Portal Credentials
-            </h3>
-
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3 border">
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Email (Username)</p>
-                <p className="font-medium font-mono text-gray-900">{customerEmail}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Temporary Password</p>
-                <p className="font-medium font-mono text-lg text-[#00C853]">{temporaryPassword}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 text-sm text-amber-600">
-              <Mail className="h-4 w-4 mt-0.5 shrink-0" />
+             <div className="flex items-start gap-2 text-sm text-amber-600 bg-amber-50 p-4 rounded-lg">
+              <Mail className="h-5 w-5 mt-0.5 shrink-0" />
               <p>
-                These credentials have been sent to your email. Please change your password on first login.
+                Your portal credentials and warranty details have been sent to <strong>{customerEmail}</strong>. Please check your email inbox (and spam folder) to log in.
               </p>
             </div>
           </div>
 
           <Button
             className="w-full bg-gradient-to-r from-[#00C853] to-[#00B4D8]"
-            onClick={() => window.location.href = "/login"}
+            onClick={() => window.location.href = "http://customer.localhost:3003"}
           >
             <ExternalLink className="mr-2 h-4 w-4" />
-            Go to Login Portal
+            Go to Customer Portal
           </Button>
         </div>
       </div>
@@ -321,7 +324,7 @@ function SuccessModal({
   );
 }
 
-export function DirectPurchaseForm() {
+export function DirectPurchaseForm({ preSelectedPackageId }: { preSelectedPackageId?: string }) {
   const [isPending, startTransition] = useTransition();
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -383,8 +386,21 @@ export function DirectPurchaseForm() {
         res.data.forEach((pkg) => { initialDurations[pkg.id] = 12; });
         setDurations(initialDurations);
         
-        // Deselect if current package is no longer in list
-        if (selectedPackageId && !res.data.find(p => p.id === selectedPackageId)) {
+        // Handle preSaved/Selected Logic
+        if (preSelectedPackageId) {
+            const isEligible = res.data.find(p => p.id === preSelectedPackageId);
+            if (isEligible) {
+                setSelectedPackageId(preSelectedPackageId);
+                // Optional: Toast to confirm selection
+                toast.success("Your selected warranty package is available!");
+            } else {
+                toast.error("The warranty package you selected is not eligible for this vehicle.");
+                // We do NOT select it, allowing them to choose others
+            }
+        }
+        
+        // Deselect if current package is no longer in list (and not handled by preSelect)
+        if (!preSelectedPackageId && selectedPackageId && !res.data.find(p => p.id === selectedPackageId)) {
           setSelectedPackageId(null);
         }
       } else {
@@ -396,7 +412,7 @@ export function DirectPurchaseForm() {
     } finally {
       setLoading(false);
     }
-  }, [selectedPackageId]);
+  }, [selectedPackageId, preSelectedPackageId]);
 
   const selectedPackage = packages.find((p) => p.id === selectedPackageId);
 
@@ -415,9 +431,14 @@ export function DirectPurchaseForm() {
       const valid = await vehicleForm.trigger();
       if (!valid) return;
       const values = vehicleForm.getValues();
-      setVehicleData(values);
+      const confirmedValues: VehicleFormValues = {
+        ...values,
+        year: Number(values.year),
+        mileage: Number(values.mileage)
+      };
+      setVehicleData(confirmedValues);
       // Fetch packages right after vehicle details are entered
-      await fetchEligiblePackages(values);
+      await fetchEligiblePackages(confirmedValues);
     } else if (currentStep === 1) {
       const valid = await customerForm.trigger();
       if (!valid) return;
@@ -490,14 +511,14 @@ export function DirectPurchaseForm() {
               <Form {...vehicleForm}>
                 <form className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={vehicleForm.control} name="make" render={({ field }) => (
+                    <FormField name="make" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Make *</FormLabel>
                         <FormControl><Input placeholder="Toyota" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={vehicleForm.control} name="model" render={({ field }) => (
+                    <FormField name="model" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Model *</FormLabel>
                         <FormControl><Input placeholder="Camry" {...field} /></FormControl>
@@ -506,14 +527,14 @@ export function DirectPurchaseForm() {
                     )} />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={vehicleForm.control} name="year" render={({ field }) => (
+                    <FormField name="year" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Year *</FormLabel>
                         <FormControl><Input type="number" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={vehicleForm.control} name="mileage" render={({ field }) => (
+                    <FormField name="mileage" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Mileage (km) *</FormLabel>
                         <FormControl><Input type="number" placeholder="50000" {...field} /></FormControl>
@@ -522,14 +543,14 @@ export function DirectPurchaseForm() {
                     )} />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={vehicleForm.control} name="vin" render={({ field }) => (
+                    <FormField name="vin" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>VIN</FormLabel>
-                        <FormControl><Input placeholder="Vehicle ID Number" {...field} /></FormControl>
+                        <FormLabel>VIN *</FormLabel>
+                        <FormControl><Input placeholder="Vehicle ID Number" {...field} onChange={(e) => field.onChange(e.target.value.replace(/[^0-9]/g, ""))} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={vehicleForm.control} name="registrationNumber" render={({ field }) => (
+                    <FormField name="registrationNumber" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Registration</FormLabel>
                         <FormControl><Input placeholder="ABC-1234" {...field} /></FormControl>
@@ -537,7 +558,7 @@ export function DirectPurchaseForm() {
                       </FormItem>
                     )} />
                   </div>
-                  <FormField control={vehicleForm.control} name="transmission" render={({ field }) => (
+                  <FormField name="transmission" render={({ field }) => (
                     <FormItem className="max-w-xs">
                       <FormLabel>Transmission</FormLabel>
                       <Select value={field.value} onValueChange={field.onChange}>
@@ -565,14 +586,14 @@ export function DirectPurchaseForm() {
               <Form {...customerForm}>
                 <form className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={customerForm.control} name="firstName" render={({ field }) => (
+                    <FormField name="firstName" render={({ field }) => (
                       <FormItem>
                         <FormLabel>First Name *</FormLabel>
                         <FormControl><Input placeholder="John" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={customerForm.control} name="lastName" render={({ field }) => (
+                    <FormField name="lastName" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Last Name *</FormLabel>
                         <FormControl><Input placeholder="Doe" {...field} /></FormControl>
@@ -580,21 +601,21 @@ export function DirectPurchaseForm() {
                       </FormItem>
                     )} />
                   </div>
-                  <FormField control={customerForm.control} name="email" render={({ field }) => (
+                  <FormField name="email" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Email * (Portal credentials will be sent here)</FormLabel>
                       <FormControl><Input type="email" placeholder="john@example.com" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <FormField control={customerForm.control} name="phone" render={({ field }) => (
+                  <FormField name="phone" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Phone *</FormLabel>
                       <FormControl><Input placeholder="1234567890" {...field} onChange={(e) => field.onChange(e.target.value.replace(/[^0-9]/g, ""))} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <FormField control={customerForm.control} name="address" render={({ field }) => (
+                  <FormField name="address" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Address *</FormLabel>
                       <FormControl><Textarea placeholder="Full address" {...field} /></FormControl>
@@ -602,19 +623,19 @@ export function DirectPurchaseForm() {
                     </FormItem>
                   )} />
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField control={customerForm.control} name="city" render={({ field }) => (
+                    <FormField name="city" render={({ field }) => (
                       <FormItem>
                         <FormLabel>City</FormLabel>
                         <FormControl><Input placeholder="City" {...field} /></FormControl>
                       </FormItem>
                     )} />
-                    <FormField control={customerForm.control} name="state" render={({ field }) => (
+                    <FormField name="state" render={({ field }) => (
                       <FormItem>
                         <FormLabel>State</FormLabel>
                         <FormControl><Input placeholder="State" {...field} /></FormControl>
                       </FormItem>
                     )} />
-                    <FormField control={customerForm.control} name="zipCode" render={({ field }) => (
+                    <FormField name="zipCode" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Zip</FormLabel>
                         <FormControl><Input placeholder="12345" {...field} /></FormControl>
@@ -720,7 +741,7 @@ export function DirectPurchaseForm() {
                 >
                   <Pencil className="h-4 w-4 mr-1" /> Change Plan
                 </Button>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-semibold text-gray-900 text-lg">{selectedPackage?.name}</h3>
                     <p className="text-gray-500 text-sm">{selectedDuration} months coverage</p>
@@ -728,6 +749,36 @@ export function DirectPurchaseForm() {
                   <div className="text-right">
                     <p className="text-3xl font-bold bg-gradient-to-r from-[#00C853] to-[#00B4D8] bg-clip-text text-transparent">£{getPrice().toLocaleString()}</p>
                   </div>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t border-[#00C853]/20">
+                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <div className="w-5 h-5 rounded-full bg-[#00C853]/10 flex items-center justify-center">
+                             <Shield className="h-3 w-3 text-[#00C853]" />
+                        </div>
+                        <span className="font-medium">Warranty Start Date:</span>
+                        <span>{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    </div>
+
+                    {selectedPackage?.items && selectedPackage.items.length > 0 && (
+                        <div className="pt-2">
+                             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Features & Benefits</p>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    {selectedPackage?.items && selectedPackage.items
+                                    .filter(item => item.type.toLowerCase() === 'benefit' || item.type.toLowerCase() === 'feature')
+                                    .slice(0, 6) // Limit to top 6 to avoid clutter
+                                    .map((item) => (
+                                    <div key={item.id} className="flex items-start gap-2 text-sm text-gray-700">
+                                         <Check className="h-4 w-4 text-[#00C853] mt-0.5 shrink-0" />
+                                         <span className="text-xs">{item.warrantyItem.label}</span>
+                                    </div>
+                                ))}
+                             </div>
+                             {(selectedPackage.items.filter(item => item.type.toLowerCase() === 'benefit' || item.type.toLowerCase() === 'feature').length > 6) && (
+                                 <p className="text-xs text-gray-500 mt-2 italic">+ {selectedPackage.items.length - 6} more benefits included</p>
+                             )}
+                        </div>
+                    )}
                 </div>
               </div>
 

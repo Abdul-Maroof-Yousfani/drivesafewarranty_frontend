@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Autocomplete } from "@/components/ui/autocomplete";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getCustomers } from "@/lib/actions/customer";
 import { getDealers } from "@/lib/actions/dealer";
@@ -587,24 +588,18 @@ export default function CreateWarrantySalePage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Customer</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select customer" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {customers.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.firstName} {c.lastName} — {c.email}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <Autocomplete
+                            options={customers.map((c) => ({
+                              value: c.id,
+                              label: `${c.firstName} ${c.lastName} — ${c.email}`,
+                            }))}
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            placeholder="Select customer"
+                            searchPlaceholder="Search customer by name or email..."
+                          />
+                        </FormControl>
                         <FormDescription>
                           Only existing customers are shown here.
                         </FormDescription>
@@ -658,25 +653,18 @@ export default function CreateWarrantySalePage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Dealer</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select dealer" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {dealers.map((d) => (
-                            <SelectItem key={d.id} value={d.id}>
-                              {d.businessNameTrading || d.businessNameLegal} —{" "}
-                              {d.email}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Autocomplete
+                          options={dealers.map((d) => ({
+                            value: d.id,
+                            label: `${d.businessNameTrading || d.businessNameLegal} — ${d.email}`,
+                          }))}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Select dealer"
+                          searchPlaceholder="Search dealer by name or email..."
+                        />
+                      </FormControl>
                       <FormDescription>
                         Select which dealer should receive this package.
                       </FormDescription>
@@ -703,24 +691,18 @@ export default function CreateWarrantySalePage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Warranty Package</FormLabel>
-                    <Select
-                      onValueChange={handlePackageChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select warranty package" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {packages.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Autocomplete
+                        options={packages.map((p) => ({
+                          value: p.id,
+                          label: p.name,
+                        }))}
+                        value={field.value}
+                        onValueChange={handlePackageChange}
+                        placeholder="Select warranty package"
+                        searchPlaceholder="Search warranty package..."
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

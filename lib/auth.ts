@@ -478,15 +478,16 @@ export async function updateMe(data: {
     if (response.ok && result) {
       const cookieStore = await cookies();
       const existingUser = JSON.parse(cookieStore.get("user")?.value || "{}");
+      const userData = result.data || result;
       cookieStore.set(
         "user",
         JSON.stringify({
           ...existingUser,
-          firstName: result.firstName || existingUser.firstName,
-          lastName: result.lastName || existingUser.lastName,
+          firstName: userData.firstName || existingUser.firstName,
+          lastName: userData.lastName || existingUser.lastName,
           avatar:
-            result.avatar !== undefined ? result.avatar : existingUser.avatar,
-          details: result.details || existingUser.details,
+            userData.avatar !== undefined ? userData.avatar : existingUser.avatar,
+          details: userData.details || existingUser.details,
         }),
         {
           httpOnly: false,

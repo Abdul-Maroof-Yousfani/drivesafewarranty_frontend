@@ -115,7 +115,9 @@ export default function InvoicePage() {
         // Use SA's template (dealerId = null)
         // If settlement variant, also use SA's template
         // Otherwise, use the dealer's branding for customer invoices
-        const isDealerInvoice = !!invoice;
+        // If we have an invoice object AND it has a dealerId, it's a dealer invoice (settlement)
+        // If invoice but no dealerId, it's a direct customer invoice
+        const isDealerInvoice = !!invoice && !!invoice.dealerId;
         const settingsRes = await getInvoiceSettingsAction(
           isDealerInvoice || isSettlement ? undefined : sale.dealer?.id,
           isDealerInvoice || isSettlement ? "master" : undefined
@@ -139,7 +141,7 @@ export default function InvoicePage() {
 
         const saleData: InvoiceData = {
           invoiceNumber: invoice?.invoiceNumber || sale.policyNumber,
-          variant: (isDealerInvoice ? "settlement" : variant) as any,
+          variant: (isDealerInvoice ? "settlement" : (invoice ? "customer" : variant)) as any,
           date: invoice
             ? new Date(invoice.invoiceDate).toLocaleDateString()
             : new Date(sale.saleDate).toLocaleDateString(),

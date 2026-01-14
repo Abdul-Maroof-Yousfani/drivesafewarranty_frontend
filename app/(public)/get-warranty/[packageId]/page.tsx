@@ -1,25 +1,35 @@
 import { Suspense } from "react";
-import { DirectPurchaseForm } from "./DirectPurchaseForm";
+import { DirectPurchaseForm } from "../DirectPurchaseForm";
 
-export default function GetWarrantyPage() {
+export default async function GetWarrantyPackagePage({
+  params,
+}: {
+  params: Promise<{ packageId: string }>;
+}) {
+  const { packageId } = await params;
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-     
-        <div className="container mx-auto flex items-center justify-center">
-          <div className="flex items-center gap-3">
+      
+        <div className=" bg-white  mx-auto flex items-center justify-between">
+          <div className="container  flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <img src="/Drive Safe-04.png" alt="DriveSafe Logo" className="h-25 w-25 object-contain" />
-             
+              <img src="/Drive Safe-04.jpg" alt="DriveSafe Logo" className="h-16 w-16 object-cover" />
+              
             </div>
           </div>
-          
+          <a
+            href="/login"
+            className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+          >
+            Already have an account? Login
+          </a>
         </div>
       
 
       {/* Hero Section */}
-      <div className="px-4">
-        <div className="text-center mb-3">
+      <div className="py-8 px-4">
+        <div className="text-center mb-8">
           <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-4">
             Get Your Vehicle{" "}
             <span className="bg-gradient-to-r from-[#00C853] to-[#00B4D8] bg-clip-text text-transparent">
@@ -34,9 +44,10 @@ export default function GetWarrantyPage() {
 
         <Suspense
           fallback={
-            <div className="text-center py-8 text-gray-500">Loading...</div>
-          }>
-          <DirectPurchaseForm />
+            <div className="text-center py-12 text-gray-500">Loading...</div>
+          }
+        >
+          <DirectPurchaseForm preSelectedPackageId={packageId} />
         </Suspense>
       </div>
 

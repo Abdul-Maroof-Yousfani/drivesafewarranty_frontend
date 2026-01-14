@@ -89,3 +89,37 @@ export async function uploadLogoAction(
     return { status: false, message: errorMessage };
   }
 }
+
+export async function uploadFileAction(
+  formData: FormData
+): Promise<{ status: boolean; data?: any; message?: string }> {
+  try {
+    const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+    
+    // Get category from formData or default to documents
+    const category = formData.get("category") || "documents";
+
+    const res = await fetch(`${API_BASE}/upload/single?category=${category}`, {
+      method: "POST",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host
+      },
+      body: formData,
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return { status: false, message: errorData.message || "Upload failed" };
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error("Upload failed:", error);
+    return { status: false, message: "Upload failed" };
+  }
+}

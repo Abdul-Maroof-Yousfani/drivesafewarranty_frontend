@@ -46,6 +46,7 @@ export default function SuperAdminInvoicesPage() {
   const [loadingStats, setLoadingStats] = useState(false);
   const [invoiceToMarkPaid, setInvoiceToMarkPaid] = useState<Invoice | null>(null);
   const [markingPaid, setMarkingPaid] = useState(false);
+  const [activeTab, setActiveTab] = useState("customer");
 
   useEffect(() => {
     loadSales();
@@ -64,7 +65,10 @@ export default function SuperAdminInvoicesPage() {
 
   const loadSettlements = async () => {
     setLoadingSettlements(true);
-    const res = await getAllInvoicesAction({ dealerId: selectedDealerId !== "all" ? selectedDealerId : undefined });
+    const res = await getAllInvoicesAction({ 
+      dealerId: selectedDealerId !== "all" ? selectedDealerId : undefined,
+      excludeDirectSales: true
+    });
     if (res.status && res.data) {
       setSettlements(res.data.invoices);
     }
@@ -99,7 +103,10 @@ export default function SuperAdminInvoicesPage() {
     
     // Reload settlements with new dealer filter
     setLoadingSettlements(true);
-    const res = await getAllInvoicesAction({ dealerId: dealerId !== "all" ? dealerId : undefined });
+    const res = await getAllInvoicesAction({ 
+      dealerId: dealerId !== "all" ? dealerId : undefined,
+      excludeDirectSales: true
+    });
     if (res.status && res.data) {
       setSettlements(res.data.invoices);
     }
@@ -139,11 +146,34 @@ export default function SuperAdminInvoicesPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="customer" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="customer">Customer Receipts</TabsTrigger>
-          <TabsTrigger value="dealer">Dealer Settlements</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex items-center justify-between">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="customer">Customer Receipts</TabsTrigger>
+            <TabsTrigger value="dealer">Dealer Settlements</TabsTrigger>
+          </TabsList>
+
+          {activeTab === "dealer" && (
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium whitespace-nowrap">
+                Filter by Dealer:
+              </span>
+              <Select value={selectedDealerId} onValueChange={handleDealerChange}>
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Select a dealer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Dealers</SelectItem>
+                  {dealers.map((dealer) => (
+                    <SelectItem key={dealer.id} value={dealer.id}>
+                      {dealer.businessNameLegal}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
 
         <TabsContent value="customer" className="mt-6">
           <Card>
@@ -220,10 +250,11 @@ export default function SuperAdminInvoicesPage() {
                           <TableCell className="font-bold">
                             {formatCurrency(sale.warrantyPrice)}
                           </TableCell>
+
                           <TableCell className="text-right">
-                            <Button asChild variant="outline" size="sm">
+                           <Button asChild variant="outline" size="sm">
                               <Link
-                                href={`/invoices/${sale.id}`}
+                                href={`/invoices/${sale.invoices?.[0]?.id || sale.id}`}
                                 target="_blank"
                               >
                                 <FileText className="h-4 w-4 mr-2" /> View
@@ -242,100 +273,83 @@ export default function SuperAdminInvoicesPage() {
 
         <TabsContent value="dealer" className="mt-3 ">
           <div className="space-y-6 ml">
-            {/* Dealer Selection - Compact in header */}
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-medium">Filter by Dealer:</label>
-              <Select value={selectedDealerId} onValueChange={handleDealerChange}>
-                <SelectTrigger className="w-[300px]">
-                  <SelectValue placeholder="Select a dealer" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Dealers</SelectItem>
-                  {dealers.map((dealer) => (
-                    <SelectItem key={dealer.id} value={dealer.id}>
-                      {dealer.businessNameLegal}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
-            {/* Statistics Cards - Improved Design */}
-            {selectedDealerId !== "all" && (
-              <div className="grid gap-4 md:grid-cols-3">
-                {loadingStats ? (
-                  <div className="col-span-3 flex justify-center p-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : statistics ? (
-                  <>
-                    <Card className="border-l-4 border-l-blue-500">
-                      <CardHeader >
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg font-medium text-muted-foreground">
-                            Total Invoices
-                          </CardTitle>
-                          <DollarSign className="h-5 w-5 text-blue-500" />
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-3xl font-bold text-blue-600">
-                          {formatCurrency(statistics.totalAmount)}
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {statistics.totalCount} invoice{statistics.totalCount !== 1 ? 's' : ''}
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-l-4 border-l-amber-500">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg font-medium text-muted-foreground">
-                            Pending Invoices
-                          </CardTitle>
-                          <Clock className="h-5 w-5 text-amber-500" />
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-3xl font-bold text-amber-600">
-                          {formatCurrency(statistics.pendingAmount)}
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {statistics.pendingCount} invoice{statistics.pendingCount !== 1 ? 's' : ''}
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-l-4 border-l-green-500">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg font-medium text-muted-foreground">
-                            Paid Invoices
-                          </CardTitle>
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-3xl font-bold text-green-600">
-                          {formatCurrency(statistics.paidAmount)}
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {statistics.paidCount} invoice{statistics.paidCount !== 1 ? 's' : ''}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </>
-                ) : null}
-              </div>
-            )}
 
             {/* Invoice Table */}
             <Card>
               <CardHeader>
                 <CardTitle>Dealer Settlement Invoices</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
+                {/* Statistics Cards - Improved Design */}
+                {selectedDealerId !== "all" && (
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {loadingStats ? (
+                      <div className="col-span-3 flex justify-center p-4">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : statistics ? (
+                      <>
+                        <Card className="border-l-4 border-l-blue-500 shadow-sm transition-all hover:shadow-md">
+                          <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Total Amount
+                              </CardTitle>
+                              <DollarSign className="h-4 w-4 text-blue-500" />
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold text-blue-600">
+                              {formatCurrency(statistics.totalAmount)}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {statistics.totalCount} total invoice{statistics.totalCount !== 1 ? 's' : ''}
+                            </p>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="border-l-4 border-l-amber-500 shadow-sm transition-all hover:shadow-md">
+                          <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Pending
+                              </CardTitle>
+                              <Clock className="h-4 w-4 text-amber-500" />
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold text-amber-600">
+                              {formatCurrency(statistics.pendingAmount)}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {statistics.pendingCount} unpaid invoice{statistics.pendingCount !== 1 ? 's' : ''}
+                            </p>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="border-l-4 border-l-green-500 shadow-sm transition-all hover:shadow-md">
+                          <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Paid
+                              </CardTitle>
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold text-green-600">
+                              {formatCurrency(statistics.paidAmount)}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {statistics.paidCount} fulfilled invoice{statistics.paidCount !== 1 ? 's' : ''}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </>
+                    ) : null}
+                  </div>
+                )}
                 {loadingSettlements ? (
                   <div className="flex justify-center p-8">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

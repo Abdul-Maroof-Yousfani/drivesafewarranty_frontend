@@ -87,6 +87,7 @@ export async function getAllInvoicesAction(params?: {
   status?: string;
   startDate?: string;
   endDate?: string;
+  excludeDirectSales?: boolean;
 }): Promise<{ status: boolean; data?: InvoiceListResponse; message?: string }> {
   try {
     const token = await getAccessToken();
@@ -98,7 +99,10 @@ export async function getAllInvoicesAction(params?: {
     if (params?.dealerId) queryParams.append("dealerId", params.dealerId);
     if (params?.status) queryParams.append("status", params.status);
     if (params?.startDate) queryParams.append("startDate", params.startDate);
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.startDate) queryParams.append("startDate", params.startDate);
     if (params?.endDate) queryParams.append("endDate", params.endDate);
+    if (params?.excludeDirectSales) queryParams.append("excludeDirectSales", "true");
 
     const url = `${API_BASE}/invoices${
       queryParams.toString() ? `?${queryParams.toString()}` : ""

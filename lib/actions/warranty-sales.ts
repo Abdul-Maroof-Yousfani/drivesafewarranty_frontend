@@ -71,7 +71,13 @@ export interface WarrantySale {
     year: number;
     vin?: string | null;
     registrationNumber?: string | null;
+
   } | null;
+  invoices?: {
+    id: string;
+    invoiceNumber: string;
+    status: string;
+  }[];
 }
 
 export async function getWarrantySalesAction(): Promise<{

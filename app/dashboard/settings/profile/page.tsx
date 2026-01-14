@@ -129,6 +129,8 @@ export default function ProfileSettingsPage() {
       });
       if (res.status) {
         toast.success(res.message || "Profile updated");
+        // Dispatch event for instant header/sidebar refresh
+        window.dispatchEvent(new Event("auth-change"));
         // Force page reload to refresh all components with updated user data
         setTimeout(() => {
           window.location.reload();

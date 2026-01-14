@@ -59,6 +59,12 @@ export default function middleware(request: NextRequest): NextResponse {
       // Redirect to main domain login
       return NextResponse.redirect(`${protocol}//${baseDomain}${port}/login`);
     }
+
+    // Block public /get-warranty page on subdomains
+    if (pathname.startsWith("/get-warranty")) {
+       console.log(`[Middleware] Blocked /get-warranty on subdomain: ${subdomain}`);
+       return NextResponse.redirect(new URL("/login", request.url));
+    }
   }
 
   // Get tokens and role from cookies
