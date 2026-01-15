@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import {
   getWarrantyItemsAction,
   createWarrantyItemAction,
-} from "@/lib/actions/warranty-package";
+} from "@/lib/actions/warranty-item";
 import { createWarrantyPlanLevelAction } from "@/lib/actions/warranty-plan-level";
 
 const schema = z.object({
@@ -37,7 +37,7 @@ const schema = z.object({
     .min(3, "Name must be at least 3 characters")
     .max(50, "Name must be less than 50 characters"),
   description: z.string().optional(),
-  benefitIds: z.array(z.string()).default([]),
+  benefitIds: z.array(z.string()),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -183,49 +183,34 @@ export default function CreateWarrantyPlanLevelPage() {
               <FormField
                 control={form.control}
                 name="benefitIds"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Default Benefits</FormLabel>
                     <div className="space-y-2">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {benefitItems.map((item) => (
-                          <FormField
-                            key={item.id}
-                            control={form.control}
-                            name="benefitIds"
-                            render={({ field }) => {
-                              const isChecked = field.value?.includes(item.id);
-                              return (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-2">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={isChecked}
-                                      onCheckedChange={(checked) => {
-                                        if (checked) {
-                                          field.onChange([
-                                            ...(field.value || []),
-                                            item.id,
-                                          ]);
-                                        } else {
-                                          field.onChange(
-                                            (field.value || []).filter(
-                                              (val: string) => val !== item.id
-                                            )
-                                          );
-                                        }
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <div className="space-y-1">
-                                    <p className="text-sm font-medium leading-none">
-                                      {item.label}
-                                    </p>
-                                  </div>
-                                </FormItem>
-                              );
-                            }}
-                          />
-                        ))}
+                        {benefitItems.map((item) => {
+                          const isChecked = field.value?.includes(item.id);
+                          return (
+                            <div key={item.id} className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-2">
+                              <FormControl>
+                                <Checkbox
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) => {
+                                    const newValue = checked
+                                      ? [...(field.value || []), item.id]
+                                      : (field.value || []).filter((val: string) => val !== item.id);
+                                    field.onChange(newValue);
+                                  }}
+                                />
+                              </FormControl>
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium leading-none">
+                                  {item.label}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                     <FormMessage />

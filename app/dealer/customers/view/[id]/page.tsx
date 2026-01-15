@@ -30,6 +30,7 @@ export default async function DealerCustomerViewPage({
     if (!result.data) {
       notFound();
     }
+    console.log("DealerCustomerViewPage data:", JSON.stringify(result.data, null, 2));
     return <CustomerViewDealer customer={result.data} />;
   } catch (error) {
     console.error("Error in DealerCustomerViewPage:", error);

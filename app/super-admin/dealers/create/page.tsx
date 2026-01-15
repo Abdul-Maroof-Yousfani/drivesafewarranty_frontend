@@ -155,9 +155,9 @@ export default function CreateDealerPage() {
 
       if (result.status && result.data) {
         toast.success("Dealer created successfully!");
-        toast.info(
-          `Credentials generated. Username: ${result.data.dealer.email} (email). Excel file: ${result.data.credentials.excelFile.filename}`
-        );
+        // toast.info(
+        //   `Credentials generated. Username: ${result.data.dealer.email} (email). Excel file: ${result.data.credentials.excelFile.filename}`
+        // );
         router.push(
           `/super-admin/dealers/list?newDealerId=${result.data.dealer.id}`
         );

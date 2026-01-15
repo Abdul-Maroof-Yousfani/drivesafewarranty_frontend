@@ -30,7 +30,7 @@ import { useAuth } from "@/hooks/use-auth";
 // Helper function to transform menu items for dealer (replace /super-admin with /dealer)
 function transformMenuForDealer(menuItems: MenuItem[]): MenuItem[] {
   return menuItems
-    .filter((item) => item.title !== "Create Package" && item.title !== "Dealer Management")
+    .filter((item) => item.title !== "Create Package" && item.title !== "Dealer Management" && item.title !== "Warranty Tiers")
     .map((item) => {
       const transformedItem = { ...item };
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import DataTable from "@/components/common/data-table";
 import { ListSkeleton } from "@/components/dashboard/list-skeleton";
@@ -64,14 +65,22 @@ export default function WarrantyPlanLevelsListPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Warranty Plan Levels
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Manage dynamic warranty plan levels (e.g. Silver, Gold, Platinum) and
-          their default benefits.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Warranty Tiers
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Manage dynamic warranty tiers (e.g. Silver, Gold, Platinum) and
+            their default benefits.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => router.push("/super-admin/warranty-items")}
+        >
+          Manage Global Benefits
+        </Button>
       </div>
 
       <DataTable<PlanLevelRow>
@@ -81,7 +90,7 @@ export default function WarrantyPlanLevelsListPage() {
         toggleAction={() =>
           router.push("/super-admin/warranty-plan-levels/create")
         }
-        actionText="Create Plan Level"
+        actionText="Create Warranty Tier"
         onMultiDelete={handleMultiDelete}
       />
     </div>

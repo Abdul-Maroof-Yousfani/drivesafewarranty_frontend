@@ -34,9 +34,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   getWarrantyPackageByIdAction,
-  getWarrantyItemsAction,
   updateWarrantyPackageAction,
 } from "@/lib/actions/warranty-package";
+import { getWarrantyItemsAction } from "@/lib/actions/warranty-item";
 import { getWarrantyPlanLevelsAction } from "@/lib/actions/warranty-plan-level";
 import { toast } from "sonner";
 
@@ -48,34 +48,18 @@ const packageSchema = z.object({
     .min(1, "Plan level is required")
     .max(50, "Plan level is too long"),
   eligibility: z.string().min(1, "Eligibility is required"),
-  eligibilityMileageComparator: z
-    .enum(["gt", "lt"])
-    .optional()
-    .or(z.literal("")),
-  eligibilityMileageValue: z.coerce.number().min(0).optional(),
-  eligibilityVehicleAgeYearsMax: z.coerce.number().min(0).optional(),
-  eligibilityTransmission: z
-    .enum(["manual", "automatic"])
-    .optional()
-    .or(z.literal("")),
-  excess: z.coerce.number().min(0, "Excess must be non‑negative"),
-  labourRatePerHour: z.coerce
-    .number()
-    .min(0, "Labour rate must be non‑negative"),
-  fixedClaimLimit: z.coerce
-    .number()
-    .min(0, "Fixed claim limit must be non‑negative"),
-  price12Months: z.coerce
-    .number()
-    .min(0, "12‑month price must be non‑negative"),
-  price24Months: z.coerce
-    .number()
-    .min(0, "24‑month price must be non‑negative"),
-  price36Months: z.coerce
-    .number()
-    .min(0, "36‑month price must be non‑negative"),
-  includedFeatures: z.array(z.string()).optional().default([]),
-  keyBenefits: z.array(z.string()).min(1, "Select at least one benefit"), // Array of WarrantyItem IDs
+  eligibilityMileageComparator: z.enum(["gt", "lt"]).optional(),
+  eligibilityMileageValue: z.number().optional(),
+  eligibilityVehicleAgeYearsMax: z.number().optional(),
+  eligibilityTransmission: z.enum(["manual", "automatic"]).optional(),
+  excess: z.number().min(0, "Excess must be non‑negative"),
+  labourRatePerHour: z.number().min(0, "Labour rate must be non‑negative"),
+  fixedClaimLimit: z.number().min(0, "Fixed claim limit must be non‑negative"),
+  price12Months: z.number().min(0, "12‑month price must be non‑negative"),
+  price24Months: z.number().min(0, "24‑month price must be non‑negative"),
+  price36Months: z.number().min(0, "36‑month price must be non‑negative"),
+  includedFeatures: z.array(z.string()),
+  keyBenefits: z.array(z.string()).min(1, "Select at least one benefit"),
 });
 
 type PackageFormValues = z.infer<typeof packageSchema>;
@@ -97,16 +81,16 @@ export default function EditWarrantyPackagePage() {
   >([]);
 
   const form = useForm<PackageFormValues>({
-    resolver: zodResolver(packageSchema),
+    resolver: zodResolver(packageSchema) as any,
     defaultValues: {
       name: "",
       description: "",
       planLevel: "Silver",
       eligibility: "",
-      eligibilityMileageComparator: "",
+      eligibilityMileageComparator: undefined,
       eligibilityMileageValue: undefined,
       eligibilityVehicleAgeYearsMax: undefined,
-      eligibilityTransmission: "",
+      eligibilityTransmission: undefined,
       excess: 0,
       labourRatePerHour: 0,
       fixedClaimLimit: 0,
@@ -166,9 +150,11 @@ export default function EditWarrantyPackagePage() {
           price12Months: p.price12Months ?? 0,
           price24Months: p.price24Months ?? 0,
           price36Months: p.price36Months ?? 0,
-          includedFeatures: Array.isArray(p.includedFeatures)
-            ? p.includedFeatures
-            : [],
+          includedFeatures:
+            p.items
+              ?.filter((item: any) => item.type === "feature")
+              .map((item: any) => item.warrantyItem?.id || item.warrantyItemId)
+              .filter(Boolean) || [],
           // Extract benefit item IDs from items relation
           keyBenefits:
             p.items
@@ -195,19 +181,27 @@ export default function EditWarrantyPackagePage() {
         planLevel: data.planLevel,
         eligibility: data.eligibility,
         eligibilityMileageComparator:
-          data.eligibilityMileageComparator || undefined,
+          (data.eligibilityMileageComparator as any) || undefined,
         eligibilityMileageValue: data.eligibilityMileageValue,
         eligibilityVehicleAgeYearsMax: data.eligibilityVehicleAgeYearsMax,
-        eligibilityTransmission: data.eligibilityTransmission || undefined,
+        eligibilityTransmission: (data.eligibilityTransmission as any) || undefined,
         excess: data.excess,
         labourRatePerHour: data.labourRatePerHour,
         fixedClaimLimit: data.fixedClaimLimit,
         price12Months: data.price12Months,
         price24Months: data.price24Months,
         price36Months: data.price36Months,
-        includedFeatures: data.includedFeatures,
-        keyBenefits: data.keyBenefits,
-      } as any);
+        items: [
+          ...data.includedFeatures.map((id) => ({
+            warrantyItemId: id,
+            type: "feature" as const,
+          })),
+          ...data.keyBenefits.map((id) => ({
+            warrantyItemId: id,
+            type: "benefit" as const,
+          })),
+        ],
+      });
       if (res.status) {
         toast.success(res.message || "Warranty package updated successfully");
         router.push("/super-admin/warranty-packages/list");
@@ -330,7 +324,13 @@ export default function EditWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>12 Months Price</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input 
+                          type="number" 
+                          min={0} 
+                          step="0.01" 
+                          {...field} 
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -343,7 +343,13 @@ export default function EditWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>24 Months Price</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input 
+                          type="number" 
+                          min={0} 
+                          step="0.01" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -356,7 +362,13 @@ export default function EditWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>36 Months Price</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input 
+                          type="number" 
+                          min={0} 
+                          step="0.01" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -366,46 +378,91 @@ export default function EditWarrantyPackagePage() {
 
               <FormField
                 control={form.control}
-                name="keyBenefits"
-                render={() => (
+                name="includedFeatures"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Coverage Benefits</FormLabel>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {warrantyItems.map((item) => (
-                        <FormField
-                          key={item.id}
-                          control={form.control}
-                          name="keyBenefits"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(item.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([
-                                          ...field.value,
-                                          item.id,
-                                        ])
-                                      : field.onChange(
-                                          field.value?.filter(
-                                            (value) => value !== item.id
-                                          )
-                                        );
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {item.label}
-                              </FormLabel>
-                            </FormItem>
-                          )}
-                        />
-                      ))}
+                    <FormLabel>Included Features</FormLabel>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {warrantyItems
+                        .filter((item) => item.type === "feature")
+                        .map((feature) => (
+                          <div
+                            key={feature.id}
+                            className="flex flex-row items-center space-x-3 space-y-0"
+                          >
+                            <Checkbox
+                              id={feature.id}
+                              checked={field.value?.includes(feature.id)}
+                              onCheckedChange={(checked) => {
+                                const current = field.value || [];
+                                const next = checked
+                                  ? [...current, feature.id]
+                                  : current.filter((v) => v !== feature.id);
+                                field.onChange(next);
+                              }}
+                            />
+                            <FormLabel
+                              className="text-sm font-normal cursor-pointer"
+                              onClick={() => {
+                                const current = field.value || [];
+                                const isChecked = current.includes(feature.id);
+                                const next = isChecked
+                                  ? current.filter((v) => v !== feature.id)
+                                  : [...current, feature.id];
+                                field.onChange(next);
+                              }}
+                            >
+                              {feature.label}
+                            </FormLabel>
+                          </div>
+                        ))}
                     </div>
-                    <FormDescription>
-                      Select applicable benefits for this package.
-                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="keyBenefits"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Key Benefits</FormLabel>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {warrantyItems
+                        .filter((item) => item.type === "benefit")
+                        .map((benefit) => (
+                          <div
+                            key={benefit.id}
+                            className="flex flex-row items-center space-x-3 space-y-0"
+                          >
+                            <Checkbox
+                              id={benefit.id}
+                              checked={field.value?.includes(benefit.id)}
+                              onCheckedChange={(checked) => {
+                                const current = field.value || [];
+                                const next = checked
+                                  ? [...current, benefit.id]
+                                  : current.filter((v) => v !== benefit.id);
+                                field.onChange(next);
+                              }}
+                            />
+                            <FormLabel
+                              className="text-sm font-normal cursor-pointer"
+                              onClick={() => {
+                                const current = field.value || [];
+                                const isChecked = current.includes(benefit.id);
+                                const next = isChecked
+                                  ? current.filter((v) => v !== benefit.id)
+                                  : [...current, benefit.id];
+                                field.onChange(next);
+                              }}
+                            >
+                              {benefit.label}
+                            </FormLabel>
+                          </div>
+                        ))}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -461,7 +518,7 @@ export default function EditWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>Mileage Value (miles)</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} {...field} />
+                        <Input type="number" min={0} {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -514,7 +571,13 @@ export default function EditWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>Excess</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input 
+                          type="number" 
+                          min={0} 
+                          step="0.01" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -527,7 +590,13 @@ export default function EditWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>Labour Rate (per hour)</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input 
+                          type="number" 
+                          min={0} 
+                          step="0.01" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -540,7 +609,13 @@ export default function EditWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>Fixed Claim Limit</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input 
+                          type="number" 
+                          min={0} 
+                          step="0.01" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

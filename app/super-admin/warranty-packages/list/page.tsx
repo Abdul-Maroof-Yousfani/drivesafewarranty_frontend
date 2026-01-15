@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { deleteWarrantyPackages } from "@/lib/actions/warranty-package";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function WarrantyPackagesListPage() {
   const router = useRouter();
@@ -49,6 +50,9 @@ export default function WarrantyPackagesListPage() {
     };
   }, []);
 
+  const { user } = useAuth();
+  const isDealer = user?.role === "dealer";
+
   if (loading) {
     return <ListSkeleton />;
   }
@@ -78,11 +82,13 @@ export default function WarrantyPackagesListPage() {
         columns={columns}
         data={data}
         searchFields={[{ key: "name", label: "Name" }]}
-        toggleAction={() =>
-          router.push("/super-admin/warranty-packages/create")
+        toggleAction={
+          !isDealer
+            ? () => router.push("/super-admin/warranty-packages/create")
+            : undefined
         }
-        actionText="Create Package"
-        onMultiDelete={handleMultiDelete}
+        actionText={!isDealer ? "Create Package" : undefined}
+        onMultiDelete={!isDealer ? handleMultiDelete : undefined}
       />
     </div>
   );

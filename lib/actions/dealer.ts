@@ -42,31 +42,10 @@ export interface Dealer {
 }
 
 export interface CreateDealerResponse {
-  dealer: {
-    id: string;
-    businessNameLegal: string;
-    businessNameTrading?: string | null;
-    email: string;
-    databaseName: string;
-    username: string;
-    excelFilePath: string;
-    status: string;
-    createdAt: Date | string;
-  };
+  dealer: Dealer;
   user: {
     id: string;
     email: string;
-    username: string;
-    role: string;
-  };
-  credentials: {
-    username: string;
-    password: string; // Only during creation
-    databaseName: string;
-    excelFile: {
-      path: string;
-      filename: string;
-    };
   };
 }
 

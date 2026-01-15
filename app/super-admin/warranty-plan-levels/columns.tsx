@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Edit, Trash2 } from "lucide-react";
+import { ArrowUpDown, Edit, Eye, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
@@ -41,10 +41,10 @@ function ActionsCell({ row }: { row: PlanLevelRow }) {
     startTransition(async () => {
       const res = await deleteWarrantyPlanLevelAction(row.id);
       if (res.status) {
-        toast.success("Plan level deleted successfully");
+        toast.success("Warranty tier deleted successfully");
         router.refresh();
       } else {
-        toast.error(res.message || "Failed to delete plan level");
+        toast.error(res.message || "Failed to delete warranty tier");
       }
     });
   };
@@ -58,16 +58,18 @@ function ActionsCell({ row }: { row: PlanLevelRow }) {
               variant="ghost"
               size="icon"
               onClick={() =>
-                toast.info("Edit functionality coming soon or use create page template")
+                router.push(`/super-admin/warranty-plan-levels/${row.id}/benefits`)
               }
             >
-              <Edit className="h-4 w-4" />
+              <Eye className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Edit Plan Level</p>
+            <p>View Benefits</p>
           </TooltipContent>
         </Tooltip>
+
+       
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -80,7 +82,7 @@ function ActionsCell({ row }: { row: PlanLevelRow }) {
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete the
-                warranty plan level "{row.name}".
+                warranty tier "{row.name}".
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -147,6 +149,7 @@ export const columns: ColumnDef<PlanLevelRow>[] = [
     header: "Benefits",
   },
   {
+    accessorKey: "Actions",
     id: "actions",
     cell: ({ row }) => <ActionsCell row={row.original} />,
   },

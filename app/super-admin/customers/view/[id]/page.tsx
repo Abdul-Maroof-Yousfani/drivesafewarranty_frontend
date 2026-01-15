@@ -38,6 +38,7 @@ export default async function CustomerViewPage({
       notFound();
     }
 
+    console.log("CustomerViewPage data:", JSON.stringify(result.data, null, 2));
     return <CustomerView customer={result.data} />;
   } catch (error) {
     console.error("Error in CustomerViewPage:", error);

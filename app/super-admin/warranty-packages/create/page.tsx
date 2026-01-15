@@ -33,8 +33,8 @@ import {
 } from "@/components/ui/select";
 import {
   createWarrantyPackageAction,
-  getWarrantyItemsAction,
 } from "@/lib/actions/warranty-package";
+import { getWarrantyItemsAction } from "@/lib/actions/warranty-item";
 import { getWarrantyPlanLevelsAction } from "@/lib/actions/warranty-plan-level";
 import { toast } from "sonner";
 import { Plus, X } from "lucide-react";

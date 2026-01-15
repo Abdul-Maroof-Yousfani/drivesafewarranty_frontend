@@ -8,6 +8,9 @@ interface StorageUsageCardProps {
   limitGB: number;
   percentageUsed: number;
   availableGB: number;
+  usedBytes?: string;
+  limitBytes?: string;
+  availableBytes?: string;
 }
 
 export function StorageUsageCard({
@@ -15,6 +18,8 @@ export function StorageUsageCard({
   limitGB,
   percentageUsed,
   availableGB,
+  usedBytes,
+  availableBytes,
 }: StorageUsageCardProps) {
   // Determine color based on usage percentage
   const getStatusColor = () => {
@@ -23,14 +28,27 @@ export function StorageUsageCard({
     return "success";
   };
 
+  // Helper to format bytes (consistent with SA Portal)
+  const formatBytes = (bytes: number | string) => {
+    const value = typeof bytes === "string" ? parseInt(bytes, 10) : bytes;
+    if (value === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(value) / Math.log(k));
+    return parseFloat((value / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const usedDisplay = usedBytes ? formatBytes(usedBytes) : `${usedGB.toFixed(2)} GB`;
+  const availableDisplay = availableBytes ? formatBytes(availableBytes) : `${availableGB.toFixed(2)} GB`;
+
   const getProgressBarColor = () => {
-    if (percentageUsed >= 90) return "bg-red-500";
+    if (percentageUsed >= 80) return "bg-red-500"; // Changed to 80% as requested (800MB/1GB)
     if (percentageUsed >= 70) return "bg-yellow-500";
     return "bg-green-500";
   };
 
   const getTextColor = () => {
-    if (percentageUsed >= 90) return "text-red-600 dark:text-red-400";
+    if (percentageUsed >= 80) return "text-red-600 dark:text-red-400";
     if (percentageUsed >= 70) return "text-yellow-600 dark:text-yellow-400";
     return "text-green-600 dark:text-green-400";
   };
@@ -66,13 +84,13 @@ export function StorageUsageCard({
           <div>
             <p className="text-muted-foreground">Used</p>
             <p className="text-lg font-semibold">
-              {usedGB.toFixed(2)} GB
+              {usedDisplay}
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground">Available</p>
+            <p className="text-muted-foreground">Free Space</p>
             <p className="text-lg font-semibold">
-              {availableGB.toFixed(2)} GB
+              {availableDisplay} Left
             </p>
           </div>
         </div>
@@ -86,7 +104,7 @@ export function StorageUsageCard({
         </div>
 
         {/* Warning Message */}
-        {percentageUsed >= 90 && (
+        {percentageUsed >= 80 && (
           <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
             <Database className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5" />
             <div className="flex-1 text-xs">
@@ -100,7 +118,7 @@ export function StorageUsageCard({
           </div>
         )}
         
-        {percentageUsed >= 70 && percentageUsed < 90 && (
+        {percentageUsed >= 70 && percentageUsed < 80 && (
           <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900">
             <Database className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5" />
             <div className="flex-1 text-xs">

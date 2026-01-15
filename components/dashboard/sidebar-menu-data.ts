@@ -486,11 +486,11 @@ export const warrantyPortalMenuData: MenuItem[] = [
     title: "Warranty Management",
     icon: ShieldCheck,
     children: [
+      { title: "Warranty Tiers", href: "/super-admin/warranty-plan-levels" },
       {
         title: "Warranty Packages",
         href: "/super-admin/warranty-packages/list",
       },
-      { title: "Plan Levels", href: "/super-admin/warranty-plan-levels" },
       { title: "Warranty Sales", href: "/super-admin/warranty-sales/list" },
     ],
   },

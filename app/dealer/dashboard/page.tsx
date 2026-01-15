@@ -24,6 +24,9 @@ export default function DealerDashboard() {
     limitGB: number;
     percentageUsed: number;
     availableGB: number;
+    usedBytes: string;
+    limitBytes: string;
+    availableBytes: string;
   } | null>(null);
 
   useEffect(() => {
@@ -55,6 +58,9 @@ export default function DealerDashboard() {
           limitGB: storageRes.data.limitGB,
           percentageUsed: storageRes.data.percentageUsed,
           availableGB: storageRes.data.availableGB,
+          usedBytes: storageRes.data.usedBytes,
+          limitBytes: storageRes.data.limitBytes,
+          availableBytes: storageRes.data.availableBytes,
         });
       }
     })();
@@ -179,6 +185,8 @@ export default function DealerDashboard() {
             limitGB={storage.limitGB}
             percentageUsed={storage.percentageUsed}
             availableGB={storage.availableGB}
+            usedBytes={storage.usedBytes}
+            availableBytes={storage.availableBytes}
           />
         </div>
       )}

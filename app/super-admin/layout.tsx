@@ -67,7 +67,7 @@ export default function SuperAdminLayout({
       <SessionChecker />
       <AppSidebar erpMode={isSuperAdmin && erpMode} />
       <SidebarInset>
-        <header className="flex h-[3.9rem] items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-6 sticky top-0 z-0 w-full justify-between">
+        <header className="flex h-[3.9rem] items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-6 sticky top-0 z-40 w-full justify-between">
           <div className="flex items-center gap-2">
             
             <SidebarTrigger />

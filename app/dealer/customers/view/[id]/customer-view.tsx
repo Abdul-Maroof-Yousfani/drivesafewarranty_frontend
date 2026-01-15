@@ -22,6 +22,8 @@ import {
   Calendar,
   ShieldCheck,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DocumentsTab } from "@/app/shared/documents/documents-tab";
 
 interface CustomerViewProps {
   customer: Customer;
@@ -67,226 +69,239 @@ export function CustomerViewDealer({ customer }: CustomerViewProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer Information</CardTitle>
-            <CardDescription>Personal and contact details</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-3">
-              <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Email</p>
-                <p className="text-sm text-muted-foreground">
-                  {customer.email}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Phone</p>
-                <p className="text-sm text-muted-foreground">
-                  {customer.phone}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Address</p>
-                <p className="text-sm text-muted-foreground">
-                  {customer.address}
-                </p>
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-medium">Status</p>
-              <Badge
-                variant={customer.status === "active" ? "default" : "secondary"}
-                className="mt-1"
-              >
-                {customer.status}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Vehicle Information</CardTitle>
-            <CardDescription>
-              Vehicle details and specifications
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] overflow-y-auto pr-4 space-y-6">
-              {customer.vehicles && customer.vehicles.length > 0 ? (
-                customer.vehicles.map((vehicle, index) => (
-                  <div key={vehicle.id || index} className="space-y-4 pt-4 first:pt-0 border-t first:border-t-0">
-                    <div className="flex items-start gap-3">
-                      <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium">Vehicle {index + 1}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {vehicle.make} {vehicle.model} ({vehicle.year})
-                        </p>
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Information</CardTitle>
+                <CardDescription>Personal and contact details</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Email</p>
+                    <p className="text-sm text-muted-foreground">
+                      {customer.email}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Phone</p>
+                    <p className="text-sm text-muted-foreground">
+                      {customer.phone}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Address</p>
+                    <p className="text-sm text-muted-foreground">
+                      {customer.address}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Status</p>
+                  <Badge
+                    variant={customer.status === "active" ? "default" : "secondary"}
+                    className="mt-1"
+                  >
+                    {customer.status}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Vehicle Information</CardTitle>
+                <CardDescription>
+                  Vehicle details and specifications
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px] overflow-y-auto pr-4 space-y-6">
+                  {customer.vehicles && customer.vehicles.length > 0 ? (
+                    customer.vehicles.map((vehicle, index) => (
+                      <div key={vehicle.id || index} className="space-y-4 pt-4 first:pt-0 border-t first:border-t-0">
+                        <div className="flex items-start gap-3">
+                          <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium">Vehicle {index + 1}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {vehicle.make} {vehicle.model} ({vehicle.year})
+                            </p>
+                          </div>
+                        </div>
+                        {vehicle.vin && (
+                          <div className="pl-8">
+                            <p className="text-sm font-medium">VIN Number</p>
+                            <p className="text-sm text-muted-foreground">{vehicle.vin}</p>
+                          </div>
+                        )}
+                        {vehicle.registrationNumber && (
+                          <div className="pl-8">
+                            <p className="text-sm font-medium">Registration Number</p>
+                            <p className="text-sm text-muted-foreground">
+                              {vehicle.registrationNumber}
+                            </p>
+                          </div>
+                        )}
+                        <div className="pl-8">
+                          <p className="text-sm font-medium">Current Mileage</p>
+                          <p className="text-sm text-muted-foreground">
+                            {vehicle.mileage ? vehicle.mileage.toLocaleString() : 0} km
+                          </p>
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    // Fallback for legacy data if needed, or just "No vehicle found"
+                    <div className="space-y-4">
+                      {(customer.vehicleMake || customer.vehicleModel) ? (
+                        <>
+                          <div className="flex items-start gap-3">
+                            <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium">Vehicle</p>
+                              <p className="text-sm text-muted-foreground">
+                                {customer.vehicleMake} {customer.vehicleModel} ({customer.vehicleYear})
+                              </p>
+                            </div>
+                          </div>
+                          {customer.vin && (
+                            <div>
+                              <p className="text-sm font-medium">VIN Number</p>
+                              <p className="text-sm text-muted-foreground">{customer.vin}</p>
+                            </div>
+                          )}
+                          {customer.registrationNumber && (
+                            <div>
+                              <p className="text-sm font-medium">Registration Number</p>
+                              <p className="text-sm text-muted-foreground">
+                                {customer.registrationNumber}
+                              </p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-medium">Current Mileage</p>
+                            <p className="text-sm text-muted-foreground">
+                              {customer.mileage ? customer.mileage.toLocaleString() : 0} km
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-muted-foreground">No vehicle information available.</p>
+                      )}
                     </div>
-                    {vehicle.vin && (
-                      <div className="pl-8">
-                        <p className="text-sm font-medium">VIN Number</p>
-                        <p className="text-sm text-muted-foreground">{vehicle.vin}</p>
-                      </div>
-                    )}
-                    {vehicle.registrationNumber && (
-                      <div className="pl-8">
-                        <p className="text-sm font-medium">Registration Number</p>
-                        <p className="text-sm text-muted-foreground">
-                          {vehicle.registrationNumber}
-                        </p>
-                      </div>
-                    )}
-                    <div className="pl-8">
-                      <p className="text-sm font-medium">Current Mileage</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Current Warranty</CardTitle>
+              <CardDescription>
+                Active warranty details for this customer
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {customer.currentWarranty ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Package</p>
                       <p className="text-sm text-muted-foreground">
-                        {vehicle.mileage ? vehicle.mileage.toLocaleString() : 0} km
+                        {customer.currentWarranty.warrantyPackage.name}
                       </p>
                     </div>
                   </div>
-                ))
-              ) : (
-                // Fallback for legacy data if needed, or just "No vehicle found"
-                <div className="space-y-4">
-                  {(customer.vehicleMake || customer.vehicleModel) ? (
-                    <>
-                      <div className="flex items-start gap-3">
-                        <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium">Vehicle</p>
-                          <p className="text-sm text-muted-foreground">
-                            {customer.vehicleMake} {customer.vehicleModel} ({customer.vehicleYear})
-                          </p>
-                        </div>
-                      </div>
-                      {customer.vin && (
-                        <div>
-                          <p className="text-sm font-medium">VIN Number</p>
-                          <p className="text-sm text-muted-foreground">{customer.vin}</p>
-                        </div>
-                      )}
-                      {customer.registrationNumber && (
-                        <div>
-                          <p className="text-sm font-medium">Registration Number</p>
-                          <p className="text-sm text-muted-foreground">
-                            {customer.registrationNumber}
-                          </p>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-sm font-medium">Current Mileage</p>
-                        <p className="text-sm text-muted-foreground">
-                          {customer.mileage ? customer.mileage.toLocaleString() : 0} km
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-muted-foreground">No vehicle information available.</p>
+                  <div>
+                    <p className="text-sm font-medium">Warranty Number</p>
+                    <p className="text-sm text-muted-foreground">
+                      {customer.currentWarranty.policyNumber}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Coverage Start</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(
+                        customer.currentWarranty.coverageStartDate
+                      ).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Coverage End</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(
+                        customer.currentWarranty.coverageEndDate
+                      ).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Status</p>
+                    <Badge className="mt-1">
+                      {customer.currentWarranty.status}
+                    </Badge>
+                  </div>
+                  {typeof customer.currentWarranty.planMonths === "number" && (
+                    <div>
+                      <p className="text-sm font-medium">Plan</p>
+                      <p className="text-sm text-muted-foreground">
+                        {customer.currentWarranty.planMonths} Months
+                      </p>
+                    </div>
                   )}
                 </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No active warranty found.
+                </p>
               )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Current Warranty</CardTitle>
-          <CardDescription>
-            Active warranty details for this customer
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {customer.currentWarranty ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex items-start gap-3">
-                <ShieldCheck className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Package</p>
-                  <p className="text-sm text-muted-foreground">
-                    {customer.currentWarranty.warrantyPackage.name}
-                  </p>
+          <Card>
+            <CardHeader>
+              <CardTitle>Additional Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex items-start gap-3">
+                  <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Created At</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(customer.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div>
-                <p className="text-sm font-medium">Warranty Number</p>
-                <p className="text-sm text-muted-foreground">
-                  {customer.currentWarranty.policyNumber}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Coverage Start</p>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(
-                    customer.currentWarranty.coverageStartDate
-                  ).toLocaleDateString()}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Coverage End</p>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(
-                    customer.currentWarranty.coverageEndDate
-                  ).toLocaleDateString()}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Status</p>
-                <Badge className="mt-1">
-                  {customer.currentWarranty.status}
-                </Badge>
-              </div>
-              {typeof customer.currentWarranty.planMonths === "number" && (
-                <div>
-                  <p className="text-sm font-medium">Plan</p>
-                  <p className="text-sm text-muted-foreground">
-                    {customer.currentWarranty.planMonths} Months
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No active warranty found.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Additional Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="flex items-start gap-3">
-              <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Created At</p>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(customer.createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="documents">
+          <DocumentsTab customerId={customer.id} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

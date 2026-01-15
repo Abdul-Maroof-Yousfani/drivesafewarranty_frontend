@@ -37,8 +37,8 @@ import { getDealers } from "@/lib/actions/dealer";
 import {
   getWarrantyPackagesAction,
   assignWarrantyPackageToDealer,
-  getWarrantyItemsAction,
 } from "@/lib/actions/warranty-package";
+import { getWarrantyItemsAction } from "@/lib/actions/warranty-item";
 import { Customer } from "@/lib/actions/customer";
 import { WarrantyPackage } from "@/lib/actions/warranty-package";
 import { createMasterWarrantySaleAction } from "@/lib/actions/warranty-sales";

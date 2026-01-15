@@ -5,6 +5,8 @@ import { API_BASE } from "./constants";
 
 export interface StorageUsage {
   usedBytes: string;
+  limitBytes: string;
+  availableBytes: string;
   usedMB: number;
   usedGB: number;
   limitGB: number;

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -157,6 +158,23 @@ export default function DealerViewPage() {
     } catch {
       toast.error("Copy failed");
     }
+  };
+
+  const formatBytes = (bytes: number | string) => {
+    const value = typeof bytes === "string" ? parseInt(bytes) : bytes;
+    if (!value || isNaN(value) || value === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(value) / Math.log(k));
+    return parseFloat((value / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const getStoragePercentage = () => {
+    if (!dealer?.dealerStorage) return 0;
+    const used = parseInt(dealer.dealerStorage.usedBytes);
+    const limit = parseInt(dealer.dealerStorage.limitBytes);
+    if (!limit) return 0;
+    return Math.min(Math.round((used / limit) * 100), 100);
   };
 
   if (loading) {
@@ -339,14 +357,6 @@ export default function DealerViewPage() {
                   : "£0.00"}
               </p>
             </div>
-            {/* <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">Amount Received</p>
-              <p className="text-2xl font-bold">
-                {typeof dealer.amountReceived === "number"
-                  ? `£${dealer.amountReceived.toFixed(2)}`
-                  : "£0.00"}
-              </p>
-            </div> */}
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">Status</p>
               <span
@@ -359,8 +369,39 @@ export default function DealerViewPage() {
                 {dealer.status === "active" ? "Active" : "Inactive"}
               </span>
             </div>
+
+            
+            <div className="pt-4 border-t">
+              <p className="text-sm font-medium mb-3">Storage Usage</p>
+              {dealer.dealerStorage ? (
+               <div className="space-y-2">
+                 <div className="flex items-center justify-between text-sm">
+                   <span className="text-muted-foreground">Used Space</span>
+                   <span className="font-medium">
+                     {formatBytes(dealer.dealerStorage.usedBytes)} / {formatBytes(dealer.dealerStorage.limitBytes)}
+                   </span>
+                 </div>
+                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                   <div 
+                     className="h-full bg-primary transition-all duration-500" 
+                     style={{ width: `${getStoragePercentage()}%` }}
+                   />
+                 </div>
+                 <p className="text-xs text-muted-foreground text-right">
+                   {getStoragePercentage()}% Used
+                 </p>
+               </div>
+             ) : (
+               <div className="flex flex-col items-center justify-center p-2 text-center text-xs text-muted-foreground">
+                 <p>Detailed storage usage not available yet.</p>
+               </div>
+             )}
+            </div>
           </CardContent>
         </Card>
+
+
+
         <Card>
           <CardHeader>
             <CardTitle>Warranty Packages</CardTitle>
@@ -423,7 +464,7 @@ export default function DealerViewPage() {
                 <p className="text-sm text-muted-foreground break-all">
                   {credentialsVisible && credentials
                     ? credentials.loginUrl
-                    : "••••••••••••••••••••••••••••••"}
+                    : "********"}
                 </p>
               </div>
               <div className="space-y-1">
@@ -431,7 +472,7 @@ export default function DealerViewPage() {
                 <p className="text-sm text-muted-foreground break-all">
                   {credentialsVisible && credentials
                     ? credentials.email
-                    : "••••••••••••••••••••••••••••••"}
+                    : "********"}
                 </p>
               </div>
               <div className="space-y-1">
@@ -439,7 +480,7 @@ export default function DealerViewPage() {
                 <p className="text-sm text-muted-foreground break-all">
                   {credentialsVisible && credentials
                     ? credentials.password
-                    : "••••••••••••••••••••••••••••••"}
+                    : "********"}
                 </p>
               </div>
             </div>

@@ -41,10 +41,10 @@ export default function GetWarrantyPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t bg-white my-2 pt-2 bottom-0">
-        <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
+      <footer className="border-t my-8 pt-2 bottom-0">
+        <div className="container mx-auto text-center text-gray-500 text-sm">
           <p>© {new Date().getFullYear()} DriveSafe. All rights reserved.</p>
-          <div className="flex justify-center gap-4 mt-2">
+          <div className="flex justify-center gap-6 mt-2">
             <a href="#" className="hover:text-gray-700 transition-colors">
               Terms of Service
             </a>

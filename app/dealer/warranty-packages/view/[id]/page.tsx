@@ -44,6 +44,7 @@ export default function DealerViewWarrantyPackagePage({
     fixedClaimLimit?: number | null;
     items?: Array<{
       id: string;
+      warrantyItemId?: string;
       type: "benefit" | "feature";
       warrantyItem: {
         id: string;
@@ -99,6 +100,11 @@ export default function DealerViewWarrantyPackagePage({
       </div>
     );
   }
+
+  // Safe access to items
+  const items = pkg.items || [];
+  const benefits = items.filter((item) => item.type === "benefit");
+  const features = items.filter((item) => item.type === "feature");
 
   return (
     <div className="space-y-6 w-full p-4 md:p-6">
@@ -226,41 +232,36 @@ export default function DealerViewWarrantyPackagePage({
               <CardDescription>What is included in this package.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {pkg.items?.filter((item) => item.type === "benefit").length > 0 && (
+              {benefits.length > 0 && (
                 <div>
                   <h3 className="font-semibold mb-3 flex items-center text-sm uppercase tracking-wide text-primary">Key Benefits</h3>
                   <ul className="space-y-3">
-                    {pkg.items
-                      .filter((item) => item.type === "benefit")
-                      .map((item, i) => (
-                        <li key={i} className="flex items-start gap-3 text-sm group">
-                          <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0 group-hover:text-green-600 transition-colors" />
-                          <span className="group-hover:text-primary transition-colors">{item.warrantyItem?.label || item.warrantyItemId}</span>
-                        </li>
-                      ))}
+                    {benefits.map((item, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm group">
+                        <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0 group-hover:text-green-600 transition-colors" />
+                        <span className="group-hover:text-primary transition-colors">{item.warrantyItem?.label || item.warrantyItemId}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               )}
 
-              {pkg.items?.filter((item) => item.type === "benefit").length > 0 &&
-                pkg.items?.filter((item) => item.type === "feature").length > 0 && (
-                  <Separator className="my-2" />
-                )}
+              {benefits.length > 0 && features.length > 0 && (
+                <Separator className="my-2" />
+              )}
 
-              {pkg.items?.filter((item) => item.type === "feature").length > 0 && (
+              {features.length > 0 && (
                 <div>
                   <h3 className="font-semibold mb-3 flex items-center text-sm uppercase tracking-wide text-primary">Included Features</h3>
                   <ul className="grid gap-2 sm:grid-cols-2">
-                    {pkg.items
-                      .filter((item) => item.type === "feature")
-                      .map((item, i) => (
-                        <li key={i} className="flex items-center gap-2 text-sm bg-muted/40 p-2.5 rounded-md border hover:border-blue-200 transition-colors">
-                          <div className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
-                          <span className="truncate font-medium text-muted-foreground hover:text-foreground transition-colors" title={item.warrantyItem?.label || item.warrantyItemId}>
-                            {item.warrantyItem?.label || item.warrantyItemId}
-                          </span>
-                        </li>
-                      ))}
+                    {features.map((item, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm bg-muted/40 p-2.5 rounded-md border hover:border-blue-200 transition-colors">
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                        <span className="truncate font-medium text-muted-foreground hover:text-foreground transition-colors" title={item.warrantyItem?.label || item.warrantyItemId}>
+                          {item.warrantyItem?.label || item.warrantyItemId}
+                        </span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               )}
