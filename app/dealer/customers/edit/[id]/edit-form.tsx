@@ -7,11 +7,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   Customer,
-  updateDealerCustomerAction,
-  createDealerCustomerVehicleAction,
-  updateDealerCustomerVehicleAction,
-  deleteDealerCustomerVehicleAction,
-} from "@/lib/actions/dealer-customer";
+  updateCustomer,
+  createCustomerVehicleAction,
+  updateCustomerVehicleAction,
+  deleteCustomerVehicleAction,
+} from "@/lib/actions/customer";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -61,16 +61,13 @@ const customerProfileSchema = z.object({
 
 const vehicleSchema = z.object({
   id: z.string().optional(), // Optional for new vehicles
-  make: z.string().min(1, "Vehicle make is required"),
-  model: z.string().min(1, "Vehicle model is required"),
-  year: z.coerce
-    .number()
-    .min(1900)
-    .max(new Date().getFullYear() + 1),
+  make: z.string().min(1, "Make is required"),
+  model: z.string().min(1, "Model is required"),
+  year: z.coerce.number().min(1900).max(new Date().getFullYear() + 1),
   vin: z.string().optional().or(z.literal("")),
   registrationNumber: z.string().optional().or(z.literal("")),
-  mileage: z.coerce.number().min(0),
-  transmission: z.enum(["manual", "automatic"]).optional().or(z.literal("")),
+  mileage: z.coerce.number().min(0).default(0),
+  transmission: z.string().optional().or(z.literal("")),
 });
 
 type CustomerProfileValues = z.infer<typeof customerProfileSchema>;
@@ -98,11 +95,11 @@ export default function EditCustomerForm({ customer }: { customer: Customer }) {
   const onProfileSubmit = async (data: CustomerProfileValues) => {
     setProfileLoading(true);
     try {
-      const result = await updateDealerCustomerAction(customer.id, data);
-      if (result.status) {
-        toast.success(result.message || "Profile updated successfully");
+      const res = await updateCustomer(customer.id, data);
+      if (res.status) {
+        toast.success(res.message || "Profile updated successfully");
       } else {
-        toast.error(result.message || "Failed to update profile");
+        toast.error(res.message || "Failed to update profile");
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -119,14 +116,16 @@ export default function EditCustomerForm({ customer }: { customer: Customer }) {
   );
 
   const handleVehicleSaved = (
-    savedVehicle: VehicleValues & { id: string },
+    savedVehicle: any,
     isNew: boolean
   ) => {
     if (isNew) {
       setVehicles([...vehicles, savedVehicle]);
     } else {
       setVehicles(
-        vehicles.map((v) => (v.id === savedVehicle.id ? savedVehicle : v))
+        vehicles.map((v: any) =>
+          v.id === savedVehicle.id ? savedVehicle : v
+        )
       );
     }
     setIsVehicleDialogOpen(false);
@@ -135,7 +134,7 @@ export default function EditCustomerForm({ customer }: { customer: Customer }) {
   };
 
   const handleVehicleDeleted = (vehicleId: string) => {
-    setVehicles(vehicles.filter((v) => v.id !== vehicleId));
+    setVehicles(vehicles.filter((v: any) => v.id !== vehicleId));
     router.refresh();
   };
 
@@ -264,10 +263,10 @@ export default function EditCustomerForm({ customer }: { customer: Customer }) {
               No vehicles found.
             </p>
           ) : (
-            vehicles.map((vehicle, index) => (
+            (vehicles || []).map((vehicle: any, index) => (
               <div
                 key={vehicle.id || index}
-                className="flex items-center justify-between p-4 border rounded-lg bg-card"
+                className="flex items-center justify-between p-4 border rounded-lg"
               >
                 <div className="flex items-center gap-4">
                   <div className="p-2 bg-primary/10 rounded-full">
@@ -292,7 +291,7 @@ export default function EditCustomerForm({ customer }: { customer: Customer }) {
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      setEditingVehicle(vehicle);
+                      setEditingVehicle(vehicle as any);
                       setIsVehicleDialogOpen(true);
                     }}
                   >
@@ -325,6 +324,7 @@ export default function EditCustomerForm({ customer }: { customer: Customer }) {
             customerId={customer.id}
             initialData={editingVehicle}
             onSuccess={(data, isNew) => handleVehicleSaved(data, isNew)}
+            onCancel={() => setIsVehicleDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
@@ -332,38 +332,37 @@ export default function EditCustomerForm({ customer }: { customer: Customer }) {
   );
 }
 
+interface VehicleFormProps {
+  customerId: string;
+  initialData: VehicleValues | null;
+  onSuccess: (data: VehicleValues & { id: string }, isNew: boolean) => void;
+  onCancel: () => void;
+}
+
 function VehicleForm({
   customerId,
   initialData,
   onSuccess,
-}: {
-  customerId: string;
-  initialData: VehicleValues | null;
-  onSuccess: (data: VehicleValues & { id: string }, isNew: boolean) => void;
-}) {
-  const defaultValues = initialData
-    ? {
-        ...initialData,
-        vin: initialData.vin ?? "",
-        registrationNumber: initialData.registrationNumber ?? "",
-        transmission: initialData.transmission ?? "",
-      }
-    : {
-        make: "",
-        model: "",
-        year: new Date().getFullYear(),
-        vin: "",
-        registrationNumber: "",
-        mileage: 0,
-        transmission: "",
-      };
+  onCancel,
+}: VehicleFormProps) {
+  const [loading, setLoading] = useState(false);
+
+  const defaultValues = {
+    make: initialData?.make ?? "",
+    model: initialData?.model ?? "",
+    year: initialData?.year ?? new Date().getFullYear(),
+    vin: initialData?.vin ?? "",
+    registrationNumber: initialData?.registrationNumber ?? "",
+    mileage: initialData?.mileage ?? 0,
+    transmission: (initialData?.transmission as any) ?? "",
+  };
 
   const form = useForm<VehicleValues>({
-    resolver: zodResolver(vehicleSchema),
+    resolver: zodResolver(vehicleSchema) as any,
     defaultValues,
   });
 
-  const [loading, setLoading] = useState(false);
+
 
   const onSubmit = async (data: VehicleValues) => {
     setLoading(true);
@@ -375,13 +374,13 @@ function VehicleForm({
       };
       if (initialData?.id) {
         // Update
-        result = await updateDealerCustomerVehicleAction(
+        result = await updateCustomerVehicleAction(
           initialData.id,
-          payload
+          payload as any
         );
       } else {
         // Create
-        result = await createDealerCustomerVehicleAction(customerId, payload);
+        result = await createCustomerVehicleAction(customerId, payload as any);
       }
 
       if (result.status) {
@@ -542,7 +541,7 @@ function DeleteVehicleButton({
     if (!confirm("Are you sure you want to delete this vehicle?")) return;
     setLoading(true);
     try {
-      const res = await deleteDealerCustomerVehicleAction(vehicleId);
+      const res = await deleteCustomerVehicleAction(vehicleId);
       if (res.status) {
         toast.success("Vehicle deleted");
         onDelete(vehicleId);

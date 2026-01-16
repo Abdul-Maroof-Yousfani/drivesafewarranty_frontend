@@ -60,16 +60,13 @@ const customerProfileSchema = z.object({
 
 const vehicleSchema = z.object({
   id: z.string().optional(), // Optional for new vehicles
-  make: z.string().min(1, "Vehicle make is required"),
-  model: z.string().min(1, "Vehicle model is required"),
-  year: z.coerce
-    .number()
-    .min(1900)
-    .max(new Date().getFullYear() + 1),
+  make: z.string().min(1, "Make is required"),
+  model: z.string().min(1, "Model is required"),
+  year: z.coerce.number().min(1900).max(new Date().getFullYear() + 1),
   vin: z.string().optional().or(z.literal("")),
   registrationNumber: z.string().optional().or(z.literal("")),
-  mileage: z.coerce.number().min(0),
-  transmission: z.enum(["manual", "automatic"]).optional().or(z.literal("")),
+  mileage: z.coerce.number().min(0).default(0),
+  transmission: z.string().optional().or(z.literal("")),
 });
 
 type CustomerProfileValues = z.infer<typeof customerProfileSchema>;
@@ -189,39 +186,39 @@ export default function EditCustomerForm({ customer }: { customer: Customer }) {
                 control={profileForm.control}
                 name="email"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                 )}
               />
               <FormField
                 control={profileForm.control}
                 name="phone"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                 )}
               />
               <FormField
                 control={profileForm.control}
                 name="address"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                 )}
               />
 
@@ -288,7 +285,7 @@ export default function EditCustomerForm({ customer }: { customer: Customer }) {
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      setEditingVehicle(vehicle);
+                      setEditingVehicle(vehicle as any);
                       setIsVehicleDialogOpen(true);
                     }}
                   >
@@ -321,6 +318,7 @@ export default function EditCustomerForm({ customer }: { customer: Customer }) {
             customerId={customer.id}
             initialData={editingVehicle}
             onSuccess={(data, isNew) => handleVehicleSaved(data, isNew)}
+            onCancel={() => setIsVehicleDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
@@ -328,31 +326,35 @@ export default function EditCustomerForm({ customer }: { customer: Customer }) {
   );
 }
 
+interface VehicleFormProps {
+  customerId: string;
+  initialData: VehicleValues | null;
+  onSuccess: (data: any, isNew: boolean) => void;
+  onCancel: () => void;
+}
+
 function VehicleForm({
   customerId,
   initialData,
   onSuccess,
-}: {
-  customerId: string;
-  initialData: VehicleValues | null;
-  onSuccess: (data: any, isNew: boolean) => void;
-}) {
-  const defaultValues = initialData || {
-    make: "",
-    model: "",
-    year: new Date().getFullYear(),
-    vin: "",
-    registrationNumber: "",
-    mileage: 0,
-    transmission: "",
+  onCancel,
+}: VehicleFormProps) {
+  const [loading, setLoading] = useState(false);
+
+  const defaultValues = {
+    make: initialData?.make ?? "",
+    model: initialData?.model ?? "",
+    year: initialData?.year ?? new Date().getFullYear(),
+    vin: initialData?.vin ?? "",
+    registrationNumber: initialData?.registrationNumber ?? "",
+    mileage: initialData?.mileage ?? 0,
+    transmission: (initialData?.transmission as any) ?? "",
   };
 
   const form = useForm<VehicleValues>({
-    resolver: zodResolver(vehicleSchema),
+    resolver: zodResolver(vehicleSchema) as any,
     defaultValues,
   });
-
-  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data: VehicleValues) => {
     setLoading(true);

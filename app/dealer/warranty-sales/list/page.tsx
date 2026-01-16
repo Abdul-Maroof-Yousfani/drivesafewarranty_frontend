@@ -22,7 +22,9 @@ export default function DealerWarrantySalesListPage() {
           (s: {
             id: string;
             policyNumber: string;
-            warrantyPackage?: { name?: string } | null;
+            packageName?: string | null;
+            planLevel?: string | null;
+            warrantyPackage?: { name?: string; planLevel?: string } | null;
             customer?: { firstName: string; lastName: string } | null;
             warrantyPrice?: number | string | null;
             saleDate: string;
@@ -30,7 +32,8 @@ export default function DealerWarrantySalesListPage() {
           }) => ({
             id: s.id,
             policyNumber: s.policyNumber,
-            packageName: s.warrantyPackage?.name || "",
+            packageName: s.packageName || s.warrantyPackage?.name || "",
+            planLevel: s.planLevel || s.warrantyPackage?.planLevel || "",
             customerName: s.customer
               ? `${s.customer.firstName} ${s.customer.lastName}`
               : "-",

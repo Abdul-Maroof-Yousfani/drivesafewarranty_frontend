@@ -753,7 +753,10 @@ export default function DealerCreateWarrantySalePage() {
                 )}
               />
               <div className="flex gap-4">
-                <Button type="submit" disabled={loading || !pkg}>
+                <Button
+                  type="submit"
+                  disabled={loading || !pkg || eligibilityStatus?.eligible === false}
+                >
                   {loading ? "Assigning..." : "Assign Package"}
                 </Button>
                 <Button

@@ -41,9 +41,10 @@ export const columns: ColumnDef<WarrantySale>[] = [
   {
     id: "warrantyPackage.name",
     accessorFn: (row) => {
-      const pkg = row.warrantyPackage;
-      if (!pkg) return "";
-      return pkg.planLevel ? `${pkg.name} (${pkg.planLevel})` : pkg.name;
+      const name = row.packageName || row.warrantyPackage?.name || "";
+      const level = row.planLevel || row.warrantyPackage?.planLevel;
+      if (!name) return "";
+      return level ? `${name} (${level})` : name;
     },
     header: "Package",
     size: 220,
@@ -64,6 +65,16 @@ export const columns: ColumnDef<WarrantySale>[] = [
       }
       return "N/A";
     },
+  },
+  {
+    accessorKey: "customer.firstName",
+    header: "Customer First Name",
+    id: "customer.firstName",
+  },
+  {
+    accessorKey: "customer.lastName",
+    header: "Customer Last Name",
+    id: "customer.lastName",
   },
   {
     id: "vehicle",

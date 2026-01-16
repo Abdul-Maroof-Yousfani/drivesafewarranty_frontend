@@ -478,7 +478,7 @@ export const warrantyPortalMenuData: MenuItem[] = [
     title: "Customer Management",
     icon: UserCheck,
     children: [
-      { title: "Customer", href: "/super-admin/customers/list" }, // Combined create/list into list or main view as per request "customer (ispe click krengy to list show hogi...)"
+      { title: "Customers", href: "/super-admin/customers/list" }, // Combined create/list into list or main view as per request "customer (ispe click krengy to list show hogi...)"
       { title: "Documents", href: "/super-admin/documents/view" }, // Combined upload/view or mostly view
     ],
   },

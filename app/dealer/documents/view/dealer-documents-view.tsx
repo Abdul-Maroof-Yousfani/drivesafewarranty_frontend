@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getDealerDocumentsAction, deleteCustomerDocumentAction } from "@/lib/actions/customer-documents";
+import { getCustomers, Customer } from "@/lib/actions/customer";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,10 +26,18 @@ import {
   Loader2,
   Search,
   User,
-  ExternalLink
+  Eye
 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Autocomplete } from "@/components/ui/autocomplete";
 import Link from "next/link";
 
 export function DealerDocumentsView() {
@@ -36,6 +45,9 @@ export function DealerDocumentsView() {
   const [filteredDocs, setFilteredDocs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [customerFilter, setCustomerFilter] = useState("all");
+  const [customers, setCustomers] = useState<Customer[]>([]);
 
   const fetchDocuments = async () => {
     setIsLoading(true);
@@ -51,21 +63,37 @@ export function DealerDocumentsView() {
 
   useEffect(() => {
     fetchDocuments();
+    loadCustomers();
   }, []);
 
+  const loadCustomers = async () => {
+    const res = await getCustomers();
+    if (res.status && res.data) {
+      setCustomers(res.data);
+    }
+  };
+
   useEffect(() => {
-    if (!searchTerm) {
-      setFilteredDocs(documents);
-      return;
+    let filtered = documents;
+
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter(doc => 
+        doc.name.toLowerCase().includes(lowerSearch) ||
+        (doc.customer && `${doc.customer.firstName} ${doc.customer.lastName}`.toLowerCase().includes(lowerSearch))
+      );
     }
 
-    const lowerSearch = searchTerm.toLowerCase();
-    const filtered = documents.filter(doc => 
-      doc.name.toLowerCase().includes(lowerSearch) ||
-      (doc.customer && `${doc.customer.firstName} ${doc.customer.lastName}`.toLowerCase().includes(lowerSearch))
-    );
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter(doc => doc.file && doc.file.category === categoryFilter);
+    }
+
+    if (customerFilter !== "all") {
+      filtered = filtered.filter(doc => doc.customerId === customerFilter);
+    }
+
     setFilteredDocs(filtered);
-  }, [searchTerm, documents]);
+  }, [searchTerm, categoryFilter, customerFilter, documents]);
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
@@ -98,14 +126,43 @@ export function DealerDocumentsView() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or customer..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or customer..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="w-[200px]">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="logo">Logos</SelectItem>
+                <SelectItem value="document">Documents</SelectItem>
+                <SelectItem value="invoice">Invoices</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex-1 max-w-[300px]">
+            <Autocomplete
+              options={customers.map((c) => ({
+                value: c.id,
+                label: `${c.firstName} ${c.lastName}`,
+              }))}
+              value={customerFilter === "all" ? "" : customerFilter}
+              onValueChange={(val) => setCustomerFilter(val || "all")}
+              placeholder="Filter by Customer"
+              searchPlaceholder="Search customer..."
+              emptyMessage="No customers found"
+            />
+          </div>
         </div>
         <div className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
           Note: To upload new documents, visit a customer's profile.
@@ -157,6 +214,11 @@ export function DealerDocumentsView() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" asChild title="View">
+                            <a href={doc.file.url} target="_blank" rel="noopener noreferrer">
+                              <Eye className="h-4 w-4" />
+                            </a>
+                          </Button>
                           <Button variant="ghost" size="icon" asChild title="Download">
                             <a href={doc.file.url} download={doc.name} target="_blank" rel="noopener noreferrer">
                               <Download className="h-4 w-4" />

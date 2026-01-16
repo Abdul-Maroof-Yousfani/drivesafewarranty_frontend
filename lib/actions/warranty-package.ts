@@ -39,6 +39,8 @@ export interface WarrantyPackage {
   context: "drive_safe" | "dealer" | "direct_customer";
   price?: number | null;
   status: string;
+  keyBenefits?: string[];
+  includedFeatures?: string[];
   createdAt: string;
   updatedAt: string;
 }

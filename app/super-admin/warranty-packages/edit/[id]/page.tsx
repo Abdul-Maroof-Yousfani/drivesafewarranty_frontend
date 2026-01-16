@@ -48,16 +48,22 @@ const packageSchema = z.object({
     .min(1, "Plan level is required")
     .max(50, "Plan level is too long"),
   eligibility: z.string().min(1, "Eligibility is required"),
-  eligibilityMileageComparator: z.enum(["gt", "lt"]).optional(),
-  eligibilityMileageValue: z.number().optional(),
-  eligibilityVehicleAgeYearsMax: z.number().optional(),
-  eligibilityTransmission: z.enum(["manual", "automatic"]).optional(),
-  excess: z.number().min(0, "Excess must be non‑negative"),
-  labourRatePerHour: z.number().min(0, "Labour rate must be non‑negative"),
-  fixedClaimLimit: z.number().min(0, "Fixed claim limit must be non‑negative"),
-  price12Months: z.number().min(0, "12‑month price must be non‑negative"),
-  price24Months: z.number().min(0, "24‑month price must be non‑negative"),
-  price36Months: z.number().min(0, "36‑month price must be non‑negative"),
+  eligibilityMileageComparator: z
+    .enum(["gt", "lt"])
+    .optional()
+    .or(z.literal("")),
+  eligibilityMileageValue: z.coerce.number().min(0).optional(),
+  eligibilityVehicleAgeYearsMax: z.coerce.number().min(0).optional(),
+  eligibilityTransmission: z
+    .enum(["manual", "automatic"])
+    .optional()
+    .or(z.literal("")),
+  excess: z.coerce.number().min(0, "Excess must be non‑negative"),
+  labourRatePerHour: z.coerce.number().min(0, "Labour rate must be non‑negative"),
+  fixedClaimLimit: z.coerce.number().min(0, "Fixed claim limit must be non‑negative"),
+  price12Months: z.coerce.number().min(0, "12‑month price must be non‑negative"),
+  price24Months: z.coerce.number().min(0, "24‑month price must be non‑negative"),
+  price36Months: z.coerce.number().min(0, "36‑month price must be non‑negative"),
   includedFeatures: z.array(z.string()),
   keyBenefits: z.array(z.string()).min(1, "Select at least one benefit"),
 });
@@ -191,16 +197,8 @@ export default function EditWarrantyPackagePage() {
         price12Months: data.price12Months,
         price24Months: data.price24Months,
         price36Months: data.price36Months,
-        items: [
-          ...data.includedFeatures.map((id) => ({
-            warrantyItemId: id,
-            type: "feature" as const,
-          })),
-          ...data.keyBenefits.map((id) => ({
-            warrantyItemId: id,
-            type: "benefit" as const,
-          })),
-        ],
+        includedFeatures: data.includedFeatures,
+        keyBenefits: data.keyBenefits,
       });
       if (res.status) {
         toast.success(res.message || "Warranty package updated successfully");
@@ -329,7 +327,8 @@ export default function EditWarrantyPackagePage() {
                           min={0} 
                           step="0.01" 
                           {...field} 
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -348,7 +347,8 @@ export default function EditWarrantyPackagePage() {
                           min={0} 
                           step="0.01" 
                           {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -367,7 +367,8 @@ export default function EditWarrantyPackagePage() {
                           min={0} 
                           step="0.01" 
                           {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -576,7 +577,8 @@ export default function EditWarrantyPackagePage() {
                           min={0} 
                           step="0.01" 
                           {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -595,7 +597,8 @@ export default function EditWarrantyPackagePage() {
                           min={0} 
                           step="0.01" 
                           {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -614,7 +617,8 @@ export default function EditWarrantyPackagePage() {
                           min={0} 
                           step="0.01" 
                           {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />

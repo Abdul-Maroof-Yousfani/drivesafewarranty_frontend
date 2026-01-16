@@ -12,10 +12,17 @@ export interface WarrantySale {
   status: string;
   dealerId?: string | null;
   customerId?: string | null;
+  // Snapshot fields: capture package info at sale time for immutability
+  packageName?: string | null;
+  planLevel?: string | null;
+  packageDescription?: string | null;
+  packageEligibility?: string | null;
   warrantyPrice: string | number;
   excess?: number | null;
   labourRatePerHour?: number | null;
   fixedClaimLimit?: number | null;
+  planMonths?: number | null;
+  dealerName?: string | null;
   price12Months?: number | null;
   price24Months?: number | null;
   price36Months?: number | null;
@@ -32,7 +39,9 @@ export interface WarrantySale {
   warrantyPackage: {
     id: string;
     name: string;
+    description?: string | null;
     planLevel?: string | null;
+    eligibility?: string | null;
     price12Months?: number | null;
     price24Months?: number | null;
     price36Months?: number | null;
@@ -78,6 +87,16 @@ export interface WarrantySale {
     invoiceNumber: string;
     status: string;
   }[];
+  benefits?: Array<{
+    id: string;
+    label?: string;
+    type: string;
+    warrantyItem?: {
+      id: string;
+      label: string;
+      type: string;
+    };
+  }>;
 }
 
 export async function getWarrantySalesAction(): Promise<{

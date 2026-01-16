@@ -41,18 +41,25 @@ export default async function WarrantySaleViewPage({
       ? sale.dealer.businessNameTrading || sale.dealer.businessNameLegal
       : "N/A";
 
-  // Calculate dealer costs and margins
-  const customerPrice12 = sale.price12Months ?? sale.warrantyPackage?.price12Months ?? 0;
-  const customerPrice24 = sale.price24Months ?? sale.warrantyPackage?.price24Months ?? 0;
-  const customerPrice36 = sale.price36Months ?? sale.warrantyPackage?.price36Months ?? 0;
+  // IMPORTANT: Sold warranties are immutable snapshots.
+  // Use the sale's snapshot fields, NOT the live warrantyPackage data for financial terms.
+  // This ensures package updates don't affect already-sold warranties.
+  const customerPrice12 = sale.price12Months ?? 0;
+  const customerPrice24 = sale.price24Months ?? 0;
+  const customerPrice36 = sale.price36Months ?? 0;
 
-  const dealerCost12 = sale.dealerCost12Months ?? sale.warrantyPackage?.dealerPrice12Months ?? 0;
-  const dealerCost24 = sale.dealerCost24Months ?? sale.warrantyPackage?.dealerPrice24Months ?? 0;
-  const dealerCost36 = sale.dealerCost36Months ?? sale.warrantyPackage?.dealerPrice36Months ?? 0;
+  const dealerCost12 = sale.dealerCost12Months ?? 0;
+  const dealerCost24 = sale.dealerCost24Months ?? 0;
+  const dealerCost36 = sale.dealerCost36Months ?? 0;
 
   const margin12 = Number(customerPrice12) - Number(dealerCost12);
   const margin24 = Number(customerPrice24) - Number(dealerCost24);
   const margin36 = Number(customerPrice36) - Number(dealerCost36);
+
+  // Snapshot fields for package configuration (also immutable at sale time)
+  const snapshotExcess = sale.excess ?? 0;
+  const snapshotLabourRate = sale.labourRatePerHour ?? 0;
+  const snapshotClaimLimit = sale.fixedClaimLimit ?? 0;
 
   return (
     <div className="space-y-6">
@@ -88,8 +95,9 @@ export default async function WarrantySaleViewPage({
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Package</span>
               <span className="font-medium">
-                {sale.warrantyPackage?.name || "N/A"}
-                {sale.warrantyPackage?.planLevel && ` (${sale.warrantyPackage.planLevel})`}
+                {sale.packageName || sale.warrantyPackage?.name || "N/A"}
+                {(sale.planLevel || sale.warrantyPackage?.planLevel) && 
+                  ` (${sale.planLevel || sale.warrantyPackage.planLevel})`}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -162,13 +170,13 @@ export default async function WarrantySaleViewPage({
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Excess</span>
               <span className="font-medium">
-                {formatCurrency(sale.excess ?? sale.warrantyPackage?.excess ?? 0)}
+                {formatCurrency(snapshotExcess)}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Labour Rate</span>
               <span className="font-medium">
-                {formatCurrency(sale.labourRatePerHour ?? sale.warrantyPackage?.labourRatePerHour ?? 0)}/hr
+                {formatCurrency(snapshotLabourRate)}/hr
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -176,9 +184,21 @@ export default async function WarrantySaleViewPage({
                 Fixed Claim Limit
               </span>
               <span className="font-medium">
-                {formatCurrency(sale.fixedClaimLimit ?? sale.warrantyPackage?.fixedClaimLimit ?? 0)}
+                {formatCurrency(snapshotClaimLimit)}
               </span>
             </div>
+            {(sale.packageDescription || sale.warrantyPackage?.description) && (
+              <div className="pt-2 border-t mt-2">
+                <span className="text-sm text-muted-foreground block mb-1">Description</span>
+                <p className="text-sm">{sale.packageDescription || sale.warrantyPackage.description}</p>
+              </div>
+            )}
+            {(sale.packageEligibility || sale.warrantyPackage?.eligibility) && (
+              <div className="pt-2 border-t mt-2">
+                <span className="text-sm text-muted-foreground block mb-1">Eligibility</span>
+                <p className="text-sm bg-muted/50 p-2 rounded">{sale.packageEligibility || sale.warrantyPackage.eligibility}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

@@ -102,11 +102,11 @@ export default function CreateWarrantyPackagePage() {
     defaultValues: {
       name: "",
       description: "",
-      planLevel: "Silver",
+      planLevel: "",
       eligibility: "",
       eligibilityMileageComparator: "",
-      eligibilityMileageValue: undefined,
-      eligibilityVehicleAgeYearsMax: undefined,
+      eligibilityMileageValue: "" as any,
+      eligibilityVehicleAgeYearsMax: "" as any,
       eligibilityTransmission: "",
       excess: 100,
       labourRatePerHour: 50,
@@ -321,7 +321,7 @@ export default function CreateWarrantyPackagePage() {
                           onChange={(e) =>
                             field.onChange(
                               e.target.value === ""
-                                ? undefined
+                                ? ""
                                 : Number(e.target.value)
                             )
                           }
@@ -347,7 +347,7 @@ export default function CreateWarrantyPackagePage() {
                           onChange={(e) =>
                             field.onChange(
                               e.target.value === ""
-                                ? undefined
+                                ? ""
                                 : Number(e.target.value)
                             )
                           }
@@ -373,7 +373,7 @@ export default function CreateWarrantyPackagePage() {
                           onChange={(e) =>
                             field.onChange(
                               e.target.value === ""
-                                ? undefined
+                                ? ""
                                 : Number(e.target.value)
                             )
                           }
@@ -487,7 +487,12 @@ export default function CreateWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>Mileage Value (miles)</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value ?? ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -500,7 +505,12 @@ export default function CreateWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>Max Vehicle Age (years)</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value ?? ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -540,7 +550,13 @@ export default function CreateWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>Excess</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -553,7 +569,13 @@ export default function CreateWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>Labour Rate (per hour)</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -566,7 +588,13 @@ export default function CreateWarrantyPackagePage() {
                     <FormItem>
                       <FormLabel>Fixed Claim Limit</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

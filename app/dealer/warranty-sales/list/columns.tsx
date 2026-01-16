@@ -15,6 +15,7 @@ export type DealerSaleRow = {
   id: string;
   policyNumber: string;
   packageName: string;
+  planLevel?: string;
   customerName: string;
   warrantyPrice: number;
   saleDate: string;

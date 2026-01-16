@@ -324,10 +324,10 @@ export default function CreateWarrantySalePage() {
       if (queryPackageId) handlePackageChange(queryPackageId);
     }
 
-    if (!needsPackage || packagesLoaded) {
+    if (!needsPackage || (packagesLoaded && dealers.length > 0)) {
       hasAppliedQueryDefaultsRef.current = true;
     }
-  }, [form, packages, searchParams]);
+  }, [form, packages, dealers, searchParams]);
 
   const handlePackageChange = (packageId: string) => {
     const pkg = packages.find((p) => p.id === packageId);
@@ -496,8 +496,11 @@ export default function CreateWarrantySalePage() {
         }
       }
 
-      const redirectTab = data.assignTo === "customer" ? "customer" : "dealer";
-      router.push(`/super-admin/warranty-sales/list?tab=${redirectTab}`);
+      const redirectPath =
+        data.assignTo === "customer"
+          ? "/super-admin/warranty-sales/list?tab=customer"
+          : "/super-admin/dealers/assigned-warranties";
+      router.push(redirectPath);
     } catch (error) {
       console.error("Error creating warranty sale:", error);
       toast.error("Failed to create warranty assignment");
@@ -1277,7 +1280,10 @@ export default function CreateWarrantySalePage() {
           </Card>
 
           <div className="flex gap-4">
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={loading || eligibilityStatus?.eligible === false}
+            >
               {loading ? "Creating..." : "Create Warranty Sale"}
             </Button>
             <Button

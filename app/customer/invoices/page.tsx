@@ -82,7 +82,7 @@ export default function CustomerInvoicesPage() {
                                             {new Date(warranty.coverageStartDate).toLocaleDateString()}
                                         </TableCell>
                                         <TableCell>
-                                            {warranty.warrantyPackage?.name || "N/A"}
+                                            {warranty.packageName || warranty.warrantyPackage?.name || "N/A"}
                                         </TableCell>
                                         <TableCell>
                                             {warranty.dealer

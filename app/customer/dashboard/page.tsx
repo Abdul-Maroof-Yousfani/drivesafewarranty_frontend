@@ -62,7 +62,7 @@ export default function CustomerDashboard() {
   const filteredWarranties = warranties.filter((warranty) => {
     const matchesSearch =
       warranty.policyNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      warranty.warrantyPackage.name
+      (warranty.packageName || warranty.warrantyPackage.name)
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
       (warranty.dealer?.businessNameTrading || "")
@@ -120,7 +120,7 @@ export default function CustomerDashboard() {
                   </p>
                   <div className="flex flex-wrap items-center gap-2 mt-1">
                     <h2 className="text-2xl font-bold">
-                      {activeWarranty.warrantyPackage.name}
+                      {activeWarranty.packageName || activeWarranty.warrantyPackage.name}
                     </h2>
                     <Badge
                       variant="outline"
@@ -194,7 +194,7 @@ export default function CustomerDashboard() {
                 <CardHeader className="pb-3 bg-muted/20">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg">
-                      {warranty.warrantyPackage.name}
+                      {warranty.packageName || warranty.warrantyPackage.name}
                     </CardTitle>
                     <Badge
                       variant={

@@ -21,6 +21,7 @@ import {
   Settings,
   ShieldCheck,
   Calendar,
+  Plus
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -83,23 +84,31 @@ export default function AssignedWarrantiesPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Dealer Assignments</CardTitle>
-          <div className="w-[300px]">
-            <Select
-              value={selectedDealerId}
-              onValueChange={setSelectedDealerId}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a dealer..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Dealers</SelectItem>
-                {dealers.map((dealer) => (
-                  <SelectItem key={dealer.id} value={dealer.id}>
-                    {dealer.businessNameLegal}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-4">
+            <div className="w-[300px]">
+              <Select
+                value={selectedDealerId}
+                onValueChange={setSelectedDealerId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a dealer..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Dealers</SelectItem>
+                  {dealers.map((dealer) => (
+                    <SelectItem key={dealer.id} value={dealer.id}>
+                      {dealer.businessNameLegal}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button asChild>
+              <Link href={`/super-admin/warranty-sales/create${selectedDealerId && selectedDealerId !== "all" ? `?dealerId=${selectedDealerId}` : ""}`}>
+                <Plus className="h-4 w-4 mr-2" />
+                Assign Warranty
+              </Link>
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -139,7 +148,7 @@ export default function AssignedWarrantiesPage() {
                     <TableBody>
                       {sales.map((sale) => (
                         <TableRow key={sale.id}>
-                          <TableCell className="font-medium text-blue-600">
+                          <TableCell className="font-medium text-black">
                             {sale.policyNumber}
                           </TableCell>
                           <TableCell>
@@ -161,11 +170,11 @@ export default function AssignedWarrantiesPage() {
                           <TableCell>
                             <div className="flex items-center">
                               <ShieldCheck className="h-4 w-4 mr-2 text-emerald-500" />
-                              {sale.warrantyPackage?.name || "N/A"}
+                              {sale.packageName || sale.warrantyPackage?.name || "N/A"}
                             </div>
                           </TableCell>
                           <TableCell>
-                             {sale.price12Months ? "12 Months" : sale.price24Months ? "24 Months" : "36 Months"}
+                             {sale.planMonths ? `${sale.planMonths} Months` : (sale.price12Months ? "12 Months" : sale.price24Months ? "24 Months" : "36 Months")}
                           </TableCell>
                           <TableCell>
                             <Badge

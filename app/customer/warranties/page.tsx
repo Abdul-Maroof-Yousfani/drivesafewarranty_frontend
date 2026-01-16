@@ -74,16 +74,31 @@ export default async function CustomerWarrantiesPage() {
               ? warranty.warrantyPackage.durationValue * 12
               : warranty.warrantyPackage.durationValue;
 
-          // Extract features and benefits from items relation
-          const features =
-            warranty.warrantyPackage.items
-              ?.filter((item) => item.type === "feature")
-              .map((item) => item.warrantyItem?.label || "") || [];
+          const dealerName = warranty.dealerName || warranty.dealer?.businessNameTrading || warranty.dealer?.businessNameLegal || "Drive Safe";
 
-          const benefits =
-            warranty.warrantyPackage.items
-              ?.filter((item) => item.type === "benefit")
-              .map((item) => item.warrantyItem?.label || "") || [];
+          // IMPORTANT: Use snapshot fields for financial terms (immutable at sale time)
+          // Do NOT fallback to warrantyPackage data - that would show updated values!
+          const snapshotExcess = warranty.excess;
+          const snapshotLabourRate = warranty.labourRatePerHour;
+          const snapshotClaimLimit = warranty.fixedClaimLimit;
+
+          // Snapshot fields for package name and level (with fallback for old sales)
+          const snapshotPackageName = warranty.packageName || warranty.warrantyPackage.name;
+          const snapshotPlanLevel = warranty.planLevel || warranty.warrantyPackage.planLevel;
+
+          // Extract features and benefits from snapshot relation (benefits)
+          // Fallback to warrantyPackage.items only if benefits snapshot is empty (for old sales)
+          const sourceItems = (warranty.benefits && warranty.benefits.length > 0) 
+            ? warranty.benefits 
+            : (warranty.warrantyPackage.items || []);
+
+          const features = sourceItems
+            ?.filter((item) => item.type === "feature")
+            .map((item) => item.label || item.warrantyItem?.label || "") || [];
+
+          const benefits = sourceItems
+            ?.filter((item) => item.type === "benefit")
+            .map((item) => item.label || item.warrantyItem?.label || "") || [];
 
           return (
             <Card
@@ -95,7 +110,7 @@ export default async function CustomerWarrantiesPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <CardTitle className="text-xl text-primary">
-                        {warranty.warrantyPackage.name}
+                        {snapshotPackageName}
                       </CardTitle>
                       {planMonths ? (
                         <Badge
@@ -105,12 +120,12 @@ export default async function CustomerWarrantiesPage() {
                           {planMonths} Months
                         </Badge>
                       ) : null}
-                      {warranty.warrantyPackage.planLevel && (
+                      {snapshotPlanLevel && (
                         <Badge
                           variant="outline"
                           className="text-xs uppercase bg-background"
                         >
-                          {warranty.warrantyPackage.planLevel}
+                          {snapshotPlanLevel}
                         </Badge>
                       )}
                     </div>
@@ -182,44 +197,44 @@ export default async function CustomerWarrantiesPage() {
                       </span>
                     </div>
                   )}
-                  {warranty.warrantyPackage.excess !== null &&
-                    warranty.warrantyPackage.excess !== undefined &&
-                    !Number.isNaN(Number(warranty.warrantyPackage.excess)) && (
+                  {snapshotExcess !== null &&
+                    snapshotExcess !== undefined &&
+                    !Number.isNaN(Number(snapshotExcess)) && (
                       <div className="bg-muted/30 p-2 rounded border text-center">
                         <span className="block text-xs text-muted-foreground mb-1">
                           Excess
                         </span>
                         <span className="font-semibold">
-                          £{Number(warranty.warrantyPackage.excess)}
+                          £{Number(snapshotExcess)}
                         </span>
                       </div>
                     )}
-                  {warranty.warrantyPackage.labourRatePerHour !== null &&
-                    warranty.warrantyPackage.labourRatePerHour !== undefined &&
+                  {snapshotLabourRate !== null &&
+                    snapshotLabourRate !== undefined &&
                     !Number.isNaN(
-                      Number(warranty.warrantyPackage.labourRatePerHour)
+                      Number(snapshotLabourRate)
                     ) && (
                       <div className="bg-muted/30 p-2 rounded border text-center">
                         <span className="block text-xs text-muted-foreground mb-1">
                           Labour Rate
                         </span>
                         <span className="font-semibold">
-                          £{Number(warranty.warrantyPackage.labourRatePerHour)}
+                          £{Number(snapshotLabourRate)}
                           /hr
                         </span>
                       </div>
                     )}
-                  {warranty.warrantyPackage.fixedClaimLimit !== null &&
-                    warranty.warrantyPackage.fixedClaimLimit !== undefined &&
+                  {snapshotClaimLimit !== null &&
+                    snapshotClaimLimit !== undefined &&
                     !Number.isNaN(
-                      Number(warranty.warrantyPackage.fixedClaimLimit)
+                      Number(snapshotClaimLimit)
                     ) && (
                       <div className="bg-muted/30 p-2 rounded border text-center">
                         <span className="block text-xs text-muted-foreground mb-1">
                           Claim Limit
                         </span>
                         <span className="font-semibold">
-                          £{Number(warranty.warrantyPackage.fixedClaimLimit)}
+                          £{Number(snapshotClaimLimit)}
                         </span>
                       </div>
                     )}
@@ -233,21 +248,21 @@ export default async function CustomerWarrantiesPage() {
                     <AccordionContent>
                       <div className="space-y-4">
                         {/* Description */}
-                        {warranty.warrantyPackage.description && (
+                        {(warranty.packageDescription || warranty.warrantyPackage.description) && (
                           <div className="text-sm text-muted-foreground">
-                            {warranty.warrantyPackage.description}
+                            {warranty.packageDescription || warranty.warrantyPackage.description}
                           </div>
                         )}
 
                         {/* Eligibility */}
-                        {warranty.warrantyPackage.eligibility && (
+                        {(warranty.packageEligibility || warranty.warrantyPackage.eligibility) && (
                           <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-100 dark:border-blue-900/50">
                             <h4 className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1 flex items-center gap-1.5">
                               <FileTextIcon className="h-3.5 w-3.5" />{" "}
                               Eligibility
                             </h4>
                             <p className="text-xs text-muted-foreground">
-                              {warranty.warrantyPackage.eligibility}
+                              {warranty.packageEligibility || warranty.warrantyPackage.eligibility}
                             </p>
                           </div>
                         )}
@@ -308,10 +323,9 @@ export default async function CustomerWarrantiesPage() {
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="space-y-3 pt-2 text-sm">
-                          <div className="font-medium">
-                            {warranty.dealer.businessNameTrading ||
-                              warranty.dealer.businessNameLegal}
-                          </div>
+                            <h3 className="text-sm font-semibold truncate">
+                              {dealerName}
+                            </h3>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <MailIcon className="h-4 w-4" />
                             <a

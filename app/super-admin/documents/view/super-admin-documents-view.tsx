@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getAllDocumentsAction, deleteCustomerDocumentAction } from "@/lib/actions/customer-documents";
+import { getCustomers, Customer } from "@/lib/actions/customer";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,16 +26,28 @@ import {
   Loader2,
   Search,
   Building,
-  User
+  User,
+  Eye
 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Autocomplete } from "@/components/ui/autocomplete";
 
 export function SuperAdminDocumentsView() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [filteredDocs, setFilteredDocs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [customerFilter, setCustomerFilter] = useState("all");
+  const [customers, setCustomers] = useState<Customer[]>([]);
 
   const fetchDocuments = async () => {
     setIsLoading(true);
@@ -50,22 +63,38 @@ export function SuperAdminDocumentsView() {
 
   useEffect(() => {
     fetchDocuments();
+    loadCustomers();
   }, []);
 
+  const loadCustomers = async () => {
+    const res = await getCustomers();
+    if (res.status && res.data) {
+      setCustomers(res.data);
+    }
+  };
+
   useEffect(() => {
-    if (!searchTerm) {
-      setFilteredDocs(documents);
-      return;
+    let filtered = documents;
+
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter(doc => 
+        doc.name.toLowerCase().includes(lowerSearch) ||
+        (doc.customer && `${doc.customer.firstName} ${doc.customer.lastName}`.toLowerCase().includes(lowerSearch)) ||
+        (doc.dealer && doc.dealer.businessNameLegal.toLowerCase().includes(lowerSearch))
+      );
     }
 
-    const lowerSearch = searchTerm.toLowerCase();
-    const filtered = documents.filter(doc => 
-      doc.name.toLowerCase().includes(lowerSearch) ||
-      (doc.customer && `${doc.customer.firstName} ${doc.customer.lastName}`.toLowerCase().includes(lowerSearch)) ||
-      (doc.dealer && doc.dealer.businessNameLegal.toLowerCase().includes(lowerSearch))
-    );
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter(doc => doc.file && doc.file.category === categoryFilter);
+    }
+
+    if (customerFilter !== "all") {
+      filtered = filtered.filter(doc => doc.customerId === customerFilter);
+    }
+
     setFilteredDocs(filtered);
-  }, [searchTerm, documents]);
+  }, [searchTerm, categoryFilter, customerFilter, documents]);
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
@@ -97,8 +126,8 @@ export function SuperAdminDocumentsView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 max-w-sm">
-        <div className="relative flex-1">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-2">
+        <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name, customer or dealer..."
@@ -107,10 +136,37 @@ export function SuperAdminDocumentsView() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        <div className="w-[200px]">
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="logo">Logos</SelectItem>
+              <SelectItem value="document">Documents</SelectItem>
+              <SelectItem value="invoice">Invoices</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex-1 max-w-[300px]">
+          <Autocomplete
+            options={customers.map((c) => ({
+              value: c.id,
+              label: `${c.firstName} ${c.lastName}`,
+            }))}
+            value={customerFilter === "all" ? "" : customerFilter}
+            onValueChange={(val) => setCustomerFilter(val || "all")}
+            placeholder="Filter by Customer"
+            searchPlaceholder="Search customer..."
+            emptyMessage="No customers found"
+          />
+        </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
+      <Card className="">
+        <CardContent >
           {filteredDocs.length > 0 ? (
             <div className="rounded-md border overflow-hidden">
               <Table>
@@ -118,7 +174,7 @@ export function SuperAdminDocumentsView() {
                   <TableRow>
                     <TableHead>Document</TableHead>
                     <TableHead>Customer</TableHead>
-                    <TableHead>Dealer</TableHead>
+                    <TableHead>Uploaded By</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -160,6 +216,11 @@ export function SuperAdminDocumentsView() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" asChild title="View">
+                            <a href={doc.file.url} target="_blank" rel="noopener noreferrer">
+                              <Eye className="h-4 w-4" />
+                            </a>
+                          </Button>
                           <Button variant="ghost" size="icon" asChild title="Download">
                             <a href={doc.file.url} download={doc.name} target="_blank" rel="noopener noreferrer">
                               <Download className="h-4 w-4" />
@@ -182,8 +243,8 @@ export function SuperAdminDocumentsView() {
               </Table>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center p-12 bg-muted/30 rounded-lg border border-dashed">
-              <FileText className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+            <div className="flex flex-col  items-center justify-center p-12 bg-muted/30 rounded-lg border border-dashed">
+              <FileText className="h-12 w-12  text-muted-foreground mb-4 opacity-20" />
               <p className="text-muted-foreground font-medium">No documents found</p>
             </div>
           )}
