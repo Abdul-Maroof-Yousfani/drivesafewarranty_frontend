@@ -416,9 +416,12 @@ export default function CreateWarrantySalePage() {
           ...(data.fixedClaimLimit != null
             ? { fixedClaimLimit: data.fixedClaimLimit }
             : {}),
-          // Dealer internal prices (cost to dealer - editable by SA)
+          // Dealer internal prices (cost to dealer - SA can set these)
           ...(data.dealerPrice12Months != null
             ? { dealerPrice12Months: data.dealerPrice12Months }
+            : {}),
+          ...(data.dealerPrice24Months != null
+            ? { dealerPrice24Months: data.dealerPrice24Months }
             : {}),
           ...(data.dealerPrice36Months != null
             ? { dealerPrice36Months: data.dealerPrice36Months }

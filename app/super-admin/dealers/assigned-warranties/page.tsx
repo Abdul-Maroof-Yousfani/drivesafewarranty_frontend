@@ -1,17 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getWarrantySalesAction, WarrantySale } from "@/lib/actions/warranty-sales";
+import { useEffect, useState, useMemo } from "react";
 import { getDealers, Dealer } from "@/lib/actions/dealer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import {
@@ -24,7 +15,6 @@ import {
   Plus
 } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -32,10 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import DataTable from "@/components/common/data-table";
+import { ColumnDef } from "@tanstack/react-table";
 
 export default function AssignedWarrantiesPage() {
   const [loadingSales, setLoadingSales] = useState(false);
-  const [sales, setSales] = useState<WarrantySale[]>([]);
+  const [sales, setSales] = useState<any[]>([]);
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [selectedDealerId, setSelectedDealerId] = useState<string>("");
 
@@ -60,17 +52,93 @@ export default function AssignedWarrantiesPage() {
 
   const loadSales = async (dealerId?: string) => {
     setLoadingSales(true);
-    const res = await getWarrantySalesAction();
+    const { getWarrantyAssignmentsAction } = await import("@/lib/actions/warranty-sales");
+    const res = await getWarrantyAssignmentsAction(dealerId);
+    
     if (res.status && res.data) {
-      // Filter for assignments: dealerId matches AND customerId is NULL
-      let filtered = res.data.filter((s) => !s.customerId && !!s.dealerId);
-      if (dealerId) {
-        filtered = filtered.filter((s) => s.dealerId === dealerId);
-      }
-      setSales(filtered);
+      setSales(res.data);
+    } else {
+        setSales([]);
     }
     setLoadingSales(false);
   };
+
+  const columns = useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: "id",
+      header: "Assignment ID",
+      cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>
+    },
+    {
+      accessorKey: "assignedAt",
+      header: "Assignment Date",
+      cell: ({ row }) => (
+        <div className="flex items-center text-sm">
+          <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+          {new Date(row.original.assignedAt).toLocaleDateString()}
+        </div>
+      )
+    },
+    {
+      id: "dealer",
+      header: "Dealer",
+      accessorFn: (row) => row.dealer?.businessNameLegal,
+      cell: ({ row }) => (
+        <div className="flex flex-col">
+          <span className="font-medium">
+            {row.original.dealer?.businessNameLegal}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {row.original.dealer?.email}
+          </span>
+        </div>
+      )
+    },
+    {
+      id: "package",
+      header: "Package",
+      accessorFn: (row) => row.warrantyPackage?.name,
+      cell: ({ row }) => (
+        <div className="flex items-center">
+          <ShieldCheck className="h-4 w-4 mr-2 text-emerald-500" />
+          {row.original.warrantyPackage?.name || "N/A"}
+        </div>
+      )
+    },
+    {
+      accessorKey: "dealerPrice12Months",
+      header: "12m Dealer",
+      cell: ({ row }) => formatCurrency(row.original.dealerPrice12Months)
+    },
+    {
+      accessorKey: "dealerPrice24Months",
+      header: "24m Dealer",
+      cell: ({ row }) => formatCurrency(row.original.dealerPrice24Months)
+    },
+    {
+      accessorKey: "dealerPrice36Months",
+      header: "36m Dealer",
+      cell: ({ row }) => formatCurrency(row.original.dealerPrice36Months)
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Actions</div>,
+      cell: ({ row }) => (
+        <div className="flex justify-end gap-2">
+            <Button asChild variant="ghost" size="icon" title="View Details">
+            <Link href={`/super-admin/dealers/assigned-warranties/edit/${row.original.id}`}>
+                <FileText className="h-4 w-4" />
+            </Link>
+            </Button>
+            <Button asChild variant="ghost" size="icon" title="Edit Assignment">
+            <Link href={`/super-admin/dealers/assigned-warranties/edit/${row.original.id}?mode=edit`}>
+                <Settings className="h-4 w-4" />
+            </Link>
+            </Button>
+        </div>
+      )
+    }
+  ], []);
 
   return (
     <div className="space-y-6">
@@ -132,71 +200,14 @@ export default function AssignedWarrantiesPage() {
                   No warranties found for this selection.
                 </div>
               ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Policy #</TableHead>
-                        <TableHead>Assignment Date</TableHead>
-                        <TableHead>Dealer</TableHead>
-                        <TableHead>Package</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sales.map((sale) => (
-                        <TableRow key={sale.id}>
-                          <TableCell className="font-medium text-black">
-                            {sale.policyNumber}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center text-sm">
-                              <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                              {new Date(sale.saleDate).toLocaleDateString()}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {sale.dealer?.businessNameLegal}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {sale.dealer?.email}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center">
-                              <ShieldCheck className="h-4 w-4 mr-2 text-emerald-500" />
-                              {sale.packageName || sale.warrantyPackage?.name || "N/A"}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                             {sale.planMonths ? `${sale.planMonths} Months` : (sale.price12Months ? "12 Months" : sale.price24Months ? "24 Months" : "36 Months")}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={sale.status === "active" ? "default" : "secondary"}
-                              className={sale.status === "active" ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : ""}
-                            >
-                              {sale.status.toUpperCase()}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button asChild variant="outline" size="sm">
-                              <Link href={`/super-admin/warranty-sales/edit/${sale.id}`}>
-                                <Settings className="h-4 w-4 mr-2" />
-                                Manage
-                              </Link>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                <DataTable 
+                  columns={columns} 
+                  data={sales} 
+                  searchFields={[
+                    { key: "dealer", label: "Dealer" },
+                    { key: "package", label: "Package" }
+                  ]}
+                />
               )}
             </div>
           )}
@@ -205,3 +216,4 @@ export default function AssignedWarrantiesPage() {
     </div>
   );
 }
+

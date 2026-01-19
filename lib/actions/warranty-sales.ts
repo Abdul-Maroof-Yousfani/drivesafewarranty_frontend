@@ -138,6 +138,127 @@ export async function getWarrantySalesAction(): Promise<{
   }
 }
 
+export async function getWarrantyAssignmentsAction(dealerId?: string): Promise<{
+  status: boolean;
+  data: any[];
+  message?: string;
+}> {
+  try {
+    const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const query = dealerId ? `?dealerId=${dealerId}` : '';
+    const res = await fetch(`${API_BASE}/warranty-packages/assignments/list${query}`, {
+      cache: "no-store",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
+    });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return {
+          status: false,
+          data: [],
+          message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+        };
+      }
+  
+      return res.json();
+    } catch (error) {
+      console.error("Failed to fetch warranty assignments:", error);
+      return {
+        status: false,
+        data: [],
+        message: "Failed to fetch warranty assignments",
+      };
+    }
+  }
+
+export async function getWarrantyAssignmentByIdAction(id: string): Promise<{
+    status: boolean;
+    data?: any;
+    message?: string;
+}> {
+    try {
+        const token = await getAccessToken();
+        const headersList = await headers();
+        const host = headersList.get("host") || "";
+
+        const res = await fetch(`${API_BASE}/warranty-packages/assignments/${id}`, {
+            cache: "no-store",
+            headers: {
+                ...(token && { Authorization: `Bearer ${token}` }),
+                Host: host,
+                "X-Forwarded-Host": host,
+            },
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            return {
+                status: false,
+                message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+            };
+        }
+
+        return res.json();
+    } catch (error) {
+        console.error("Failed to fetch warranty assignment:", error);
+        return {
+            status: false,
+            message: "Failed to fetch warranty assignment",
+        };
+    }
+}
+
+export async function updateWarrantyAssignmentAction(
+    id: string,
+    payload: {
+        dealerPrice12Months?: number;
+        dealerPrice24Months?: number;
+        dealerPrice36Months?: number;
+        price?: number;
+    }
+): Promise<{ status: boolean; data?: any; message?: string }> {
+    try {
+        const token = await getAccessToken();
+        const headersList = await headers();
+        const host = headersList.get("host") || "";
+
+        const res = await fetch(`${API_BASE}/warranty-packages/assignments/${id}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                ...(token && { Authorization: `Bearer ${token}` }),
+                Host: host,
+                "X-Forwarded-Host": host,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            return {
+                status: false,
+                message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+            };
+        }
+
+        return res.json();
+    } catch (error) {
+        console.error("Failed to update warranty assignment:", error);
+        return {
+            status: false,
+            message: "Failed to update warranty assignment",
+        };
+    }
+}
+
+
 export async function getWarrantySaleByIdAction(
   id: string
 ): Promise<{ status: boolean; data?: WarrantySale; message?: string }> {
