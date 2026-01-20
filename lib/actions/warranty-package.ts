@@ -43,6 +43,7 @@ export interface WarrantyPackage {
   includedFeatures?: string[];
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
 }
 
 interface ApiResponse<T> {
@@ -109,20 +110,28 @@ export async function createWarrantyPackageAction(
   }
 }
 
-export async function getWarrantyPackagesAction(): Promise<
-  ApiResponse<WarrantyPackage[]>
-> {
+export async function getWarrantyPackagesAction(options?: {
+  includeInactive?: boolean;
+  includeDeleted?: boolean;
+  context?: string;
+}): Promise<ApiResponse<WarrantyPackage[]>> {
   const cookieStore = await cookies();
   const token = cookieStore.get("accessToken")?.value;
-
+  
   if (!token) {
     return { status: false, message: "Not authenticated" };
   }
 
+  const query = new URLSearchParams();
+  if (options?.includeInactive) query.append("includeInactive", "true");
+  if (options?.includeDeleted) query.append("includeDeleted", "true");
+  if (options?.context) query.append("context", options.context);
+  const queryString = query.toString();
+
   const headersList = await headers();
   const host = headersList.get("host") || "";
 
-  const res = await fetch(`${API_BASE}/warranty-packages`, {
+  const res = await fetch(`${API_BASE}/warranty-packages${queryString ? `?${queryString}` : ""}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -252,7 +261,6 @@ export async function updateWarrantyPackageAction(
       | "id"
       | "createdAt"
       | "updatedAt"
-      | "status"
       | "dealerPrice12Months"
       | "dealerPrice24Months"
       | "dealerPrice36Months"
@@ -294,6 +302,36 @@ export async function updateWarrantyPackageAction(
     return json;
   } catch (error) {
     return { status: false, message: "Network error" };
+  }
+}
+
+
+export async function restoreWarrantyPackageAction(
+  id: string
+): Promise<{ status: boolean; message?: string; data?: WarrantyPackage }> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+
+  try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/warranty-packages/${id}/restore`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
+    });
+    return res.json();
+  } catch (error) {
+    console.error("Failed to restore warranty package:", error);
+    return { status: false, message: "Failed to restore warranty package" };
   }
 }
 

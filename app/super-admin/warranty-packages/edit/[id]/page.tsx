@@ -66,6 +66,7 @@ const packageSchema = z.object({
   price36Months: z.coerce.number().min(0, "36‑month price must be non‑negative"),
   includedFeatures: z.array(z.string()),
   keyBenefits: z.array(z.string()).min(1, "Select at least one benefit"),
+  status: z.enum(["active", "inactive"]),
 });
 
 type PackageFormValues = z.infer<typeof packageSchema>;
@@ -105,6 +106,7 @@ export default function EditWarrantyPackagePage() {
       price36Months: 0,
       includedFeatures: [],
       keyBenefits: [],
+      status: "active",
     },
   });
 
@@ -167,6 +169,7 @@ export default function EditWarrantyPackagePage() {
               ?.filter((item: any) => item.type === "benefit")
               .map((item: any) => item.warrantyItem?.id || item.warrantyItemId)
               .filter(Boolean) || [],
+          status: (p.status as any) || "active",
         });
       } else {
         toast.error(pkgRes.message || "Failed to load package");
@@ -199,6 +202,7 @@ export default function EditWarrantyPackagePage() {
         price36Months: data.price36Months,
         includedFeatures: data.includedFeatures,
         keyBenefits: data.keyBenefits,
+        status: data.status,
       });
       if (res.status) {
         toast.success(res.message || "Warranty package updated successfully");
@@ -269,6 +273,35 @@ export default function EditWarrantyPackagePage() {
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Inactive packages will not be available for new dealer assignments or customer sales.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

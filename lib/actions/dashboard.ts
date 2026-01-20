@@ -23,6 +23,8 @@ export async function getSuperAdminDashboardStatsAction(): Promise<{
       warrantyPackage: string;
       date: string;
     }>;
+    topPackages: Array<{ name: string; sales: number }>;
+    topDealers: Array<{ name: string; revenue: number }>;
   };
   message?: string;
 }> {
