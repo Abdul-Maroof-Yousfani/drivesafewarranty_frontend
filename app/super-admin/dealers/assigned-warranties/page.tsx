@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { getDealers, Dealer } from "@/lib/actions/dealer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,10 +27,13 @@ import DataTable from "@/components/common/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 
 export default function AssignedWarrantiesPage() {
+  const searchParams = useSearchParams();
+  const urlDealerId = searchParams.get("dealerId");
+  
   const [loadingSales, setLoadingSales] = useState(false);
   const [sales, setSales] = useState<any[]>([]);
   const [dealers, setDealers] = useState<Dealer[]>([]);
-  const [selectedDealerId, setSelectedDealerId] = useState<string>("");
+  const [selectedDealerId, setSelectedDealerId] = useState<string>(urlDealerId || "");
 
   useEffect(() => {
     loadDealers();
@@ -42,6 +46,12 @@ export default function AssignedWarrantiesPage() {
       setSales([]);
     }
   }, [selectedDealerId]);
+
+  useEffect(() => {
+    if (urlDealerId && urlDealerId !== selectedDealerId) {
+      setSelectedDealerId(urlDealerId);
+    }
+  }, [urlDealerId]);
 
   const loadDealers = async () => {
     const res = await getDealers();

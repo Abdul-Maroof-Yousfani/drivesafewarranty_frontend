@@ -414,9 +414,11 @@ export default function DataTable<TData extends DataTableRow>({
               </DropdownMenuContent>
             </DropdownMenu>
             {/* Add user button */}
-            <Button onClick={toggleAction}>
-              <PlusIcon className="-ms-1 opacity-60" size={16} /> {actionText}
-            </Button>
+            {toggleAction && (
+              <Button onClick={toggleAction}>
+                <PlusIcon className="-ms-1 opacity-60" size={16} /> {actionText}
+              </Button>
+            )}
           </div>
         </div>
 

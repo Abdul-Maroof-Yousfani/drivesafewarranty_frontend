@@ -66,16 +66,7 @@ export const columns: ColumnDef<WarrantySale>[] = [
       return "N/A";
     },
   },
-  {
-    accessorKey: "customer.firstName",
-    header: "Customer First Name",
-    id: "customer.firstName",
-  },
-  {
-    accessorKey: "customer.lastName",
-    header: "Customer Last Name",
-    id: "customer.lastName",
-  },
+  
   {
     id: "vehicle",
     header: "Vehicle",
@@ -124,19 +115,19 @@ export const columns: ColumnDef<WarrantySale>[] = [
       );
     },
   },
-  {
-    id: "buyerType",
-    accessorFn: (row) =>
-      row.customer ? "Customer" : row.dealer ? "Dealer" : "N/A",
-    header: "Type",
-    size: 120,
-    cell: ({ row }) => {
-      const type = row.getValue("buyerType") as string;
-      return (
-        <Badge variant={type === "N/A" ? "secondary" : "default"}>{type}</Badge>
-      );
-    },
-  },
+  // {
+  //   id: "buyerType",
+  //   accessorFn: (row) =>
+  //     row.customer ? "Customer" : row.dealer ? "Dealer" : "N/A",
+  //   header: "Type",
+  //   size: 120,
+  //   cell: ({ row }) => {
+  //     const type = row.getValue("buyerType") as string;
+  //     return (
+  //       <Badge variant={type === "N/A" ? "secondary" : "default"}>{type}</Badge>
+  //     );
+  //   },
+  // },
   {
     accessorKey: "Actions",
     id: "actions",

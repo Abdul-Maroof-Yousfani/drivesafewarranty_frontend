@@ -214,7 +214,7 @@ export default function SuperAdminDashboard() {
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
               <div>
                 <CardTitle className="text-sm font-bold tracking-tight">Market Distribution</CardTitle>
-                <CardDescription className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Plan Popularity</CardDescription>
+                <CardDescription className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Warranty Plan Popularity</CardDescription>
               </div>
               <Activity className="h-3.5 w-3.5 text-slate-300" />
             </CardHeader>
@@ -243,7 +243,7 @@ export default function SuperAdminDashboard() {
                    <span className="text-2xl font-bold text-slate-900 dark:text-white">
                      {stats.topPackages.reduce((a, b) => a + b.sales, 0)}
                    </span>
-                   <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
+                   <span className="text-[13px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
                 </div>
               </div>
               {/* Mini Legend Row */}
@@ -251,8 +251,8 @@ export default function SuperAdminDashboard() {
                  {stats.topPackages.slice(0, 3).map((pkg, i) => (
                    <div key={pkg.name} className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex-1 min-w-[30%]">
                       <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                      <span className="text-[9px] font-bold truncate text-slate-500">{pkg.name}</span>
-                      <span className="text-[9px] font-bold ml-auto text-slate-700 dark:text-slate-300">{pkg.sales}</span>
+                      <span className="text-[11px] font-bold truncate text-slate-500">{pkg.name}</span>
+                      <span className="text-[11px] font-bold ml-auto text-slate-700 dark:text-slate-300">{pkg.sales}</span>
                    </div>
                  ))}
               </div>
@@ -265,8 +265,8 @@ export default function SuperAdminDashboard() {
           <Card className="h-full border border-slate-200/60 dark:border-slate-800/60 bg-white/50 dark:bg-slate-900/30 rounded-2xl overflow-hidden backdrop-blur-sm">
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
               <div>
-                <CardTitle className="text-sm font-bold tracking-tight">Revenue Performance</CardTitle>
-                <CardDescription className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Top Sub-domains</CardDescription>
+                <CardTitle className="text-sm font-bold tracking-tight">Dealers Performance</CardTitle>
+                <CardDescription className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Top Dealers</CardDescription>
               </div>
               <Trophy className="h-3.5 w-3.5 text-amber-400 opacity-60" />
             </CardHeader>
@@ -287,13 +287,13 @@ export default function SuperAdminDashboard() {
                       dataKey="name" 
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 8, fontWeight: 700, fill: '#94A3B8' }}
+                      tick={{ fontSize: 12, fontWeight: 600, fill: '#94A3B8' }}
                       dy={5}
                     />
                     <YAxis 
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 8, fontWeight: 700, fill: '#94A3B8' }}
+                      tick={{ fontSize: 12, fontWeight: 700, fill: '#94A3B8' }}
                       tickFormatter={(val) => `£${val > 999 ? (val/1000).toFixed(1) + 'k' : val}`}
                     />
                     <Tooltip 

@@ -502,7 +502,7 @@ export default function CreateWarrantySalePage() {
       const redirectPath =
         data.assignTo === "customer"
           ? "/super-admin/warranty-sales/list?tab=customer"
-          : "/super-admin/dealers/assigned-warranties";
+          : `/super-admin/dealers/assigned-warranties?dealerId=${data.dealerId}`;
       router.push(redirectPath);
     } catch (error) {
       console.error("Error creating warranty sale:", error);

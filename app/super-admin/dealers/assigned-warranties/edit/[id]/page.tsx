@@ -165,12 +165,12 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
             </CardHeader>
             <CardContent className="p-0">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-y">
+                <thead className="bg-muted/50 border-y">
                   <tr>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">Duration</th>
-                    <th className="px-4 py-3 text-right font-medium text-slate-600">Retail</th>
-                    <th className="px-4 py-3 text-right font-medium text-blue-600">Dealer Cost</th>
-                    <th className="px-4 py-3 text-right font-medium text-green-600">Dealer's Profit</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Duration</th>
+                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">Retail</th>
+                    <th className="px-4 py-3 text-right font-medium text-blue-500">Dealer Cost</th>
+                    <th className="px-4 py-3 text-right font-medium text-green-500">Dealer's Profit</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -182,9 +182,9 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
                     const profit = retailPrice - dealerPrice;
 
                     return (
-                      <tr key={months} className="hover:bg-slate-50/50">
+                      <tr key={months} className="hover:bg-muted/30">
                         <td className="px-4 py-3 font-medium">{months} Months</td>
-                        <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(retailPrice)}</td>
+                        <td className="px-4 py-3 text-right text-muted-foreground">{formatCurrency(retailPrice)}</td>
                         <td className="px-4 py-3 text-right">
                           {isEditMode ? (
                             <div className="flex justify-end">
@@ -202,10 +202,10 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
                               </div>
                             </div>
                           ) : (
-                            <span className="font-semibold text-blue-600">{formatCurrency(dealerPrice)}</span>
+                            <span className="font-semibold text-blue-500">{formatCurrency(dealerPrice)}</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right font-semibold text-green-600">
+                        <td className="px-4 py-3 text-right font-semibold text-green-500">
                           +{formatCurrency(profit)}
                         </td>
                       </tr>
@@ -221,7 +221,7 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
                   <CardTitle className="text-lg">Package Benefits</CardTitle>
                 </div>
                 <CardDescription>Included coverage items</CardDescription>
@@ -229,9 +229,9 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
               <CardContent>
                 <div className="grid sm:grid-cols-2 gap-2">
                   {benefits.map((item: any, i: number) => (
-                    <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-green-50/50 border border-green-100">
+                    <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-green-500/5 border border-green-500/10">
                       <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-                      <span className="text-sm text-slate-700">{item.warrantyItem?.label || "Benefit"}</span>
+                      <span className="text-sm text-foreground/80">{item.warrantyItem?.label || "Benefit"}</span>
                     </div>
                   ))}
                 </div>
@@ -246,8 +246,8 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
           <div className="grid grid-cols-2 gap-3">
             <Card className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-100">
-                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <TrendingUp className="h-4 w-4 text-blue-500" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Excess</p>
@@ -257,8 +257,8 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
             </Card>
             <Card className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-100">
-                  <Wallet className="h-4 w-4 text-amber-600" />
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <Wallet className="h-4 w-4 text-amber-500" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Labour Rate</p>
@@ -268,8 +268,8 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
             </Card>
             <Card className="p-4 col-span-2">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-100">
-                  <ShieldCheck className="h-4 w-4 text-green-600" />
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <ShieldCheck className="h-4 w-4 text-green-500" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Claim Limit</p>
@@ -290,7 +290,7 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 {pkg.eligibilityMileageValue && (
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-slate-50">
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
                     <span className="text-muted-foreground">Max Mileage</span>
                     <span className="font-semibold">
                       {pkg.eligibilityMileageComparator === "less_than" ? "< " : "≤ "}
@@ -299,13 +299,13 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
                   </div>
                 )}
                 {pkg.eligibilityVehicleAgeYearsMax && (
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-slate-50">
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
                     <span className="text-muted-foreground">Max Vehicle Age</span>
                     <span className="font-semibold">{pkg.eligibilityVehicleAgeYearsMax} years</span>
                   </div>
                 )}
                 {pkg.eligibilityTransmission && (
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-slate-50">
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
                     <span className="text-muted-foreground">Transmission</span>
                     <Badge variant="outline" className="capitalize">{pkg.eligibilityTransmission}</Badge>
                   </div>
@@ -313,7 +313,7 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
                 {pkg.eligibility && (
                   <div className="pt-2 border-t">
                     <span className="text-muted-foreground text-xs">Additional Notes</span>
-                    <p className="font-medium text-slate-700 mt-1">{pkg.eligibility}</p>
+                    <p className="font-medium text-foreground/80 mt-1">{pkg.eligibility}</p>
                   </div>
                 )}
               </CardContent>
@@ -335,7 +335,7 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">ID</span>
-                <span className="font-mono text-xs text-slate-500 truncate max-w-[150px]" title={assignment.id}>{assignment.id}</span>
+                <span className="font-mono text-xs text-muted-foreground truncate max-w-[150px]" title={assignment.id}>{assignment.id}</span>
               </div>
             </CardContent>
           </Card>
