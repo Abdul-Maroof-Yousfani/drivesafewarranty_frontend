@@ -19,11 +19,20 @@ import {
   Car,
   Calendar,
   ShieldCheck,
+  Fuel,
+  Settings,
+  Info,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentsTab } from "@/app/shared/documents/documents-tab";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface CustomerViewProps {
   customer: Customer;
@@ -114,7 +123,9 @@ export function CustomerView({ customer }: CustomerViewProps) {
                 <div>
                   <p className="text-sm font-medium">Status</p>
                   <Badge
-                    variant={customer.status === "active" ? "default" : "secondary"}
+                    variant={
+                      customer.status === "active" ? "default" : "secondary"
+                    }
                     className="mt-1"
                   >
                     {customer.status}
@@ -140,77 +151,272 @@ export function CustomerView({ customer }: CustomerViewProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] overflow-y-auto pr-4 space-y-6">
+                <div className="space-y-6 max-h-[350px] overflow-y-auto pr-2">
                   {customer.vehicles && customer.vehicles.length > 0 ? (
                     customer.vehicles.map((vehicle, index) => (
-                      <div key={vehicle.id || index} className="space-y-4 pt-4 first:pt-0 border-t first:border-t-0">
-                        <div className="flex items-start gap-3">
-                          <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
-                          <div>
-                            <p className="text-sm font-medium">Vehicle {index + 1}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {vehicle.make} {vehicle.model} ({vehicle.year})
-                            </p>
+                      <div
+                        key={vehicle.id || index}
+                        className="space-y-4 pt-6 first:pt-0 border-t first:border-t-0"
+                      >
+                        {/* Header with Title & Badges */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <Car className="h-5 w-5 text-primary" />
+                            <h3 className="text-lg font-semibold">
+                              {vehicle.make} {vehicle.model}
+                              <span className="text-muted-foreground ml-2 text-sm font-normal">
+                                ({vehicle.year})
+                              </span>
+                            </h3>
+                          </div>
+                          <div className="flex gap-2">
+                            {vehicle.dvlaTaxStatus && (
+                              <Badge
+                                variant={
+                                  vehicle.dvlaTaxStatus.toLowerCase() ===
+                                  "taxed"
+                                    ? "default"
+                                    : "secondary"
+                                }
+                                className="text-xs"
+                              >
+                                Tax: {vehicle.dvlaTaxStatus}
+                              </Badge>
+                            )}
+                            {vehicle.dvlaMotStatus && (
+                              <Badge
+                                variant={
+                                  vehicle.dvlaMotStatus.toLowerCase() ===
+                                  "valid"
+                                    ? "default"
+                                    : "secondary"
+                                }
+                                className="text-xs"
+                              >
+                                MOT: {vehicle.dvlaMotStatus}
+                              </Badge>
+                            )}
                           </div>
                         </div>
-                        {vehicle.vin && (
-                          <div className="pl-8">
-                            <p className="text-sm font-medium">VIN Number</p>
-                            <p className="text-sm text-muted-foreground">{vehicle.vin}</p>
+
+                        {/* Primary Info Grid */}
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground uppercase">
+                              Registration
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono bg-muted px-2 py-0.5 rounded text-sm font-medium tracking-wide">
+                                {vehicle.registrationNumber || "N/A"}
+                              </span>
+                            </div>
                           </div>
-                        )}
-                        {vehicle.registrationNumber && (
-                          <div className="pl-8">
-                            <p className="text-sm font-medium">Registration Number</p>
-                            <p className="text-sm text-muted-foreground">
-                              {vehicle.registrationNumber}
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground uppercase">
+                              Mileage
+                            </p>
+                            <p className="text-sm font-medium">
+                              {vehicle.mileage?.toLocaleString() ?? 0} km
                             </p>
                           </div>
-                        )}
-                        <div className="pl-8">
-                          <p className="text-sm font-medium">Current Mileage</p>
-                          <p className="text-sm text-muted-foreground">
-                            {vehicle.mileage ? vehicle.mileage.toLocaleString() : 0} km
-                          </p>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground uppercase">
+                              VIN
+                            </p>
+                            <p
+                              className="text-sm font-mono text-muted-foreground truncate"
+                              title={vehicle.vin || ""}
+                            >
+                              {vehicle.vin || "N/A"}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground uppercase">
+                              Transmission
+                            </p>
+                            <p className="text-sm font-medium capitalize">
+                              {vehicle.transmission || "N/A"}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground uppercase">
+                              Fuel Type
+                            </p>
+                            <div className="flex items-center gap-1.5">
+                              <Fuel className="h-3.5 w-3.5 text-muted-foreground" />
+                              <p className="text-sm text-foreground">
+                                {vehicle.dvlaFuelType || "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground uppercase">
+                              Colour
+                            </p>
+                            <div className="flex items-center gap-1.5">
+                              <div
+                                className="h-3 w-3 rounded-full border bg-current"
+                                style={{
+                                  color:
+                                    vehicle.dvlaColour?.toLowerCase() || "gray",
+                                }}
+                              />
+                              <p className="text-sm text-foreground capitalize">
+                                {vehicle.dvlaColour || "N/A"}
+                              </p>
+                            </div>
+                          </div>
                         </div>
+
+                        {/* Technical Specs Accordion */}
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem
+                            value="technical-specs"
+                            className="border-b-0"
+                          >
+                            <AccordionTrigger className="py-2 text-sm text-muted-foreground hover:text-foreground">
+                              <span className="flex items-center gap-2">
+                                <Settings className="h-4 w-4" />
+                                View Technical Specifications
+                              </span>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="rounded-md bg-muted/40 p-3 mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">
+                                    Engine Capacity:
+                                  </span>
+                                  <span className="font-medium">
+                                    {vehicle.dvlaEngineCapacity
+                                      ? `${vehicle.dvlaEngineCapacity} cc`
+                                      : "N/A"}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">
+                                    CO2 Emissions:
+                                  </span>
+                                  <span className="font-medium">
+                                    {vehicle.dvlaCo2Emissions
+                                      ? `${vehicle.dvlaCo2Emissions} g/km`
+                                      : "N/A"}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">
+                                    First Registered:
+                                  </span>
+                                  <span className="font-medium">
+                                    {vehicle.dvlaMonthOfFirstRegistration ||
+                                      "N/A"}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">
+                                    Last V5C Issued:
+                                  </span>
+                                  <span className="font-medium">
+                                    {vehicle.dvlaDateOfLastV5CIssued
+                                      ? new Date(
+                                          vehicle.dvlaDateOfLastV5CIssued
+                                        ).toLocaleDateString()
+                                      : "N/A"}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">
+                                    Wheelplan:
+                                  </span>
+                                  <span className="font-medium">
+                                    {vehicle.dvlaWheelplan || "N/A"}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">
+                                    Type Approval:
+                                  </span>
+                                  <span className="font-medium">
+                                    {vehicle.dvlaTypeApproval || "N/A"}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">
+                                    Tax Due Date:
+                                  </span>
+                                  <span className="font-medium">
+                                    {vehicle.dvlaTaxDueDate
+                                      ? new Date(
+                                          vehicle.dvlaTaxDueDate
+                                        ).toLocaleDateString()
+                                      : "N/A"}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">
+                                    MOT Expiry:
+                                  </span>
+                                  <span className="font-medium">
+                                    {vehicle.dvlaMotExpiryDate
+                                      ? new Date(
+                                          vehicle.dvlaMotExpiryDate
+                                        ).toLocaleDateString()
+                                      : "N/A"}
+                                  </span>
+                                </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                       </div>
                     ))
                   ) : (
                     <div className="space-y-4">
-                      {(customer.vehicleMake || customer.vehicleModel) ? (
+                      {customer.vehicleMake || customer.vehicleModel ? (
                         <>
                           <div className="flex items-start gap-3">
                             <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
                             <div>
                               <p className="text-sm font-medium">Vehicle</p>
                               <p className="text-sm text-muted-foreground">
-                                {customer.vehicleMake} {customer.vehicleModel} ({customer.vehicleYear})
+                                {customer.vehicleMake} {customer.vehicleModel} (
+                                {customer.vehicleYear})
                               </p>
                             </div>
                           </div>
                           {customer.vin && (
                             <div>
                               <p className="text-sm font-medium">VIN Number</p>
-                              <p className="text-sm text-muted-foreground">{customer.vin}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {customer.vin}
+                              </p>
                             </div>
                           )}
                           {customer.registrationNumber && (
                             <div>
-                              <p className="text-sm font-medium">Registration Number</p>
+                              <p className="text-sm font-medium">
+                                Registration Number
+                              </p>
                               <p className="text-sm text-muted-foreground">
                                 {customer.registrationNumber}
                               </p>
                             </div>
                           )}
                           <div>
-                            <p className="text-sm font-medium">Current Mileage</p>
+                            <p className="text-sm font-medium">
+                              Current Mileage
+                            </p>
                             <p className="text-sm text-muted-foreground">
-                              {customer.mileage ? customer.mileage.toLocaleString() : 0} km
+                              {customer.mileage
+                                ? customer.mileage.toLocaleString()
+                                : 0}{" "}
+                              km
                             </p>
                           </div>
                         </>
                       ) : (
-                        <p className="text-muted-foreground">No vehicle information available.</p>
+                        <p className="text-muted-foreground">
+                          No vehicle information available.
+                        </p>
                       )}
                     </div>
                   )}
@@ -235,7 +441,8 @@ export function CustomerView({ customer }: CustomerViewProps) {
                       <p className="text-sm font-medium">Package</p>
                       <p className="text-sm text-muted-foreground">
                         {customer.currentWarranty.warrantyPackage.name}
-                        {customer.currentWarranty.warrantyPackage.planLevel && ` (${customer.currentWarranty.warrantyPackage.planLevel})`}
+                        {customer.currentWarranty.warrantyPackage.planLevel &&
+                          ` (${customer.currentWarranty.warrantyPackage.planLevel})`}
                       </p>
                     </div>
                   </div>
@@ -245,7 +452,9 @@ export function CustomerView({ customer }: CustomerViewProps) {
                       <div>
                         <p className="text-sm font-medium">Covered Vehicle</p>
                         <p className="text-sm text-muted-foreground">
-                          {customer.currentWarranty.vehicle.make} {customer.currentWarranty.vehicle.model} ({customer.currentWarranty.vehicle.year})
+                          {customer.currentWarranty.vehicle.make}{" "}
+                          {customer.currentWarranty.vehicle.model} (
+                          {customer.currentWarranty.vehicle.year})
                         </p>
                       </div>
                     </div>
@@ -280,7 +489,9 @@ export function CustomerView({ customer }: CustomerViewProps) {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No active warranty found.</p>
+                <p className="text-sm text-muted-foreground">
+                  No active warranty found.
+                </p>
               )}
             </CardContent>
           </Card>
@@ -303,11 +514,14 @@ export function CustomerView({ customer }: CustomerViewProps) {
                   <div>
                     <p className="text-sm font-medium">Created At</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(customer.createdAt).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
+                      {new Date(customer.createdAt).toLocaleDateString(
+                        "en-US",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}
                     </p>
                   </div>
                 </div>

@@ -26,7 +26,9 @@ import {
 import DataTable from "@/components/common/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 
-export default function AssignedWarrantiesPage() {
+import { Suspense } from "react";
+
+function AssignedWarrantiesContent() {
   const searchParams = useSearchParams();
   const urlDealerId = searchParams.get("dealerId");
   
@@ -224,6 +226,18 @@ export default function AssignedWarrantiesPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function AssignedWarrantiesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center p-12">
+        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <AssignedWarrantiesContent />
+    </Suspense>
   );
 }
 

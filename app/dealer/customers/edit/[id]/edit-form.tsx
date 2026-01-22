@@ -75,8 +75,8 @@ const vehicleSchema = z.object({
   make: z.string().min(1, "Make is required"),
   model: z.string().min(1, "Model is required"),
   year: z.coerce.number().min(1900).max(new Date().getFullYear() + 1),
-  vin: z.string().optional().or(z.literal("")),
-  registrationNumber: z.string().optional().or(z.literal("")),
+  vin: z.string().min(1, "VIN is required"),
+  registrationNumber: z.string().min(1, "Registration number is required"),
   mileage: z.coerce.number().min(0).default(0),
   transmission: z.string().optional().or(z.literal("")),
 });
@@ -357,6 +357,8 @@ function VehicleForm({
   onCancel,
 }: VehicleFormProps) {
   const [loading, setLoading] = useState(false);
+  const [dvlaLoading, setDvlaLoading] = useState(false);
+  const [dvlaData, setDvlaData] = useState<any | null>(null);
 
   const defaultValues = {
     make: initialData?.make ?? "",
@@ -372,6 +374,42 @@ function VehicleForm({
     resolver: zodResolver(vehicleSchema) as any,
     defaultValues,
   });
+  const lookupVehicle = async () => {
+    const registrationNumber = form.getValues("registrationNumber")?.trim();
+    const vin = form.getValues("vin")?.trim();
+
+    if (!registrationNumber || !vin) {
+      toast.error("Registration number and VIN are required");
+      return;
+    }
+
+    setDvlaLoading(true);
+    try {
+      const res = await fetch("/api/vehicle-enquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ registrationNumber: registrationNumber.toUpperCase() }),
+      });
+      const json = (await res.json().catch(() => ({}))) as any;
+      if (!res.ok || !json?.status) {
+        toast.error(json?.message || "Failed to fetch vehicle details");
+        setDvlaData(null);
+        return;
+      }
+      const data = json.data;
+      setDvlaData(data);
+      if (data?.make) form.setValue("make", data.make, { shouldValidate: true });
+      if (typeof data?.yearOfManufacture === "number") {
+        form.setValue("year", data.yearOfManufacture, { shouldValidate: true });
+      }
+      toast.success("Vehicle details fetched");
+    } catch {
+      toast.error("Failed to fetch vehicle details");
+      setDvlaData(null);
+    } finally {
+      setDvlaLoading(false);
+    }
+  };
 
 
 
@@ -379,9 +417,27 @@ function VehicleForm({
     setLoading(true);
     try {
       let result;
-      const payload = {
+      const payload: any = {
         ...data,
         transmission: data.transmission || undefined,
+        ...(dvlaData
+          ? {
+              dvlaTaxStatus: dvlaData.taxStatus,
+              dvlaTaxDueDate: dvlaData.taxDueDate,
+              dvlaMotStatus: dvlaData.motStatus,
+              dvlaMotExpiryDate: dvlaData.motExpiryDate,
+              dvlaYearOfManufacture: dvlaData.yearOfManufacture,
+              dvlaEngineCapacity: dvlaData.engineCapacity,
+              dvlaCo2Emissions: dvlaData.co2Emissions,
+              dvlaFuelType: dvlaData.fuelType,
+              dvlaMarkedForExport: dvlaData.markedForExport,
+              dvlaColour: dvlaData.colour,
+              dvlaTypeApproval: dvlaData.typeApproval,
+              dvlaDateOfLastV5CIssued: dvlaData.dateOfLastV5CIssued,
+              dvlaWheelplan: dvlaData.wheelplan,
+              dvlaMonthOfFirstRegistration: dvlaData.monthOfFirstRegistration,
+            }
+          : {}),
       };
       if (initialData?.id) {
         // Update
@@ -418,7 +474,7 @@ function VehicleForm({
               <FormItem>
                 <FormLabel>Make</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} disabled={!!initialData?.id} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -431,7 +487,7 @@ function VehicleForm({
               <FormItem>
                 <FormLabel>Model</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} disabled={!!initialData?.id} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -452,6 +508,7 @@ function VehicleForm({
                     onChange={(e) =>
                       field.onChange(parseInt(e.target.value) || 0)
                     }
+                    disabled={!!initialData?.id}
                   />
                 </FormControl>
                 <FormMessage />
@@ -507,9 +564,17 @@ function VehicleForm({
             name="vin"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>VIN</FormLabel>
+                <FormLabel>VIN *</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")
+                      )
+                    }
+                    disabled={!!initialData?.id}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -520,15 +585,66 @@ function VehicleForm({
             name="registrationNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Reg Number</FormLabel>
+                <FormLabel>Reg Number *</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value.toUpperCase().replace(/\s+/g, "")
+                      )
+                    }
+                    disabled={!!initialData?.id}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={lookupVehicle}
+            disabled={dvlaLoading}
+          >
+            {dvlaLoading ? "Fetching..." : "Fetch Vehicle Details"}
+          </Button>
+        </div>
+
+        {dvlaData && (
+          <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div>
+                <div className="font-medium">Make</div>
+                <div className="text-muted-foreground">{dvlaData?.make || "-"}</div>
+              </div>
+              <div>
+                <div className="font-medium">Year</div>
+                <div className="text-muted-foreground">{dvlaData?.yearOfManufacture ?? "-"}</div>
+              </div>
+              <div>
+                <div className="font-medium">Fuel</div>
+                <div className="text-muted-foreground">{dvlaData?.fuelType || "-"}</div>
+              </div>
+              <div>
+                <div className="font-medium">Colour</div>
+                <div className="text-muted-foreground">{dvlaData?.colour || "-"}</div>
+              </div>
+              <div>
+                <div className="font-medium">MOT</div>
+                <div className="text-muted-foreground">{dvlaData?.motStatus || "-"}</div>
+              </div>
+              <div>
+                <div className="font-medium">Tax</div>
+                <div className="text-muted-foreground">{dvlaData?.taxStatus || "-"}</div>
+              </div>
+            </div>
+          </div>
+        )}
         <DialogFooter>
           <Button type="submit" disabled={loading}>
             {loading ? "Saving" : "Save"}

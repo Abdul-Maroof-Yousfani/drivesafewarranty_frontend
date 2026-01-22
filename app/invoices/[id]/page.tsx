@@ -14,7 +14,9 @@ import { Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-export default function InvoicePage() {
+import { Suspense } from "react";
+
+function InvoiceContent() {
   const { id } = useParams();
   const searchParams = useSearchParams();
   const variant = searchParams.get("variant") || "customer";
@@ -299,7 +301,7 @@ export default function InvoicePage() {
       }
     }
     load();
-  }, [id, variant]);
+  }, [id, variant, searchParams]); // Added searchParams to deps
 
   const handleDownloadPDF = async () => {
     if (!data || !settings) return;
@@ -533,5 +535,17 @@ export default function InvoicePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function InvoicePage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen w-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <InvoiceContent />
+    </Suspense>
   );
 }

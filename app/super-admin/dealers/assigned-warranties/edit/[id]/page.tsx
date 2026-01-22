@@ -29,7 +29,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-export default function EditAssignmentPage({ params }: { params: Promise<{ id: string }> }) {
+import { Suspense } from "react";
+
+function EditAssignmentContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -344,6 +346,18 @@ export default function EditAssignmentPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EditAssignmentPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <EditAssignmentContent params={params} />
+    </Suspense>
   );
 }
 

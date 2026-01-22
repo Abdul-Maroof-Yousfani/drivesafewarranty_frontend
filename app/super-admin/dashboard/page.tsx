@@ -319,31 +319,31 @@ export default function SuperAdminDashboard() {
       </div>
 
       {/* Bottom Row */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-2 lg:grid-cols-2">
         {/* Recent Activity List */}
-        <motion.div className="lg:col-span-2" variants={itemVariants}>
-          <Card className="border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 rounded-2xl shadow-sm">
+        <motion.div variants={itemVariants}>
+          <Card className="border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 rounded-2xl shadow-sm h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-slate-800/80">
               <div>
                 <CardTitle className="text-sm font-bold tracking-tight">Recent Transactions</CardTitle>
                 <CardDescription className="text-[9px] uppercase font-bold text-slate-400">Live sales feed</CardDescription>
               </div>
-              <Button variant="ghost" className="h-7 px-3 text-[9px] font-bold uppercase tracking-widest text-slate-500 hover:text-primary transition-colors" asChild>
+              <Button variant="ghost" className="h-7 px-1 text-[9px] font-bold uppercase tracking-widest text-slate-500 hover:text-primary transition-colors" asChild>
                 <Link href="/super-admin/customers/list">View All <ArrowRight className="ml-1 h-3 w-3" /></Link>
               </Button>
             </CardHeader>
-            <CardContent className="p-2">
+            <CardContent className="p-2 flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
                 {stats.recentCustomers.length > 0 ? (
                   stats.recentCustomers.slice(0, 6).map((customer) => (
-                    <div key={customer.id} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-50 dark:border-slate-800/40 bg-slate-50/30 dark:bg-slate-800/20 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group">
+                    <div key={customer.id} className="flex items-center justify-between p-2 rounded-xl border border-slate-50 dark:border-slate-800/40 bg-slate-50/30 dark:bg-slate-800/20 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group">
                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-lg bg-white dark:bg-slate-900 shadow-sm flex items-center justify-center text-primary border border-slate-100 dark:border-slate-800 group-hover:scale-110 transition-transform">
+                          <div className="h-9 w-9 rounded-lg bg-white dark:bg-slate-900 shadow-lg flex items-center justify-center text-primary border border-slate-10 dark:border-slate-800 group-hover:scale-110 transition-transform">
                              <Users className="h-4 w-4" />
                           </div>
                           <div>
-                            <p className="text-[11px] font-bold text-slate-900 dark:text-white">{customer.name}</p>
-                            <span className="text-[9px] font-medium text-slate-400 block">{customer.warrantyPackage} • {customer.date}</span>
+                            <p className="text-[12px] font-bold text-slate-900 dark:text-white">{customer.name}</p>
+                            <span className="text-[10px] font-medium text-slate-70 dark:text-gray-400 block">{customer.warrantyPackage} • {customer.date}</span>
                           </div>
                        </div>
                        <Link href={`/super-admin/customers/edit/${customer.id}`} className="h-6 w-6 rounded-full flex items-center justify-center text-slate-300 hover:bg-white hover:text-primary transition-all shadow-sm border border-transparent hover:border-slate-100">
@@ -364,30 +364,30 @@ export default function SuperAdminDashboard() {
 
         {/* Refined Quick Actions */}
         <motion.div variants={itemVariants}>
-          <Card className="border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 rounded-2xl shadow-sm h-full flex flex-col overflow-hidden">
-            <CardHeader className="p-4 bg-slate-50/50 dark:bg-slate-950/20 border-b dark:border-slate-800/60">
-              <div className="flex items-center gap-3">
+          <Card className="border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 rounded-xl shadow-sm h-full flex flex-col overflow-hidden">
+            <CardHeader className="p-2 bg-slate-50/50 dark:bg-slate-950/20 border-b dark:border-slate-800/60">
+              <div className="flex items-center gap-1">
                 <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Zap className="h-4 w-4 text-primary" />
                 </div>
                 <div>
                   <CardTitle className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">Quick Actions</CardTitle>
-                  <CardDescription className="text-[9px] uppercase font-bold text-slate-400">Direct Controls</CardDescription>
+                  <CardDescription className="text-[10px] uppercase font-bold text-slate-400">Direct Controls</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-4 flex-1 flex flex-col justify-between">
-              <div className="grid grid-cols-2 gap-3">
+            <CardContent className="p-2 flex-1 flex flex-col justify-between">
+              <div className="grid grid-cols-4 gap-2">
                 {[
-                  { label: "Provision Dealer", href: "/super-admin/dealers/create", color: "blue", icon: Building2 },
-                  { label: "Register Client", href: "/super-admin/customers/create", color: "emerald", icon: Users },
-                  { label: "Launch Plan", href: "/super-admin/warranty-packages/create", color: "violet", icon: Package },
-                  { label: "Direct Checkout", href: "/super-admin/warranty-sales/create", color: "amber", icon: ShieldCheck },
+                  { label: "Create Dealer", href: "/super-admin/dealers/create", color: "blue", icon: Building2 },
+                  { label: "Create Customer", href: "/super-admin/customers/create", color: "emerald", icon: Users },
+                  { label: "Create Warranty", href: "/super-admin/warranty-packages/create", color: "violet", icon: Package },
+                  { label: "Assign/Sell Warranty", href: "/super-admin/warranty-sales/create", color: "amber", icon: ShieldCheck },
                 ].map((action) => (
                   <Button 
                     key={action.label} 
                     variant="outline" 
-                    className="w-full justify-start h-auto py-3 px-3 rounded-xl border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 group relative overflow-hidden transition-all duration-300" 
+                    className="w-full justify-start h-auto py-2 px-3 rounded-xl border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 group relative overflow-hidden transition-all duration-300" 
                     asChild
                   >
                     <Link href={action.href} className="flex flex-col items-start gap-2 !space-x-0">

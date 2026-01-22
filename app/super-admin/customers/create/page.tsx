@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -57,24 +58,14 @@ const customerSchema = z.object({
     .array(
       z.object({
         make: z.string().min(1, "Vehicle make is required"),
-        model: z.string().min(1, "Vehicle model is required"),
         year: z.coerce
           .number()
           .min(1900, "Year must be 1900 or later")
           .max(new Date().getFullYear() + 1, "Year is too far in future"),
-        vin: z
+        vin: z.string().min(1, "VIN is required"),
+        registrationNumber: z
           .string()
-          .optional()
-          .or(z.literal(""))
-          .superRefine((val, ctx) => {
-            if (val && val.length > 0 && val.length < 11) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "VIN must be at least 11 characters if provided",
-              });
-            }
-          }),
-        registrationNumber: z.string().optional().or(z.literal("")),
+          .min(1, "Registration number is required"),
         mileage: z.coerce
           .number()
           .min(0, "Mileage must be a non-negative number")
@@ -95,6 +86,10 @@ export default function CreateCustomerPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [dvlaLoadingIndex, setDvlaLoadingIndex] = useState<number | null>(null);
+  const [dvlaDataByIndex, setDvlaDataByIndex] = useState<
+    Record<number, any | null>
+  >({});
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema) as any,
@@ -107,7 +102,6 @@ export default function CreateCustomerPage() {
       vehicles: [
         {
           make: "",
-          model: "",
           year: new Date().getFullYear(),
           vin: "",
           registrationNumber: "",
@@ -124,11 +118,78 @@ export default function CreateCustomerPage() {
     name: "vehicles",
   });
 
+  const lookupVehicle = async (index: number) => {
+    const registrationNumber = form
+      .getValues(`vehicles.${index}.registrationNumber`)
+      ?.trim();
+    const vin = form.getValues(`vehicles.${index}.vin`)?.trim();
+
+    if (!registrationNumber || !vin) {
+      toast.error("Registration number and VIN are required");
+      return;
+    }
+
+    setDvlaLoadingIndex(index);
+    try {
+      const res = await fetch("/api/vehicle-enquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          registrationNumber: registrationNumber.toUpperCase(),
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as any;
+
+      if (!res.ok || !json?.status) {
+        toast.error(json?.message || "Failed to fetch vehicle details");
+        setDvlaDataByIndex((p) => ({ ...p, [index]: null }));
+        return;
+      }
+
+      const data = json.data;
+      setDvlaDataByIndex((p) => ({ ...p, [index]: data }));
+      if (data?.make)
+        form.setValue(`vehicles.${index}.make`, data.make, {
+          shouldValidate: true,
+        });
+      if (typeof data?.yearOfManufacture === "number") {
+        form.setValue(`vehicles.${index}.year`, data.yearOfManufacture, {
+          shouldValidate: true,
+        });
+      }
+      toast.success("Vehicle details fetched");
+    } catch {
+      toast.error("Failed to fetch vehicle details");
+      setDvlaDataByIndex((p) => ({ ...p, [index]: null }));
+    } finally {
+      setDvlaLoadingIndex(null);
+    }
+  };
+
   const onSubmit = async (data: CustomerFormValues) => {
     setLoading(true);
     try {
       const { createCustomer } = await import("@/lib/actions/customer");
-      const result = await createCustomer(data);
+      const vehicles = data.vehicles.map((v, idx) => ({
+        ...v,
+        model: "Unknown", // Model not available from DVLA
+        dvlaTaxStatus: dvlaDataByIndex[idx]?.taxStatus,
+        dvlaTaxDueDate: dvlaDataByIndex[idx]?.taxDueDate,
+        dvlaMotStatus: dvlaDataByIndex[idx]?.motStatus,
+        dvlaMotExpiryDate: dvlaDataByIndex[idx]?.motExpiryDate,
+        dvlaYearOfManufacture: dvlaDataByIndex[idx]?.yearOfManufacture,
+        dvlaEngineCapacity: dvlaDataByIndex[idx]?.engineCapacity,
+        dvlaCo2Emissions: dvlaDataByIndex[idx]?.co2Emissions,
+        dvlaFuelType: dvlaDataByIndex[idx]?.fuelType,
+        dvlaMarkedForExport: dvlaDataByIndex[idx]?.markedForExport,
+        dvlaColour: dvlaDataByIndex[idx]?.colour,
+        dvlaTypeApproval: dvlaDataByIndex[idx]?.typeApproval,
+        dvlaDateOfLastV5CIssued: dvlaDataByIndex[idx]?.dateOfLastV5CIssued,
+        dvlaWheelplan: dvlaDataByIndex[idx]?.wheelplan,
+        dvlaMonthOfFirstRegistration:
+          dvlaDataByIndex[idx]?.monthOfFirstRegistration,
+      }));
+      const result = await createCustomer({ ...data, vehicles } as any);
       if (result.status) {
         toast.success(result.message || "Customer created successfully");
         router.push(`/super-admin/customers/list?newItemId=${result.data?.id}`);
@@ -304,7 +365,6 @@ export default function CreateCustomerPage() {
                   onClick={() =>
                     append({
                       make: "",
-                      model: "",
                       year: new Date().getFullYear(),
                       vin: "",
                       registrationNumber: "",
@@ -318,10 +378,10 @@ export default function CreateCustomerPage() {
                 </Button>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-2">
                 {fields.map((field, index) => (
                   <Card key={field.id}>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0  ">
                       <CardTitle className="text-base font-medium">
                         Vehicle {index + 1}
                       </CardTitle>
@@ -337,150 +397,216 @@ export default function CreateCustomerPage() {
                         </Button>
                       )}
                     </CardHeader>
-                    <CardContent className="space-y-4 pt-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name={`vehicles.${index}.make`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Make</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Toyota" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`vehicles.${index}.model`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Model</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Camry" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                    <CardContent className="space-y-4 pb-1">
+                      {/* Step 1: VIN and Registration Number */}
+                      <div className="space-y-2 ">
+                        <div className="bg-blue-50 border border-blue-200  rounded-lg p-3 mb-5">
+                          <p className="text-sm text-blue-800 font-medium">
+                            Enter VIN number and Registration number below, then
+                            click "Get Vehicle Details" to automatically
+                            populate vehicle information.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6">
+                          <FormField
+                            control={form.control}
+                            name={`vehicles.${index}.vin`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>VIN Number *</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Enter VIN number"
+                                    value={field.value || ""}
+                                    onChange={(e) => {
+                                      field.onChange(
+                                        e.target.value
+                                          .toUpperCase()
+                                          .replace(/[^A-Z0-9]/g, "")
+                                      );
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`vehicles.${index}.registrationNumber`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Registration Number *</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Enter registration number"
+                                    {...field}
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        e.target.value
+                                          .toUpperCase()
+                                          .replace(/\s+/g, "")
+                                      )
+                                    }
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="flex justify-end mt-5">
+                          <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            onClick={() => lookupVehicle(index)}
+                            disabled={dvlaLoadingIndex === index}
+                            className="bg-gradient-to-r from-[#00C853] to-[#00B4D8] hover:from-[#00B4D8] hover:to-[#00C853]"
+                          >
+                            {dvlaLoadingIndex === index ? (
+                              <>Loading...</>
+                            ) : (
+                              <>Get Vehicle Details</>
+                            )}
+                          </Button>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name={`vehicles.${index}.year`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Year</FormLabel>
-                              <FormControl>
+
+                      {/* Step 2: Show fields only after DVLA data is fetched */}
+                      {dvlaDataByIndex[index] && (
+                        <div className=" space-y-2 ">
+                          <div className="rounded-lg">
+                            <h5 className="text-sm font-semibold mb-3 text-gray-900">
+                              Vehicle Details
+                            </h5>
+                            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+                              <div className="space-y-2 ">
+                                <Label>Make</Label>
                                 <Input
-                                  type="number"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseInt(e.target.value) || 0
-                                    )
+                                  value={dvlaDataByIndex[index]?.make || "-"}
+                                  readOnly
+                                  disabled
+                                  className="bg-gray-100 cursor-not-allowed"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Year</Label>
+                                <Input
+                                  value={
+                                    dvlaDataByIndex[index]?.yearOfManufacture ??
+                                    "-"
                                   }
-                                  value={field.value}
+                                  readOnly
+                                  disabled
+                                  className="bg-gray-100 cursor-not-allowed"
                                 />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`vehicles.${index}.mileage`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Mileage</FormLabel>
-                              <FormControl>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Fuel Type</Label>
                                 <Input
-                                  type="number"
-                                  placeholder="0"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseInt(e.target.value) || 0
-                                    )
+                                  value={
+                                    dvlaDataByIndex[index]?.fuelType || "-"
                                   }
-                                  value={field.value}
+                                  readOnly
+                                  disabled
+                                  className="bg-gray-100 cursor-not-allowed"
                                 />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name={`vehicles.${index}.transmission`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Transmission</FormLabel>
-                              <FormControl>
-                                <Select
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select transmission" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="manual">
-                                      Manual
-                                    </SelectItem>
-                                    <SelectItem value="automatic">
-                                      Automatic
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name={`vehicles.${index}.vin`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>VIN</FormLabel>
-                              <FormControl>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Colour</Label>
                                 <Input
-                                  placeholder="VIN"
-                                  value={field.value || ""}
-                                  onChange={(e) => {
-                                    const numericValue = e.target.value.replace(
-                                      /[^0-9]/g,
-                                      ""
-                                    );
-                                    field.onChange(numericValue);
-                                  }}
+                                  value={dvlaDataByIndex[index]?.colour || "-"}
+                                  readOnly
+                                  disabled
+                                  className="bg-gray-100 cursor-not-allowed"
                                 />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`vehicles.${index}.registrationNumber`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Registration Number </FormLabel>
-                              <FormControl>
-                                <Input placeholder="Registration" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>MOT Status</Label>
+                                <Input
+                                  value={
+                                    dvlaDataByIndex[index]?.motStatus || "-"
+                                  }
+                                  readOnly
+                                  disabled
+                                  className="bg-gray-100 cursor-not-allowed"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Tax Status</Label>
+                                <Input
+                                  value={
+                                    dvlaDataByIndex[index]?.taxStatus || "-"
+                                  }
+                                  readOnly
+                                  disabled
+                                  className="bg-gray-100 cursor-not-allowed"
+                                />
+                              </div>
+                                            
+
+                         
+                          {/* Editable fields */}
+                          
+                            <FormField
+                              control={form.control}
+                              name={`vehicles.${index}.mileage`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Mileage (km) *</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      placeholder="Enter current mileage"
+                                      {...field}
+                                      onChange={(e) =>
+                                        field.onChange(
+                                          parseInt(e.target.value) || 0
+                                        )
+                                      }
+                                      value={field.value}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`vehicles.${index}.transmission`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Transmission</FormLabel>
+                                  <FormControl>
+                                    <Select
+                                      value={field.value}
+                                      onValueChange={field.onChange}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select transmission" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="manual">
+                                          Manual
+                                        </SelectItem>
+                                        <SelectItem value="automatic">
+                                          Automatic
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                       
+                        </div>
+                         </div>  
+                          </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
