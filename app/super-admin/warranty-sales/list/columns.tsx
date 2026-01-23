@@ -35,7 +35,7 @@ export const columns: ColumnDef<WarrantySale>[] = [
   },
   {
     accessorKey: "policyNumber",
-    header: "Sale ID",
+    header: "Warranty Number",
     size: 260,
   },
   {

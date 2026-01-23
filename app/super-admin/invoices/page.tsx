@@ -57,8 +57,10 @@ export default function SuperAdminInvoicesPage() {
   const loadSales = async () => {
     setLoadingSales(true);
     const res = await getWarrantySalesAction();
-    if (res.status) {
-      setSales((res.data || []) as WarrantySale[]);
+    if (res.status && res.data) {
+      // Handle potential { data: { data: [...] } } or { data: [...] } response structure
+      const data = Array.isArray(res.data) ? res.data : (res.data as any).data || [];
+      setSales(data as WarrantySale[]);
     }
     setLoadingSales(false);
   };
@@ -70,7 +72,9 @@ export default function SuperAdminInvoicesPage() {
       excludeDirectSales: true
     });
     if (res.status && res.data) {
-      setSettlements(res.data.invoices);
+      setSettlements(res.data.invoices || []);
+    } else if (res.status && Array.isArray(res.data)) {
+      setSettlements(res.data as any);
     }
     setLoadingSettlements(false);
   };
@@ -108,7 +112,9 @@ export default function SuperAdminInvoicesPage() {
       excludeDirectSales: true
     });
     if (res.status && res.data) {
-      setSettlements(res.data.invoices);
+      setSettlements(res.data.invoices || []);
+    } else if (res.status && Array.isArray(res.data)) {
+      setSettlements(res.data as any);
     }
     setLoadingSettlements(false);
   };
@@ -193,7 +199,7 @@ export default function SuperAdminInvoicesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Policy #</TableHead>
+                      <TableHead>Warranty #</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Dealer (Seller)</TableHead>
                       <TableHead>Customer (Buyer)</TableHead>

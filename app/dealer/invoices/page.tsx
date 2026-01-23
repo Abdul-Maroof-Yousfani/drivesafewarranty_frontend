@@ -83,7 +83,7 @@ export default function DealerInvoicesPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Policy #</TableHead>
+                                            <TableHead>Warranty #</TableHead>
                                             <TableHead>Date</TableHead>
                                             <TableHead>Customer</TableHead>
                                             <TableHead>Package</TableHead>

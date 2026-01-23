@@ -58,7 +58,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, Car, Save } from "lucide-react";
+import { Plus, Trash2, Edit, Car, Save, ChevronDown, ChevronUp } from "lucide-react";
 
 // --- Schemas ---
 
@@ -358,7 +358,21 @@ function VehicleForm({
 }: VehicleFormProps) {
   const [loading, setLoading] = useState(false);
   const [dvlaLoading, setDvlaLoading] = useState(false);
-  const [dvlaData, setDvlaData] = useState<any | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [dvlaData, setDvlaData] = useState<any | null>(() => {
+    if (initialData?.id && ((initialData as any).dvlaFuelType || (initialData as any).dvlaTaxStatus || (initialData as any).dvlaMotStatus)) {
+      const d = initialData as any;
+      return {
+        make: d.make,
+        yearOfManufacture: d.dvlaYearOfManufacture || d.year,
+        fuelType: d.dvlaFuelType,
+        colour: d.dvlaColour,
+        motStatus: d.dvlaMotStatus,
+        taxStatus: d.dvlaTaxStatus,
+      };
+    }
+    return null;
+  });
 
   const defaultValues = {
     make: initialData?.make ?? "",
@@ -403,6 +417,7 @@ function VehicleForm({
         form.setValue("year", data.yearOfManufacture, { shouldValidate: true });
       }
       toast.success("Vehicle details fetched");
+      setShowDetails(true);
     } catch {
       toast.error("Failed to fetch vehicle details");
       setDvlaData(null);
@@ -487,7 +502,7 @@ function VehicleForm({
               <FormItem>
                 <FormLabel>Model</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={!!initialData?.id} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -603,19 +618,40 @@ function VehicleForm({
           />
         </div>
 
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={lookupVehicle}
-            disabled={dvlaLoading}
-          >
-            {dvlaLoading ? "Fetching..." : "Fetch Vehicle Details"}
-          </Button>
+        <div className="flex justify-between items-center bg-muted/20 p-2 rounded-lg border border-border/40">
+          <div className="flex gap-2">
+            {!initialData?.id && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={lookupVehicle}
+                disabled={dvlaLoading}
+                className="h-8 text-[11px] font-bold uppercase tracking-wider"
+              >
+                {dvlaLoading ? "Fetching..." : "Fetch Vehicle Details"}
+              </Button>
+            )}
+            
+            {(dvlaData || (initialData as any)?.dvlaFuelType || (initialData as any)?.dvlaTaxStatus) && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDetails(!showDetails)}
+                className="h-8 text-[11px] font-bold uppercase tracking-wider gap-1.5"
+              >
+                {showDetails ? (
+                  <>Hide Details <ChevronUp className="h-3 w-3" /></>
+                ) : (
+                  <>View All Details <ChevronDown className="h-3 w-3" /></>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
 
-        {dvlaData && (
+        {showDetails && dvlaData && (
           <div className="rounded-lg border bg-muted/30 p-3 text-sm">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div>

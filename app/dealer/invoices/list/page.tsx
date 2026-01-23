@@ -28,7 +28,7 @@ const dealerInvoiceColumns: ColumnDef<Invoice>[] = [
   },
   {
     accessorKey: "warrantySale",
-    header: "Policy Number",
+    header: "Warranty Number",
     cell: ({ row }) => {
       const sale = row.original.warrantySale;
       return sale?.policyNumber || "N/A";

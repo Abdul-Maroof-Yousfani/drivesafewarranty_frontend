@@ -186,7 +186,7 @@ export function DocumentsTab({ customerId }: DocumentsTabProps) {
                     id="name" 
                     value={docName} 
                     onChange={(e) => setDocName(e.target.value)} 
-                    placeholder="e.g. ID Proof, Policy Document"
+                    placeholder="e.g. ID Proof, Warranty Document"
                     required
                   />
                 </div>
@@ -358,7 +358,7 @@ export function DocumentsTab({ customerId }: DocumentsTabProps) {
             <FileText className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
             <p className="text-muted-foreground font-medium">No documents yet</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Upload documents like ID proofs, vehicle photos, or policy documents.
+              Upload documents like ID proofs, vehicle photos, or warranty documents.
             </p>
           </div>
         )}

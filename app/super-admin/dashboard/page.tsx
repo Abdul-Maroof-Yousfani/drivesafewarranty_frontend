@@ -53,23 +53,45 @@ const COLORS = [
 
 // Custom Tooltip Component for a refined tech look
 interface CustomTooltipProps {
-  active?: boolean;
-  payload?: any[];
   label?: string;
   prefix?: string;
+  type?: "sales" | "revenue";
 }
 
-const CustomTooltip = ({ active, payload, label, prefix = "" }: CustomTooltipProps) => {
+const CustomTooltip = ({ active, payload, label, prefix = "", type }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
+    const isDealer = payload[0].payload.policies !== undefined;
     return (
-      <div className="bg-white/98 dark:bg-slate-950/98 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg shadow-xl ring-1 ring-black/5 dark:ring-white/5">
+      <div className="bg-white/98 dark:bg-slate-950/98 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg shadow-xl ring-1 ring-black/5 dark:ring-white/5 space-y-1.5">
         <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{label}</p>
-        <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-          {prefix}{payload[0].value.toLocaleString()}
-          <span className="text-[9px] font-medium text-slate-500">
-            {payload[0].name === "sales" ? "Units" : "GBP"}
-          </span>
-        </p>
+        
+        {isDealer ? (
+          <>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[8px] uppercase font-bold text-slate-400">Total Revenue</span>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                £{payload[0].payload.revenue.toLocaleString()}
+              </p>
+            </div>
+            <div className="flex justify-between gap-4 border-t border-slate-100 dark:border-slate-800 pt-1 mt-1">
+              <div>
+                <span className="text-[8px] uppercase font-bold text-slate-400">Policies</span>
+                <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{payload[0].payload.policies}</p>
+              </div>
+              <div>
+                <span className="text-[8px] uppercase font-bold text-amber-500">Pending</span>
+                <p className="text-[11px] font-bold text-amber-600">£{payload[0].payload.pendingRevenue.toLocaleString()}</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            {prefix}{payload[0].value.toLocaleString()}
+            <span className="text-[9px] font-medium text-slate-500">
+              {payload[0].name === "sales" ? "Units" : "GBP"}
+            </span>
+          </p>
+        )}
       </div>
     );
   }
@@ -93,7 +115,7 @@ export default function SuperAdminDashboard() {
       date: string;
     }>;
     topPackages: Array<{ name: string; sales: number }>;
-    topDealers: Array<{ name: string; revenue: number }>;
+    topDealers: Array<{ name: string; revenue: number; policies: number; pendingRevenue: number }>;
   }>({
     totalDealers: 0,
     totalCustomers: 0,
@@ -146,7 +168,7 @@ export default function SuperAdminDashboard() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: any = {
     hidden: { opacity: 0, y: 10 },
     show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
   };
@@ -183,11 +205,11 @@ export default function SuperAdminDashboard() {
           { label: "Customers", value: stats.totalCustomers, icon: Users, color: "emerald", sub: "Active" },
           { label: "Policies", value: stats.totalWarranties, icon: ShieldCheck, color: "violet", sub: "Stored" },
           { label: "Gross Sales", value: stats.totalEarnings, icon: DollarSign, color: "amber", sub: "All-time", prefix: "£" },
-          { label: "Pending", value: stats.pendingInvoicesAmount, icon: FileText, color: "orange", sub: "Invoices", prefix: "£" },
+          { label: "Pending", value: stats.pendingInvoicesAmount, icon: FileText, color: "orange", sub: `${stats.pendingInvoices} Pending Invoice${stats.pendingInvoices !== 1 ? 's' : ''}`, prefix: "£" },
           { label: "Warranty Packages", value: stats.totalPackages, icon: Package, color: "indigo", sub: "Packages" },
         ].map((stat) => (
           <motion.div key={stat.label} variants={itemVariants}>
-            <Card className="relative overflow-hidden border-none bg-white dark:bg-slate-900/50 shadow-sm hover:shadow-md transition-all duration-300 rounded-xl group p-0">
+            <Card className="relative overflow-hidden border-none bg-white dark:bg-card/50 shadow-sm hover:shadow-md transition-all duration-300 rounded-xl group p-0">
               <CardHeader className="p-3 pb-0 space-y-0 flex flex-row items-center justify-between">
                 <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-slate-500 transition-colors">{stat.label}</span>
                 <stat.icon className={`h-3 w-3 text-${stat.color}-500/50 group-hover:text-${stat.color}-500 transition-all`} />
@@ -210,7 +232,7 @@ export default function SuperAdminDashboard() {
       <div className="grid gap-4 lg:grid-cols-5">
         {/* Compact Donut */}
         <motion.div className="lg:col-span-2" variants={itemVariants}>
-          <Card className="h-full border border-slate-200/60 dark:border-slate-800/60 bg-white/50 dark:bg-slate-900/30 rounded-2xl overflow-hidden backdrop-blur-sm">
+          <Card className="h-full border border-slate-200/60 dark:border-border bg-white/50 dark:bg-card/40 rounded-2xl overflow-hidden backdrop-blur-sm">
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
               <div>
                 <CardTitle className="text-sm font-bold tracking-tight">Market Distribution</CardTitle>
@@ -249,7 +271,7 @@ export default function SuperAdminDashboard() {
               {/* Mini Legend Row */}
               <div className="flex flex-wrap gap-2 mt-2">
                  {stats.topPackages.slice(0, 3).map((pkg, i) => (
-                   <div key={pkg.name} className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex-1 min-w-[30%]">
+                   <div key={pkg.name} className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-muted/30 border border-slate-100 dark:border-border flex-1 min-w-[30%]">
                       <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                       <span className="text-[11px] font-bold truncate text-slate-500">{pkg.name}</span>
                       <span className="text-[11px] font-bold ml-auto text-slate-700 dark:text-slate-300">{pkg.sales}</span>
@@ -262,7 +284,7 @@ export default function SuperAdminDashboard() {
 
         {/* Compact Revenue Bar */}
         <motion.div className="lg:col-span-3" variants={itemVariants}>
-          <Card className="h-full border border-slate-200/60 dark:border-slate-800/60 bg-white/50 dark:bg-slate-900/30 rounded-2xl overflow-hidden backdrop-blur-sm">
+          <Card className="h-full border border-slate-200/60 dark:border-border bg-white/50 dark:bg-card/40 rounded-2xl overflow-hidden backdrop-blur-sm">
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
               <div>
                 <CardTitle className="text-sm font-bold tracking-tight">Dealers Performance</CardTitle>
@@ -297,7 +319,7 @@ export default function SuperAdminDashboard() {
                       tickFormatter={(val) => `£${val > 999 ? (val/1000).toFixed(1) + 'k' : val}`}
                     />
                     <Tooltip 
-                      content={<CustomTooltip prefix="£" />}
+                      content={<CustomTooltip />}
                       cursor={{ fill: 'rgba(0,0,0,0.02)', radius: 4 }}
                     />
                     <Bar 
@@ -322,8 +344,8 @@ export default function SuperAdminDashboard() {
       <div className="grid gap-2 lg:grid-cols-2">
         {/* Recent Activity List */}
         <motion.div variants={itemVariants}>
-          <Card className="border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 rounded-2xl shadow-sm h-full flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-slate-800/80">
+          <Card className="border border-slate-200/60 dark:border-border bg-white dark:bg-card rounded-2xl shadow-sm h-full flex flex-col overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between p-4 bg-slate-50/50 dark:bg-muted/50 border-b dark:border-border/60">
               <div>
                 <CardTitle className="text-sm font-bold tracking-tight">Recent Transactions</CardTitle>
                 <CardDescription className="text-[9px] uppercase font-bold text-slate-400">Live sales feed</CardDescription>
@@ -336,9 +358,9 @@ export default function SuperAdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
                 {stats.recentCustomers.length > 0 ? (
                   stats.recentCustomers.slice(0, 6).map((customer) => (
-                    <div key={customer.id} className="flex items-center justify-between p-2 rounded-xl border border-slate-50 dark:border-slate-800/40 bg-slate-50/30 dark:bg-slate-800/20 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group">
+                    <div key={customer.id} className="flex items-center justify-between p-2 rounded-xl border border-slate-50 dark:border-border/40 bg-white/40 dark:bg-muted/30 hover:bg-white/60 dark:hover:bg-muted/50 transition-all group">
                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-lg bg-white dark:bg-slate-900 shadow-lg flex items-center justify-center text-primary border border-slate-10 dark:border-slate-800 group-hover:scale-110 transition-transform">
+                          <div className="h-9 w-9 rounded-lg bg-white dark:bg-card shadow-lg flex items-center justify-center text-primary border border-slate-10 dark:border-border group-hover:scale-110 transition-transform">
                              <Users className="h-4 w-4" />
                           </div>
                           <div>
@@ -364,8 +386,8 @@ export default function SuperAdminDashboard() {
 
         {/* Refined Quick Actions */}
         <motion.div variants={itemVariants}>
-          <Card className="border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 rounded-xl shadow-sm h-full flex flex-col overflow-hidden">
-            <CardHeader className="p-2 bg-slate-50/50 dark:bg-slate-950/20 border-b dark:border-slate-800/60">
+          <Card className="border border-slate-200/60 dark:border-border bg-white dark:bg-card rounded-xl shadow-sm h-full flex flex-col overflow-hidden">
+            <CardHeader className="p-2 bg-slate-50/50 dark:bg-muted/50 border-b dark:border-border/60">
               <div className="flex items-center gap-1">
                 <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Zap className="h-4 w-4 text-primary" />
@@ -387,11 +409,11 @@ export default function SuperAdminDashboard() {
                   <Button 
                     key={action.label} 
                     variant="outline" 
-                    className="w-full justify-start h-auto py-2 px-3 rounded-xl border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 group relative overflow-hidden transition-all duration-300" 
+                    className="w-full justify-start h-auto py-2 px-3 rounded-xl border-slate-100 dark:border-border bg-white dark:bg-muted/30 hover:bg-slate-50 dark:hover:bg-muted/50 group relative overflow-hidden transition-all duration-300" 
                     asChild
                   >
                     <Link href={action.href} className="flex flex-col items-start gap-2 !space-x-0">
-                      <div className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 group-hover:bg-white dark:group-hover:bg-slate-700 flex items-center justify-center transition-all group-hover:shadow-sm">
+                      <div className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-card group-hover:bg-white dark:group-hover:bg-muted flex items-center justify-center transition-all group-hover:shadow-sm">
                         <action.icon className={`h-4 w-4 text-${action.color}-500/80 group-hover:text-${action.color}-500 transition-colors`} />
                       </div>
                       <div className="flex items-center justify-between w-full">

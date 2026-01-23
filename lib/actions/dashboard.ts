@@ -24,7 +24,7 @@ export async function getSuperAdminDashboardStatsAction(): Promise<{
       date: string;
     }>;
     topPackages: Array<{ name: string; sales: number }>;
-    topDealers: Array<{ name: string; revenue: number }>;
+    topDealers: Array<{ name: string; revenue: number; policies?: number; pendingRevenue?: number }>;
   };
   message?: string;
 }> {

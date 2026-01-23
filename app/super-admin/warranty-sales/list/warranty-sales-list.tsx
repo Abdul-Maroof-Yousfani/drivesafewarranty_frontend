@@ -42,7 +42,7 @@ export function WarrantySalesList({ initialSales }: { initialSales: WarrantySale
         toggleAction={handleToggle}
         onMultiDelete={handleMultiDelete}
         searchFields={[
-          { key: "policyNumber", label: "Policy ID" },
+          { key: "policyNumber", label: "Warranty Number" },
           { key: "warrantyPackage.name", label: "Package" },
           { key: "customer.firstName", label: "First Name" },
           { key: "customer.lastName", label: "Last Name" },

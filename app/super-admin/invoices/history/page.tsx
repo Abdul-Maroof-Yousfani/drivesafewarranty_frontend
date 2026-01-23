@@ -79,7 +79,7 @@ export default function InvoiceHistoryPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Policy #</TableHead>
+                      <TableHead>Invoice #</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Dealer (Seller)</TableHead>
                       <TableHead>Customer (Buyer)</TableHead>

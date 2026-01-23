@@ -282,7 +282,7 @@ export function SuccessModal({
         {/* Content */}
         <div className="p-6 space-y-6">
           <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-1">Policy Number</p>
+            <p className="text-sm text-muted-foreground mb-1">Warranty Number</p>
             <p className="text-xl font-bold font-mono">{policyNumber}</p>
           </div>
 
