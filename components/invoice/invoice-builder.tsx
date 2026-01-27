@@ -32,8 +32,10 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Palette, Layout, FileText, Globe } from "lucide-react";
+import { Loader2, Palette, Layout, FileText, Globe, Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { extractDominantColor } from "@/lib/utils/extract-color";
+import { ColorPicker } from "@/components/ui/color-picker";
 
 // Schema for invoice settings
 const invoiceSettingsSchema = z.object({
@@ -180,6 +182,7 @@ export function InvoiceBuilder() {
   const [loading, setLoading] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [editingLayout, setEditingLayout] = useState(false);
+  const [extractingColors, setExtractingColors] = useState(false);
 
   const form = useForm<InvoiceSettingsFormValues>({
     resolver: zodResolver(invoiceSettingsSchema) as any,
@@ -561,7 +564,7 @@ export function InvoiceBuilder() {
                                 <Input
                                   type="file"
                                   accept="image/*"
-                                  onChange={(e) => {
+                                  onChange={async (e) => {
                                     const file = e.target.files?.[0];
                                     if (!file) return;
 
@@ -573,16 +576,32 @@ export function InvoiceBuilder() {
                                     // Update form state so Live Preview (which watches form) sees it
                                     form.setValue("logoUrl", previewUrl);
 
-                                    // Clean up blob URL on unmount or change if needed,
-                                    // but for now this is the simplest fix.
+                                    // Extract dominant colors from the logo
+                                    setExtractingColors(true);
+                                    try {
+                                      const colors = await extractDominantColor(file);
+                                      form.setValue("primaryColor", colors.primary, { shouldValidate: true });
+                                      form.setValue("accentColor", colors.accent, { shouldValidate: true });
+                                      toast.success("Colors extracted from logo!", {
+                                        description: `Primary: ${colors.primary}, Accent: ${colors.accent}`,
+                                      });
+                                    } catch (error) {
+                                      console.error("Failed to extract colors:", error);
+                                    } finally {
+                                      setExtractingColors(false);
+                                    }
                                   }}
                                 />
                               </div>
                             </div>
                           </FormControl>
-                          <FormDescription>
-                            Upload a logo image (PNG, JPG). Upload happens when
-                            saving.
+                          <FormDescription className="flex items-center gap-1.5">
+                            <Sparkles className="h-3 w-3 text-amber-500" />
+                            {extractingColors ? (
+                              <span className="text-amber-600 animate-pulse">Extracting colors from logo...</span>
+                            ) : (
+                              <span>Upload a logo and colors will be auto-extracted to match your brand.</span>
+                            )}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -694,18 +713,12 @@ export function InvoiceBuilder() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Primary Color</FormLabel>
-                            <div className="flex gap-2">
-                              <div className="w-10 h-10 rounded border overflow-hidden">
-                                <input
-                                  type="color"
-                                  className="w-14 h-14 -m-2 cursor-pointer p-0 border-0"
-                                  {...field}
-                                />
-                              </div>
-                              <FormControl>
-                                <Input {...field} placeholder="#000000" />
-                              </FormControl>
-                            </div>
+                            <FormControl>
+                              <ColorPicker
+                                value={field.value}
+                                onChange={field.onChange}
+                              />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -716,18 +729,12 @@ export function InvoiceBuilder() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Accent Color</FormLabel>
-                            <div className="flex gap-2">
-                              <div className="w-10 h-10 rounded border overflow-hidden">
-                                <input
-                                  type="color"
-                                  className="w-14 h-14 -m-2 cursor-pointer p-0 border-0"
-                                  {...field}
-                                />
-                              </div>
-                              <FormControl>
-                                <Input {...field} placeholder="#e5e7eb" />
-                              </FormControl>
-                            </div>
+                            <FormControl>
+                              <ColorPicker
+                                value={field.value}
+                                onChange={field.onChange}
+                              />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}

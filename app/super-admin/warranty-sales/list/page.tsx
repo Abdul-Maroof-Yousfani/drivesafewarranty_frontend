@@ -1,5 +1,5 @@
 import { getWarrantySalesAction } from "@/lib/actions/warranty-sales";
-import { WarrantySalesList } from "./warranty-sales-list";
+import { WarrantySalesSharedList } from "@/components/dashboard/warranty-sales/warranty-sales-shared-list";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
@@ -22,8 +22,9 @@ export default async function WarrantySalesListPage() {
         </div>
       )}
       <Suspense fallback={<div>Loading...</div>}>
-        <WarrantySalesList initialSales={data} />
+        <WarrantySalesSharedList role="admin" initialSales={data} />
       </Suspense>
     </div>
   );
 }
+

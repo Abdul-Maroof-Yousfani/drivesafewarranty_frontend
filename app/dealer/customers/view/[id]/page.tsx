@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
+
 import { getDealerCustomerByIdAction } from "@/lib/actions/dealer-customer";
 import { ListError } from "@/components/dashboard/list-error";
-import { CustomerViewDealer } from "./customer-view";
+import { CustomerSharedView } from "@/components/dashboard/customers/customer-shared-view";
+
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +32,11 @@ export default async function DealerCustomerViewPage({
     if (!result.data) {
       notFound();
     }
+
     console.log("DealerCustomerViewPage data:", JSON.stringify(result.data, null, 2));
-    return <CustomerViewDealer customer={result.data} />;
+    return <CustomerSharedView customer={result.data} role="dealer" />;
   } catch (error) {
+
     console.error("Error in DealerCustomerViewPage:", error);
     return (
       <ListError

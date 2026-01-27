@@ -1,7 +1,9 @@
 import { getCustomerById } from "@/lib/actions/customer";
+
 import { notFound } from "next/navigation";
-import { CustomerView } from "./customer-view";
+import { CustomerSharedView } from "@/components/dashboard/customers/customer-shared-view";
 import { ListError } from "@/components/dashboard/list-error";
+
 
 export const dynamic = "force-dynamic";
 
@@ -34,17 +36,19 @@ export default async function CustomerViewPage({
       );
     }
 
+
     if (!result.data) {
       notFound();
     }
 
     console.log("CustomerViewPage data:", JSON.stringify(result.data, null, 2));
-    return <CustomerView customer={result.data} />;
+    return <CustomerSharedView customer={result.data} role="admin" />;
   } catch (error) {
     console.error("Error in CustomerViewPage:", error);
     if (error instanceof Error && error.message.includes("not found")) {
       notFound();
     }
+
     return (
       <ListError
         title="Failed to load customer"

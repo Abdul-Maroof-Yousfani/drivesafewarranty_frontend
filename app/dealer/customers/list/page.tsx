@@ -1,5 +1,5 @@
 import { getDealerCustomersAction } from "@/lib/actions/dealer-customer";
-import { CustomerList } from "./customer-list";
+import { CustomerSharedList } from "@/components/dashboard/customers/customer-shared-list";
 import { ListError } from "@/components/dashboard/list-error";
 
 export const dynamic = "force-dynamic";
@@ -23,9 +23,10 @@ export default async function DealerCustomersListPage({
     }
 
     return (
-      <CustomerList
+      <CustomerSharedList
         initialCustomers={result.data || []}
         newItemId={newItemId}
+        role="dealer"
       />
     );
   } catch (error) {

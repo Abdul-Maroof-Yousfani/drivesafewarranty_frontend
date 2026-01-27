@@ -1,5 +1,5 @@
 import { getCustomers } from "@/lib/actions/customer";
-import { CustomerList } from "./customer-list";
+import { CustomerSharedList } from "@/components/dashboard/customers/customer-shared-list";
 import { ListError } from "@/components/dashboard/list-error";
 
 export const dynamic = "force-dynamic";
@@ -23,9 +23,10 @@ export default async function CustomersListPage({
     }
 
     return (
-      <CustomerList
+      <CustomerSharedList
         initialCustomers={result.data || []}
         newItemId={newItemId}
+        role="admin"
       />
     );
   } catch (error) {
