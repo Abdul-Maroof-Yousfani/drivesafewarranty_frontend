@@ -17,12 +17,14 @@ import { Search, Sparkles, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 import { HeaderMasterMenu } from "@/components/dashboard/header-master-menu";
+import { useRouter } from "next/navigation";
 
 export default function DealerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter()
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [erpMode, setErpMode] = useState(false);
 
@@ -36,25 +38,46 @@ export default function DealerLayout({
     }
   }, []);
 
-  const toggleErpMode = () => {
+    const toggleErpMode = async () => {
     const next = !erpMode;
-    setErpMode(next);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("erp-mode", next ? "on" : "off");
-    }
-    if (typeof document !== "undefined") {
-      document.documentElement.dataset.erpMode = next ? "on" : "off";
-    }
-
-    // Dealer: toggle between dealer dashboard (warranty portal) and /dashboard (HR/ERP)
+    
     if (next) {
-      // ERP mode ON -> HR dashboard
-      window.location.href = "/dashboard";
+      // Switching to ERP Mode - fetch SSO URL and redirect
+      try {
+        // Dynamic import to avoid server-action issues if any
+        const { getHrmSsoUrlAction } = await import("@/lib/actions/integration");
+        const res = await getHrmSsoUrlAction();
+        
+        if (res.status && res.url) {
+            window.location.href = res.url;
+            // setErpMode(next);
+            if (typeof window !== "undefined") {
+                 localStorage.setItem("erp-mode", "on");
+            }
+            if (typeof document !== "undefined") {
+                 document.documentElement.dataset.erpMode = "on";
+            }
+        } else {
+            console.error("Failed to get SSO URL:", res.message);
+            alert("Failed to switch to HR Portal: " + (res.message || "Unknown error"));
+        }
+      } catch (e) {
+         console.error("Error switching to HR portal:", e);
+         alert("Error switching to HR Portal");
+      }
     } else {
-      // Warranty portal -> dealer dashboard
-      window.location.href = "/dealer/dashboard";
+      // Switching to Warranty Portal Mode - go to warranty dashboard
+      setErpMode(next);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("erp-mode", "off");
+      }
+      if (typeof document !== "undefined") {
+        document.documentElement.dataset.erpMode = "off";
+      }
+      router.push("/super-admin/dashboard");
     }
   };
+
 
   return (
     <SidebarProvider>

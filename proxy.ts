@@ -30,34 +30,43 @@ export default function middleware(request: NextRequest): NextResponse {
   const host = request.headers.get("host") || "";
   const hostname = host.split(":")[0]; // Remove port
   
-  // Detect environment and define base domain
-  const isProd = hostname.endsWith("inplsoftwares.com") || (!hostname.includes("localhost") && !hostname.includes("127.0.0.1"));
-  const baseDomain = isProd ? "drivesafewarranty.inplsoftwares.com" : "localhost";
+  // Get base domain from environment variable (fallback to localhost for dev)
+  // Example values:
+  // - Development: "localhost"
+  // - Production: "drivesafe.com" or "yourdomain.com"
+  const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || "localhost";
+  
+  // Detect environment based on base domain
+  const isProd = baseDomain !== "localhost" && baseDomain !== "127.0.0.1";
   
   // Protocol and Port for redirects
   const protocol = isProd ? "https:" : request.nextUrl.protocol;
   const port = (request.nextUrl.port && !isProd) ? `:${request.nextUrl.port}` : "";
 
-  // 1. Ensure we are on the correct base domain in production (e.g. prevent hits on raw inplsoftwares.com)
-  if (isProd && hostname !== baseDomain && !hostname.endsWith(`.${baseDomain}`)) {
-      console.log(`[Middleware] Redirecting unknown domain ${hostname} to ${baseDomain}`);
-      return NextResponse.redirect(`${protocol}//${baseDomain}${port}${pathname}`);
+  // 1. Ensure we are on the correct base domain or valid subdomain
+  const isMainDomain = hostname === baseDomain || hostname === `portal.${baseDomain}`;
+  const isValidSubdomain = hostname.endsWith(`.${baseDomain}`);
+  
+  if (!isMainDomain && !isValidSubdomain && baseDomain !== "localhost") {
+      console.log(`[Middleware] Redirecting unknown domain ${hostname} to portal.${baseDomain}`);
+      return NextResponse.redirect(`${protocol}//portal.${baseDomain}${port}${pathname}`);
   }
 
   // 2. Extract Subdomain
   let subdomain = "";
-  if (hostname !== baseDomain && hostname.endsWith(`.${baseDomain}`)) {
+  if (hostname !== baseDomain && isValidSubdomain) {
     subdomain = hostname.replace(`.${baseDomain}`, "");
   }
   
   if (subdomain) {
-    const allowedSubdomains = ["dealer", "customer"];
+    const allowedSubdomains = ["portal", "dealer", "customer"];
     
     // Block any subdomain that's not in the allowed list
     if (!allowedSubdomains.includes(subdomain)) {
       console.log(`[Middleware] Blocked invalid subdomain: ${subdomain}`);
-      // Redirect to main domain login
-      return NextResponse.redirect(`${protocol}//${baseDomain}${port}/login`);
+      // Redirect to main portal login
+      const mainDomain = isProd ? `portal.${baseDomain}` : baseDomain;
+      return NextResponse.redirect(`${protocol}//${mainDomain}${port}/login`);
     }
 
     // Block public /get-warranty page on subdomains
@@ -99,7 +108,8 @@ export default function middleware(request: NextRequest): NextResponse {
 
     // --- SUBDOMAIN ENFORCEMENT ---
     let portalType = "admin";
-    if (subdomain === "dealer") portalType = "dealer";
+    if (subdomain === "portal" || !subdomain) portalType = "admin";
+    else if (subdomain === "dealer") portalType = "dealer";
     else if (subdomain === "customer") portalType = "customer";
 
     const isSuperAdminRoute =

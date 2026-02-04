@@ -2,7 +2,7 @@ const getLocalApiBase = () => {
   if (typeof window !== "undefined") {
      return `http://${window.location.hostname}:3004/api`;
   }
-  return "http://localhost:3004/api";
+  return "http://127.0.0.1:3004/api";
 };
 
 export const API_BASE = (

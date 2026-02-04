@@ -40,22 +40,42 @@ export default function SuperAdminLayout({
     }
   }, []);
 
-  const toggleErpMode = () => {
+  const toggleErpMode = async () => {
     const next = !erpMode;
-    setErpMode(next);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("erp-mode", next ? "on" : "off");
-    }
-    if (typeof document !== "undefined") {
-      document.documentElement.dataset.erpMode = next ? "on" : "off";
-    }
-
-    // Navigate to appropriate dashboard based on mode
+    
     if (next) {
-      // Switching to ERP Mode - go to ERP dashboard
-      router.push("/dashboard");
+      // Switching to ERP Mode - fetch SSO URL and redirect
+      try {
+        // Dynamic import to avoid server-action issues if any
+        const { getHrmSsoUrlAction } = await import("@/lib/actions/integration");
+        const res = await getHrmSsoUrlAction();
+        
+        if (res.status && res.url) {
+            window.location.href = res.url;
+            // setErpMode(next);
+            if (typeof window !== "undefined") {
+                 localStorage.setItem("erp-mode", "on");
+            }
+            if (typeof document !== "undefined") {
+                 document.documentElement.dataset.erpMode = "on";
+            }
+        } else {
+            console.error("Failed to get SSO URL:", res.message);
+            alert("Failed to switch to HR Portal: " + (res.message || "Unknown error"));
+        }
+      } catch (e) {
+         console.error("Error switching to HR portal:", e);
+         alert("Error switching to HR Portal");
+      }
     } else {
       // Switching to Warranty Portal Mode - go to warranty dashboard
+      setErpMode(next);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("erp-mode", "off");
+      }
+      if (typeof document !== "undefined") {
+        document.documentElement.dataset.erpMode = "off";
+      }
       router.push("/super-admin/dashboard");
     }
   };
