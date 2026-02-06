@@ -626,7 +626,7 @@ export function DirectPurchaseForm({
 
     setDvlaLoading(true);
     try {
-      const res = await fetch("/api/vehicle-enquiry", {
+      const res = await fetch("/internal-api/vehicle-enquiry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

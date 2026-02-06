@@ -228,7 +228,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
 
     setDvlaLoadingIndex(index);
     try {
-      const res = await fetch("/api/vehicle-enquiry", {
+      const res = await fetch("/internal-api/vehicle-enquiry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ registrationNumber: registrationNumber.toUpperCase() }),
@@ -629,7 +629,7 @@ function VehicleForm({ customerId, initialData, onSuccess, onCancel }: VehicleFo
     
         setDvlaLoading(true);
         try {
-          const res = await fetch("/api/vehicle-enquiry", {
+          const res = await fetch("/internal-api/vehicle-enquiry", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ registrationNumber: registrationNumber.toUpperCase() }),
