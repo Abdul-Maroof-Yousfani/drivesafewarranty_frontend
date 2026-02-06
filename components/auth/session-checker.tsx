@@ -21,7 +21,7 @@ export function SessionChecker() {
 
   const performCheck = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/check-session");
+      const res = await fetch("/internal-api/auth/check-session");
 
       if (res.status === 401) {
         setSessionExpired(true);
