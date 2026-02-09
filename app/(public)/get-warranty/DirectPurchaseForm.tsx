@@ -461,7 +461,7 @@ export function DirectPurchaseForm({
     registrationNumber: "",
     vin: "",
     make: "",
-    year: new Date().getFullYear(),
+    year: 2024, // Use a static year for initial hydration, will be updated in useEffect if needed or by user
     mileage: 0,
     transmission: undefined,
   });
@@ -738,7 +738,7 @@ export function DirectPurchaseForm({
 
   return (
     <>
-      <Card className="max-w-6xl mx-auto bg-white shadow-lg">
+      <Card className="max-w-6xl mx-auto bg-white shadow-xl border-t-4 border-t-[#00C853]">
         <CardContent className="pt-8 px-8 pb-8">
           <StepIndicator
             steps={STEPS}
@@ -824,7 +824,7 @@ export function DirectPurchaseForm({
                             value={dvlaData.make || "-"}
                             readOnly
                             disabled
-                            className="bg-gray-100 cursor-not-allowed"
+                            className="bg-muted/50 cursor-not-allowed"
                           />
                         </div>
                         <div className="space-y-2">
@@ -886,7 +886,7 @@ export function DirectPurchaseForm({
                                   {...field}
                                   readOnly
                                   disabled
-                                  className="bg-gray-100 cursor-not-allowed"
+                                  className="bg-muted/50 cursor-not-allowed"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -910,7 +910,7 @@ export function DirectPurchaseForm({
                                   value={field.value}
                                   readOnly
                                   disabled
-                                  className="bg-gray-100 cursor-not-allowed"
+                                  className="bg-muted/50 cursor-not-allowed"
                                 />
                               </FormControl>
                               <FormMessage />

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Public routes that don't require authentication
-const publicRoutes = ["/login"];
+const publicRoutes = ["/login", "/get-warranty"];
 
 // Routes that require authentication (any role)
 const protectedRoutes = ["/super-admin", "/dealer", "/customer", "/dashboard"];
@@ -69,8 +69,8 @@ export default function middleware(request: NextRequest): NextResponse {
       return NextResponse.redirect(`${protocol}//${mainDomain}${port}/login`);
     }
 
-    // Block public /get-warranty page on subdomains
-    if (pathname.startsWith("/get-warranty")) {
+    // Block public /get-warranty page on subdomains OTHER than 'portal'
+    if (pathname.startsWith("/get-warranty") && subdomain !== "portal") {
        console.log(`[Middleware] Blocked /get-warranty on subdomain: ${subdomain}`);
        return NextResponse.redirect(new URL("/login", request.url));
     }

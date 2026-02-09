@@ -75,27 +75,21 @@ export function HeaderUserMenu() {
               Change Password
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
+          {/* <DropdownMenuItem asChild>
             <Link href="/dashboard/settings/sessions">
               <History className="mr-2 h-4 w-4" />
               Active Sessions
             </Link>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenuGroup>
         {isAdmin() && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/admin/activity-logs">
+                <Link href="/super-admin/activity-logs">
                   <Shield className="mr-2 h-4 w-4" />
                   Activity Logs
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/admin/users">
-                  <Settings className="mr-2 h-4 w-4" />
-                  User Management
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

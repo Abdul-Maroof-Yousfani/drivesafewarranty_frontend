@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronRight, Building2, Shield, User } from "lucide-react";
-import { MenuItem, menuData, warrantyPortalMenuData } from "./sidebar-menu-data";
+import { MenuItem, warrantyPortalMenuData } from "./sidebar-menu-data";
 import { customerMenuData } from "./customer-menu-data";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -132,10 +132,9 @@ function MenuItemComponent({ item, pathname }: { item: MenuItem; pathname: strin
 }
 
 interface AppSidebarProps {
-  erpMode?: boolean;
 }
 
-export function AppSidebar({ erpMode = false }: AppSidebarProps) {
+export function AppSidebar({ }: AppSidebarProps) {
   const pathname = usePathname();
   const { isAdmin, user } = useAuth();
   
@@ -146,7 +145,7 @@ export function AppSidebar({ erpMode = false }: AppSidebarProps) {
   let menuItems: MenuItem[] = [];
   
   if (isAdmin()) {
-    menuItems = erpMode ? menuData : warrantyPortalMenuData;
+    menuItems = warrantyPortalMenuData;
   } else if (isDealer) {
     menuItems = transformMenuForDealer(
       warrantyPortalMenuData.filter((item) => item.title !== "Dealer Management")
@@ -159,7 +158,7 @@ export function AppSidebar({ erpMode = false }: AppSidebarProps) {
   const portalName = isCustomer 
     ? (user?.firstName ? `${user.firstName} Portal` : 'Customer Portal')
     : isAdmin() 
-      ? (erpMode ? 'ERP Portal' : 'Drive Safe Portal')
+      ? 'Drive Safe Portal'
       : isDealer 
         ? (user?.details?.businessNameLegal || user?.details?.businessNameTrading || 'Dealer Portal')
         : 'Portal';
@@ -189,7 +188,7 @@ export function AppSidebar({ erpMode = false }: AppSidebarProps) {
           <SidebarGroup>
             {!isCustomer && (
               <SidebarGroupLabel>
-                {erpMode ? "HRM Portal Navigation" : "Warranty Portal Navigation"}
+                Portal Navigation
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>

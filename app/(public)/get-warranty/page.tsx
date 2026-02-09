@@ -3,7 +3,7 @@ import { DirectPurchaseForm } from "./DirectPurchaseForm";
 
 export default function GetWarrantyPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
      
         <div className="container mx-auto flex items-center justify-center">
@@ -18,7 +18,7 @@ export default function GetWarrantyPage() {
       
 
       {/* Hero Section */}
-      <div className="px-4">
+      <div className="px-4 flex-1">
         <div className="text-center mb-3">
           <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-4">
             Get Your Vehicle{" "}
@@ -41,9 +41,9 @@ export default function GetWarrantyPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t my-8 pt-2 bottom-0">
+      <footer className="border-t mt-auto py-6 bg-white">
         <div className="container mx-auto text-center text-gray-500 text-sm">
-          <p>© {new Date().getFullYear()} DriveSafe. All rights reserved.</p>
+          <p>© <span suppressHydrationWarning>{new Date().getFullYear()}</span> DriveSafe. All rights reserved.</p>
           <div className="flex justify-center gap-6 mt-2">
             <a href="#" className="hover:text-gray-700 transition-colors">
               Terms of Service

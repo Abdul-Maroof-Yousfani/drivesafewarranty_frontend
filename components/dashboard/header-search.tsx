@@ -10,7 +10,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { menuData, masterMenuData, flattenMenu } from "./sidebar-menu-data";
+import { menuData, flattenMenu } from "./sidebar-menu-data";
 
 interface HeaderSearchProps {
   onNavigate?: () => void;
@@ -21,7 +21,6 @@ export function HeaderSearch({ onNavigate }: HeaderSearchProps) {
   const [search, setSearch] = useState("");
   const router = useRouter();
   const flatMenu = useMemo(() => flattenMenu(menuData), []);
-  const flatMasterMenu = useMemo(() => flattenMenu(masterMenuData, "Master Menu"), []);
 
   const filteredNav = useMemo(() => {
     if (!search) return flatMenu.slice(0, 6);
@@ -32,14 +31,6 @@ export function HeaderSearch({ onNavigate }: HeaderSearchProps) {
     );
   }, [search, flatMenu]);
 
-  const filteredMaster = useMemo(() => {
-    if (!search) return flatMasterMenu.slice(0, 4);
-    return flatMasterMenu.filter(
-      (item) =>
-        item.title.toLowerCase().includes(search.toLowerCase()) ||
-        item.path.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [search, flatMasterMenu]);
 
   return (
     <div className="relative w-full max-w-xs lg:max-w-sm">
@@ -63,27 +54,6 @@ export function HeaderSearch({ onNavigate }: HeaderSearchProps) {
           {filteredNav.length > 0 && (
             <CommandGroup heading="Navigation">
               {filteredNav.map((item) => (
-                <CommandItem
-                  key={item.href}
-                  value={item.path}
-                  onSelect={() => {
-                    router.push(item.href);
-                    setOpen(false);
-                    setSearch("");
-                    onNavigate?.();
-                  }}
-                >
-                  <div className="flex flex-col">
-                    <span>{item.title}</span>
-                    <span className="text-xs text-muted-foreground">{item.path}</span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-          {filteredMaster.length > 0 && (
-            <CommandGroup heading="Master Menu">
-              {filteredMaster.map((item) => (
                 <CommandItem
                   key={item.href}
                   value={item.path}

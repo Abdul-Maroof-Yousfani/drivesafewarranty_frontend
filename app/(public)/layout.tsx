@@ -3,5 +3,6 @@ export default function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  // Force light mode for public pages (they use hardcoded light colors)
+  return <div >{children}</div>;
 }

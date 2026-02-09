@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Search, Sparkles, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
-import { HeaderMasterMenu } from "@/components/dashboard/header-master-menu";
 import { useRouter } from "next/navigation";
 
 export default function DealerLayout({
@@ -26,65 +25,31 @@ export default function DealerLayout({
 }) {
   const router = useRouter()
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [erpMode, setErpMode] = useState(false);
-
-  useEffect(() => {
-    const saved =
-      typeof window !== "undefined" ? localStorage.getItem("erp-mode") : null;
-    const isOn = saved === "on";
-    setErpMode(isOn);
-    if (typeof document !== "undefined") {
-      document.documentElement.dataset.erpMode = isOn ? "on" : "off";
-    }
-  }, []);
-
-    const toggleErpMode = async () => {
-    const next = !erpMode;
-    
-    if (next) {
-      // Switching to ERP Mode - fetch SSO URL and redirect
-      try {
-        // Dynamic import to avoid server-action issues if any
-        const { getHrmSsoUrlAction } = await import("@/lib/actions/integration");
-        const res = await getHrmSsoUrlAction();
-        
-        if (res.status && res.url) {
-            window.location.href = res.url;
-            // setErpMode(next);
-            if (typeof window !== "undefined") {
-                 localStorage.setItem("erp-mode", "on");
-            }
-            if (typeof document !== "undefined") {
-                 document.documentElement.dataset.erpMode = "on";
-            }
-        } else {
-            console.error("Failed to get SSO URL:", res.message);
-            alert("Failed to switch to HR Portal: " + (res.message || "Unknown error"));
-        }
-      } catch (e) {
-         console.error("Error switching to HR portal:", e);
-         alert("Error switching to HR Portal");
+  const switchToHrm = async () => {
+    // Switching to ERP Mode - fetch SSO URL and redirect
+    try {
+      const { getHrmSsoUrlAction } = await import("@/lib/actions/integration");
+      const res = await getHrmSsoUrlAction();
+      
+      if (res.status && res.url) {
+          window.location.href = res.url;
+      } else {
+          console.error("Failed to get SSO URL:", res.message);
+          alert("Failed to switch to HR Portal: " + (res.message || "Unknown error"));
       }
-    } else {
-      // Switching to Warranty Portal Mode - go to warranty dashboard
-      setErpMode(next);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("erp-mode", "off");
-      }
-      if (typeof document !== "undefined") {
-        document.documentElement.dataset.erpMode = "off";
-      }
-      router.push("/super-admin/dashboard");
+    } catch (e) {
+       console.error("Error switching to HR portal:", e);
+       alert("Error switching to HR Portal");
     }
   };
+
 
 
   return (
     <SidebarProvider>
       <SessionChecker />
       <PasswordResetPrompt />
-      {/* For dealer, ERP mode controls whether they see ERP (HR) or Warranty menu */}
-      <AppSidebar erpMode={erpMode} />
+      <AppSidebar />
       <SidebarInset>
         <header className="flex h-[3.8rem] items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-6 sticky top-0 z-30 w-full justify-between">
           <div className="flex items-center gap-2">
@@ -105,33 +70,18 @@ export default function DealerLayout({
           </Button>
           <div className="flex-1 sm:flex-none" />
           <div className="flex items-center gap-1 sm:gap-2">
-            <HeaderMasterMenu />
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
             >
               <Button
-                variant={erpMode ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                className={`relative overflow-hidden ${
-                  erpMode ? "animate-pulse" : ""
-                }`}
-                onClick={toggleErpMode}
+                className="relative overflow-hidden"
+                onClick={switchToHrm}
               >
                 <Sparkles className="h-4 w-4 mr-2" />
-                {erpMode ? "Switch to Warranty Portal" : "Switch to HR Portal"}
-                <motion.span
-                  className="absolute inset-0"
-                  initial={false}
-                  animate={
-                    erpMode ? { opacity: [0.2, 0.5, 0.2] } : { opacity: 0 }
-                  }
-                  transition={{ duration: 2, repeat: Infinity }}
-                  style={{
-                    background:
-                      "radial-gradient(120% 120% at 50% 50%, rgba(99,102,241,0.15) 0%, rgba(147,51,234,0.15) 50%, transparent 100%)",
-                  }}
-                />
+                Switch to HR Portal
               </Button>
             </motion.div>
             <ThemeToggle />

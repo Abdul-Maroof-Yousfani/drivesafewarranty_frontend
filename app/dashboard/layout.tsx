@@ -6,7 +6,6 @@ import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { HeaderSearch } from "@/components/dashboard/header-search";
 import { HeaderNotifications } from "@/components/dashboard/header-notifications";
 import { HeaderUserMenu } from "@/components/dashboard/header-user-menu";
-import { HeaderMasterMenu } from "@/components/dashboard/header-master-menu";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { SessionChecker } from "@/components/auth/session-checker";
 import { PasswordResetPrompt } from "@/components/auth/password-reset-prompt";
@@ -24,47 +23,25 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [erpMode, setErpMode] = useState(false);
   const { isAdmin, user } = useAuth();
-
-  useEffect(() => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem("erp-mode") : null;
-    const isOn = saved === "on";
-    setErpMode(isOn);
-    if (typeof document !== "undefined") {
-      document.documentElement.dataset.erpMode = isOn ? "on" : "off";
-    }
-  }, []);
-
-  const toggleErpMode = () => {
-    const next = !erpMode;
-    setErpMode(next);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("erp-mode", next ? "on" : "off");
-    }
-    if (typeof document !== "undefined") {
-      document.documentElement.dataset.erpMode = next ? "on" : "off";
-    }
-
-    // Navigate to appropriate dashboard based on mode
-    if (isSuperAdmin) {
-      if (next) {
-        // Super admin: ERP Mode ON -> ERP dashboard
-        router.push("/dashboard");
+  const switchToHrm = async () => {
+    // Switching to ERP Mode - fetch SSO URL and redirect
+    try {
+      const { getHrmSsoUrlAction } = await import("@/lib/actions/integration");
+      const res = await getHrmSsoUrlAction();
+      
+      if (res.status && res.url) {
+          window.location.href = res.url;
       } else {
-        // Super admin: Warranty portal -> super-admin dashboard
-        router.push("/super-admin/dashboard");
+          console.error("Failed to get SSO URL:", res.message);
+          alert("Failed to switch to HR Portal: " + (res.message || "Unknown error"));
       }
-    } else if (isDealer) {
-      if (next) {
-        // Dealer: ERP Mode ON -> HR/ERP dashboard
-        router.push("/dashboard");
-      } else {
-        // Dealer: Warranty portal -> dealer dashboard
-        router.push("/dealer/dashboard");
-      }
+    } catch (e) {
+       console.error("Error switching to HR portal:", e);
+       alert("Error switching to HR Portal");
     }
   };
+
 
   const isSuperAdmin = isAdmin();
   const isDealer = user?.role === "dealer";
@@ -73,8 +50,7 @@ export default function DashboardLayout({
     <SidebarProvider>
       <SessionChecker />
       <PasswordResetPrompt />
-      {/* For super admin: erpMode controls menu; for dealer: ERP mode ON shows HR/ERP menu */}
-      <AppSidebar erpMode={(isSuperAdmin || isDealer) && erpMode} />
+      <AppSidebar />
       <SidebarInset>
         <header className="flex h-[3.9rem] items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-6 sticky top-0 z-0 w-full justify-between">
           <div className="flex items-center gap-2">
@@ -96,27 +72,16 @@ export default function DashboardLayout({
           </Button>
           <div className="flex-1 sm:flex-none" />
           <div className="flex items-center gap-1 sm:gap-2">
-            <HeaderMasterMenu />
             {(isSuperAdmin || isDealer) && (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Button
-                  variant={erpMode ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
-                  className={`relative overflow-hidden ${erpMode ? "animate-pulse" : ""}`}
-                  onClick={toggleErpMode}
+                  className="relative overflow-hidden"
+                  onClick={switchToHrm}
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
-                  {erpMode ? "Switch to Warranty Portal" : "Switch to HR Portal"}
-                  <motion.span
-                    className="absolute inset-0"
-                    initial={false}
-                    animate={erpMode ? { opacity: [0.2, 0.5, 0.2] } : { opacity: 0 }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    style={{
-                      background:
-                        "radial-gradient(120% 120% at 50% 50%, rgba(99,102,241,0.15) 0%, rgba(147,51,234,0.15) 50%, transparent 100%)",
-                    }}
-                  />
+                  Switch to HR Portal
                 </Button>
               </motion.div>
             )}
