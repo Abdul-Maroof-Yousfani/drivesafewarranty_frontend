@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -30,7 +30,11 @@ import {
   getWarrantyItemsAction,
   createWarrantyItemAction,
 } from "@/lib/actions/warranty-item";
-import { createWarrantyPlanLevelAction } from "@/lib/actions/warranty-plan-level";
+import {
+  getWarrantyPlanLevelByIdAction,
+  updateWarrantyPlanLevelAction,
+} from "@/lib/actions/warranty-plan-level";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const schema = z.object({
   name: z
@@ -43,9 +47,15 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function CreateWarrantyPlanLevelPage() {
+export default function EditWarrantyPlanLevelPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const params = use(paramsPromise);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [warrantyItems, setWarrantyItems] = useState<
     Array<{ id: string; label: string; type: string }>
   >([]);
@@ -63,18 +73,40 @@ export default function CreateWarrantyPlanLevelPage() {
 
   useEffect(() => {
     (async () => {
-      const res = await getWarrantyItemsAction();
-      if (res.status && Array.isArray(res.data)) {
-        setWarrantyItems(
-          res.data.map((x) => ({
-            id: x.id,
-            label: x.label,
-            type: x.type,
-          }))
-        );
+      try {
+        const [itemsRes, levelRes] = await Promise.all([
+          getWarrantyItemsAction(),
+          getWarrantyPlanLevelByIdAction(params.id),
+        ]);
+
+        if (itemsRes.status && Array.isArray(itemsRes.data)) {
+          setWarrantyItems(
+            itemsRes.data.map((x) => ({
+              id: x.id,
+              label: x.label,
+              type: x.type,
+            }))
+          );
+        }
+
+        if (levelRes.status && levelRes.data) {
+          form.reset({
+            name: levelRes.data.name,
+            description: levelRes.data.description || "",
+            benefitIds: levelRes.data.benefits?.map((b) => b.warrantyItemId) || [],
+          });
+        } else {
+          toast.error(levelRes.message || "Failed to load plan level");
+          router.push("/super-admin/warranty-plan-levels");
+        }
+      } catch (error) {
+        console.error("Fetch data error:", error);
+        toast.error("An error occurred while fetching data");
+      } finally {
+        setFetching(false);
       }
     })();
-  }, []);
+  }, [params.id, form, router]);
 
   const handleCreateBenefit = async () => {
     if (!newBenefit.trim()) return;
@@ -106,26 +138,47 @@ export default function CreateWarrantyPlanLevelPage() {
   const onSubmit = async (data: FormValues) => {
     setLoading(true);
     try {
-      const res = await createWarrantyPlanLevelAction({
+      const res = await updateWarrantyPlanLevelAction(params.id, {
         name: data.name,
         description: data.description,
         benefitIds: data.benefitIds,
       });
       if (res.status) {
-        toast.success(res.message || "Plan level created successfully");
+        toast.success(res.message || "Plan level updated successfully");
         router.push("/super-admin/warranty-plan-levels");
       } else {
-        toast.error(res.message || "Failed to create plan level");
+        toast.error(res.message || "Failed to update plan level");
       }
     } catch (error) {
-      console.error("Create plan level error:", error);
-      toast.error("Failed to create plan level");
+      console.error("Update plan level error:", error);
+      toast.error("Failed to update plan level");
     } finally {
       setLoading(false);
     }
   };
 
   const benefitItems = warrantyItems.filter((item) => item.type === "benefit");
+
+  if (fetching) {
+    return (
+      <div className="space-y-6 max-w-3xl mx-auto">
+        <Skeleton className="h-10 w-2/3" />
+        <Skeleton className="h-6 w-1/2" />
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-1/3 mb-2" />
+            <Skeleton className="h-4 w-2/3" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-10 w-1/4" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -135,11 +188,10 @@ export default function CreateWarrantyPlanLevelPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Create Warranty Plan Level
+            Edit Warranty Plan Level
           </h1>
           <p className="text-muted-foreground mt-2">
-            Define a new plan level and choose its default benefits. When this
-            level is selected on a package, these benefits will be pre-selected.
+            Update the plan level name, description and its default benefits.
           </p>
         </div>
       </div>
@@ -244,7 +296,7 @@ export default function CreateWarrantyPlanLevelPage() {
 
               <div className="flex gap-4">
                 <Button type="submit" disabled={loading}>
-                  {loading ? "Creating..." : "Create Plan Level"}
+                  {loading ? "Updating..." : "Update Plan Level"}
                 </Button>
                 <Button
                   type="button"
@@ -261,5 +313,3 @@ export default function CreateWarrantyPlanLevelPage() {
     </div>
   );
 }
-
-

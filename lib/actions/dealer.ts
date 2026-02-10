@@ -17,8 +17,8 @@ export interface Dealer {
   email: string;
   dealerLicenseNumber?: string | null;
   businessRegistrationNumber?: string | null;
-  bankDetails?: string | null;
-  authorizedSignatory?: string | null;
+  bankDetails?: { bankName: string; accountNumber: string; accountHolderName: string; routingNumber?: string; } | null;
+  authorizedSignatory?: { name: string; title: string; email?: string; phone?: string; } | null;
   dealerAgreementSigned: boolean;
   onboardingDate?: Date | string | null;
   status: string;
@@ -39,6 +39,11 @@ export interface Dealer {
   amountPaid?: number;
   amountReceived?: number;
   warrantyPackages?: WarrantyPackage[];
+  dealerStorage?: {
+    usedBytes: string;
+    limitBytes: string;
+    lastCalculated: Date | string;
+  } | null;
 }
 
 export interface CreateDealerResponse {

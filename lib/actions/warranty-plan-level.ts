@@ -64,6 +64,44 @@ export async function getWarrantyPlanLevelsAction(): Promise<
   }
 }
 
+export async function getWarrantyPlanLevelByIdAction(
+  id: string
+): Promise<ApiResponse<WarrantyPlanLevel>> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    return { status: false, message: "Not authenticated" };
+  }
+
+  try {
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/warranty-plan-levels/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: json.message || "Failed to load plan level",
+      };
+    }
+
+    const json = await res.json();
+    return json;
+  } catch (error) {
+    return { status: false, message: "Failed to load plan level" };
+  }
+}
+
 export async function createWarrantyPlanLevelAction(payload: {
   name: string;
   description?: string;

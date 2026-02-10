@@ -69,8 +69,23 @@ function ActionsCell({ row }: { row: PlanLevelRow }) {
           </TooltipContent>
         </Tooltip>
 
-       
-
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+              onClick={() =>
+                router.push(`/super-admin/warranty-plan-levels/edit/${row.id}`)
+              }
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Edit Plan Level</p>
+          </TooltipContent>
+        </Tooltip>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="ghost" size="icon" className="text-destructive">

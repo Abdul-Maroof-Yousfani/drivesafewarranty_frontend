@@ -101,9 +101,12 @@ export async function getDirectPurchasePackagesAction(
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok) {
+      const message = json.message 
+        ? (Array.isArray(json.message) ? json.message.join(", ") : json.message)
+        : "Failed to load packages";
       return {
         status: false,
-        message: json.message || "Failed to load packages",
+        message,
       };
     }
 
@@ -132,12 +135,12 @@ export async function createDirectPurchaseAction(
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok) {
+      const message = json.message 
+        ? (Array.isArray(json.message) ? json.message.join(", ") : json.message)
+        : `Failed with status ${res.status}`;
       return {
         status: false,
-        message:
-          json.message ||
-          (Array.isArray(json.message) ? json.message.join(", ") : null) ||
-          `Failed with status ${res.status}`,
+        message,
       };
     }
 

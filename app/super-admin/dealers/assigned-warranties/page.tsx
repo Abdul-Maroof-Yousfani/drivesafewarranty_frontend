@@ -7,13 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import {
-  FileText,
+  Eye,
   Loader2,
   Search,
-  Settings,
+  Edit,
   ShieldCheck,
   Calendar,
-  Plus
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -35,7 +35,7 @@ function AssignedWarrantiesContent() {
   const [loadingSales, setLoadingSales] = useState(false);
   const [sales, setSales] = useState<any[]>([]);
   const [dealers, setDealers] = useState<Dealer[]>([]);
-  const [selectedDealerId, setSelectedDealerId] = useState<string>(urlDealerId || "");
+  const [selectedDealerId, setSelectedDealerId] = useState<string>(urlDealerId || "all");
 
   useEffect(() => {
     loadDealers();
@@ -139,12 +139,12 @@ function AssignedWarrantiesContent() {
         <div className="flex justify-end gap-2">
             <Button asChild variant="ghost" size="icon" title="View Details">
             <Link href={`/super-admin/dealers/assigned-warranties/edit/${row.original.id}`}>
-                <FileText className="h-4 w-4" />
+                <Eye className="h-4 w-4" />
             </Link>
             </Button>
             <Button asChild variant="ghost" size="icon" title="Edit Assignment">
             <Link href={`/super-admin/dealers/assigned-warranties/edit/${row.original.id}?mode=edit`}>
-                <Settings className="h-4 w-4" />
+                <Edit className="h-4 w-4" />
             </Link>
             </Button>
         </div>

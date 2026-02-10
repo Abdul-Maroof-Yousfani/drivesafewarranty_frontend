@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowUpDown, Eye, Edit } from "lucide-react";
+import { ArrowUpDown, Eye, Edit, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,9 +22,20 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updateDealer } from "@/lib/actions/dealer";
+import { updateDealer, deleteDealer } from "@/lib/actions/dealer";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -116,69 +127,63 @@ function ActionsCell({ dealer }: { dealer: DealerRow }) {
         </Tooltip>
       </TooltipProvider>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <Edit className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Edit Dealer</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Legal Business Name</Label>
-                <Input {...form.register("businessNameLegal")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Trading Name</Label>
-                <Input {...form.register("businessNameTrading")} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Business Address</Label>
-              <Input {...form.register("businessAddress")} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Contact Person</Label>
-                <Input {...form.register("contactPersonName")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input {...form.register("phone")} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" {...form.register("email")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Input {...form.register("status")} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Dealer License #</Label>
-                <Input {...form.register("dealerLicenseNumber")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Business Registration #</Label>
-                <Input {...form.register("businessRegistrationNumber")} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={isPending}>
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" asChild>
+              <Link href={`/super-admin/dealers/edit/${dealer.id}`}>
+                <Edit className="h-4 w-4" />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Edit Dealer</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <AlertDialog>
+        <TooltipProvider>
+          <Tooltip>
+            <AlertDialogTrigger asChild>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+            </AlertDialogTrigger>
+            <TooltipContent>
+              <p>Delete Dealer</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              dealer <strong>{dealer.businessName}</strong> and all associated data including their tenant database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                const res = await deleteDealer(dealer.id);
+                if (res.status) {
+                  toast.success("Dealer deleted successfully");
+                  window.location.reload();
+                } else {
+                  toast.error(res.message || "Failed to delete dealer");
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

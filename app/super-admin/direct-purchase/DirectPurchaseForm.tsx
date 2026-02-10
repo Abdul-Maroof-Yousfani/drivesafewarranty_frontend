@@ -132,9 +132,17 @@ export function DirectPurchaseForm() {
   });
 
   // Load packages
-  useEffect(() => {
-    (async () => {
-      const res = await getDirectPurchasePackagesAction();
+  const fetchPackages = async (vehicle: VehicleFormValues) => {
+    setLoading(true);
+    try {
+      const res = await getDirectPurchasePackagesAction({
+        make: vehicle.make,
+        model: vehicle.model,
+        year: vehicle.year,
+        mileage: vehicle.mileage,
+        transmission: vehicle.transmission,
+      });
+      
       if (res.status && res.data) {
         setPackages(res.data);
         // Initialize durations for each package
@@ -146,8 +154,17 @@ export function DirectPurchaseForm() {
       } else {
         toast.error(res.message || "Failed to load packages");
       }
+    } catch (error) {
+      toast.error("Failed to load packages");
+    } finally {
       setLoading(false);
-    })();
+    }
+  };
+
+  useEffect(() => {
+    // We only fetch when the user specifies vehicle details
+    // but we can initialize loading to false
+    setLoading(false);
   }, []);
 
   const selectedPackage = packages.find((p) => p.id === selectedPackageId);
@@ -171,7 +188,20 @@ export function DirectPurchaseForm() {
       // Validate vehicle form
       const valid = await vehicleForm.trigger();
       if (!valid) return;
-      setVehicleData(vehicleForm.getValues());
+      const values = vehicleForm.getValues();
+      
+      // Only refetch if vehicle data has changed significantly
+      const hasChanged = 
+        values.make !== vehicleData.make || 
+        values.model !== vehicleData.model || 
+        values.year !== vehicleData.year ||
+        values.mileage !== vehicleData.mileage ||
+        values.transmission !== vehicleData.transmission;
+
+      setVehicleData(values);
+      if (hasChanged || packages.length === 0) {
+        await fetchPackages(values);
+      }
     } else if (currentStep === 1) {
       // Validate customer form
       const valid = await customerForm.trigger();

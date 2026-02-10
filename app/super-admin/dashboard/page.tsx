@@ -203,7 +203,7 @@ export default function SuperAdminDashboard() {
         {[
           { label: "Dealers", value: stats.totalDealers, icon: Building2, color: "blue", sub: "Partners" },
           { label: "Customers", value: stats.totalCustomers, icon: Users, color: "emerald", sub: "Active" },
-          { label: "Policies", value: stats.totalWarranties, icon: ShieldCheck, color: "violet", sub: "Stored" },
+         
           { label: "Gross Sales", value: stats.totalEarnings, icon: DollarSign, color: "amber", sub: "All-time", prefix: "£" },
           { label: "Pending", value: stats.pendingInvoicesAmount, icon: FileText, color: "orange", sub: `${stats.pendingInvoices} Pending Invoice${stats.pendingInvoices !== 1 ? 's' : ''}`, prefix: "£" },
           { label: "Warranty Packages", value: stats.totalPackages, icon: Package, color: "indigo", sub: "Packages" },

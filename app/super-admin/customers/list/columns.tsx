@@ -11,6 +11,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { deleteCustomer } from "@/lib/actions/customer";
+
 
 export type CustomerRow = {
   id: string;
@@ -168,7 +183,11 @@ function CustomerActionsCell({ customer }: { customer: CustomerRow }) {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+            >
               <Link
                 href={`/super-admin/warranty-sales/create?customerId=${customer.id}`}
               >
@@ -181,6 +200,53 @@ function CustomerActionsCell({ customer }: { customer: CustomerRow }) {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      <AlertDialog>
+        <TooltipProvider>
+          <Tooltip>
+            <AlertDialogTrigger asChild>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+            </AlertDialogTrigger>
+            <TooltipContent>
+              <p>Delete Customer</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              customer <strong>{customer.name}</strong> and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                const res = await deleteCustomer(customer.id);
+                if (res.status) {
+                  toast.success("Customer deleted successfully");
+                  window.location.reload();
+                } else {
+                  toast.error(res.message || "Failed to delete customer");
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const CHECK_INTERVAL = 1 * 60 * 1000; // Check every 1 minutes
+const CHECK_INTERVAL = 20 * 60 * 1000; // Check every 20 minutes
 
 export function SessionChecker() {
   const router = useRouter();
