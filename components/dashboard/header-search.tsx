@@ -10,7 +10,14 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { menuData, flattenMenu } from "./sidebar-menu-data";
+import { 
+  flattenMenu, 
+  MenuItem, 
+  warrantyPortalMenuData, 
+  transformMenuForDealer 
+} from "./sidebar-menu-data";
+import { customerMenuData } from "./customer-menu-data";
+import { useAuth } from "@/hooks/use-auth";
 
 interface HeaderSearchProps {
   onNavigate?: () => void;
@@ -20,7 +27,25 @@ export function HeaderSearch({ onNavigate }: HeaderSearchProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const router = useRouter();
-  const flatMenu = useMemo(() => flattenMenu(menuData), []);
+  const { user, isAdmin } = useAuth();
+
+  const flatMenu = useMemo(() => {
+    let menuItems: MenuItem[] = [];
+    const isDealer = user?.role === 'dealer';
+    const isCustomer = user?.role === 'customer';
+
+    if (isAdmin()) {
+      menuItems = warrantyPortalMenuData;
+    } else if (isDealer) {
+      menuItems = transformMenuForDealer(
+        warrantyPortalMenuData.filter((item) => item.title !== "Dealer Management")
+      );
+    } else if (isCustomer) {
+      menuItems = customerMenuData;
+    }
+
+    return flattenMenu(menuItems);
+  }, [user, isAdmin]);
 
   const filteredNav = useMemo(() => {
     if (!search) return flatMenu.slice(0, 6);

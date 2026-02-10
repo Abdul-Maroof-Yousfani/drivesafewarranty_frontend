@@ -400,6 +400,36 @@ export const warrantyPortalMenuData: MenuItem[] = [
   },
 ];
 
+// Helper function to transform menu items for dealer (replace /super-admin with /dealer)
+export function transformMenuForDealer(menuItems: MenuItem[]): MenuItem[] {
+  return menuItems
+    .filter((item) => item.title !== "Create Package" && item.title !== "Dealer Management" && item.title !== "Warranty Tiers")
+    .map((item) => {
+      const transformedItem = { ...item };
+
+      // Transform href if it exists and starts with /super-admin
+      if (
+        transformedItem.href &&
+        transformedItem.href.startsWith("/super-admin")
+      ) {
+        transformedItem.href = transformedItem.href.replace(
+          "/super-admin",
+          "/dealer"
+        );
+      }
+
+      // Transform children recursively
+      if (transformedItem.children) {
+        transformedItem.children = transformMenuForDealer(
+          transformedItem.children
+        );
+      }
+
+      return transformedItem;
+    });
+}
+
+
 export function flattenMenu(
   items: MenuItem[],
   parentPath = ""

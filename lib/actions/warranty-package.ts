@@ -44,6 +44,10 @@ export interface WarrantyPackage {
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
+  stats?: {
+    activeAssignments: number;
+    claimsRatio: number;
+  };
 }
 
 interface ApiResponse<T> {

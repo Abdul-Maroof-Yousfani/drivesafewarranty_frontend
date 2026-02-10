@@ -23,38 +23,9 @@ import {
 } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronRight, Building2, Shield, User } from "lucide-react";
-import { MenuItem, warrantyPortalMenuData } from "./sidebar-menu-data";
+import { MenuItem, warrantyPortalMenuData, transformMenuForDealer } from "./sidebar-menu-data";
 import { customerMenuData } from "./customer-menu-data";
 import { useAuth } from "@/hooks/use-auth";
-
-// Helper function to transform menu items for dealer (replace /super-admin with /dealer)
-function transformMenuForDealer(menuItems: MenuItem[]): MenuItem[] {
-  return menuItems
-    .filter((item) => item.title !== "Create Package" && item.title !== "Dealer Management" && item.title !== "Warranty Tiers")
-    .map((item) => {
-      const transformedItem = { ...item };
-
-      // Transform href if it exists and starts with /super-admin
-      if (
-        transformedItem.href &&
-        transformedItem.href.startsWith("/super-admin")
-      ) {
-        transformedItem.href = transformedItem.href.replace(
-          "/super-admin",
-          "/dealer"
-        );
-      }
-
-      // Transform children recursively
-      if (transformedItem.children) {
-        transformedItem.children = transformMenuForDealer(
-          transformedItem.children
-        );
-      }
-
-      return transformedItem;
-    });
-}
 
 function SubMenuItem({ item, pathname }: { item: MenuItem; pathname: string }) {
   const isActive = item.href === pathname;

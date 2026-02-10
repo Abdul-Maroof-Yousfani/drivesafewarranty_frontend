@@ -1,4 +1,3 @@
-
 import { getWarrantyPackageByIdAction } from "@/lib/actions/warranty-package";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -55,7 +54,7 @@ export default async function WarrantyPackageViewPage({
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">--</div>
+            <div className="text-2xl font-bold">{pkg.stats?.activeAssignments ?? 0}</div>
             <p className="text-xs text-muted-foreground">Dealers & Customers</p>
           </CardContent>
         </Card>
@@ -65,7 +64,7 @@ export default async function WarrantyPackageViewPage({
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">--%</div>
+            <div className="text-2xl font-bold">{pkg.stats?.claimsRatio ?? 0}%</div>
             <p className="text-xs text-muted-foreground">Last 30 days</p>
           </CardContent>
         </Card>
