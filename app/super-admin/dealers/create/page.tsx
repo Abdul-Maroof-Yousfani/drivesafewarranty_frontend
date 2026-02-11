@@ -86,6 +86,7 @@ const dealerSchema = z.object({
 
   // Login Credentials (set by Super Admin)
   password: z.string().min(8, "Password must be at least 8 characters"),
+  hasHrmAccess: z.boolean().default(false),
 });
 
 type DealerFormValues = z.infer<typeof dealerSchema>;
@@ -117,6 +118,7 @@ export default function CreateDealerPage() {
       hasSignedAgreement: false,
       onboardingDate: new Date(),
       password: "",
+      hasHrmAccess: false,
     },
   });
 
@@ -149,6 +151,7 @@ export default function CreateDealerPage() {
         dealerAgreementSigned: data.hasSignedAgreement,
         onboardingDate: data.onboardingDate,
         password: data.password, // Password set by Super Admin
+        hasHrmAccess: data.hasHrmAccess,
       };
 
       const result = await createDealer(dealerData);
@@ -589,6 +592,27 @@ export default function CreateDealerPage() {
                         is on file
                       </FormDescription>
                       <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="hasHrmAccess"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Give HRM Access</FormLabel>
+                      <FormDescription>
+                        Enable this to allow the dealer to access the HR Management module
+                      </FormDescription>
                     </div>
                   </FormItem>
                 )}

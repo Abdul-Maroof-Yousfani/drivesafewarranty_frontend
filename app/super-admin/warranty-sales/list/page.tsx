@@ -13,7 +13,7 @@ export default async function WarrantySalesListPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Warranty Sales</h1>
         <p className="text-muted-foreground mt-2">
-          View all warranty sales created by super admin
+        List of Warranty Packages sold to customers
         </p>
       </div>
       {hasError && (

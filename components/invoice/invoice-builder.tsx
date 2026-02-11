@@ -176,6 +176,7 @@ import {
   saveInvoiceSettingsAction,
 } from "@/lib/actions/invoice-settings";
 import { uploadLogoAction } from "@/lib/actions/upload";
+import { useDealerStatus } from "@/lib/hooks/use-dealer-status";
 
 // --- Invoice Builder Component ---
 export function InvoiceBuilder() {
@@ -183,6 +184,7 @@ export function InvoiceBuilder() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [editingLayout, setEditingLayout] = useState(false);
   const [extractingColors, setExtractingColors] = useState(false);
+  const { isInactive } = useDealerStatus();
 
   const form = useForm<InvoiceSettingsFormValues>({
     resolver: zodResolver(invoiceSettingsSchema) as any,
@@ -858,14 +860,14 @@ export function InvoiceBuilder() {
             <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 border-t z-10">
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || isInactive}
                 className="w-full"
                 size="lg"
               >
                 {loading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                Save Template
+                {isInactive ? "Save Template (Locked)" : "Save Template"}
               </Button>
             </div>
           </form>
@@ -887,6 +889,7 @@ export function InvoiceBuilder() {
               variant={editingLayout ? "default" : "secondary"}
               size="sm"
               onClick={() => setEditingLayout(!editingLayout)}
+              disabled={isInactive}
             >
               {editingLayout ? "Editing Layout (On)" : "Edit Layout"}
             </Button>

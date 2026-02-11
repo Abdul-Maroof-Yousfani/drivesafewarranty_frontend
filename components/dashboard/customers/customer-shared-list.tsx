@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, useMemo } from "react";
 import DataTable from "@/components/common/data-table";
 import { CustomerRow, getColumns } from "./columns";
 import {
@@ -9,7 +9,7 @@ import {
   deleteCustomers,
 } from "@/lib/actions/customer";
 import { toast } from "sonner";
-import { useMemo } from "react";
+import { useDealerStatus } from "@/lib/hooks/use-dealer-status";
 
 interface CustomerSharedListProps {
   initialCustomers: Customer[];
@@ -24,23 +24,34 @@ export function CustomerSharedList({
 }: CustomerSharedListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { isInactive } = useDealerStatus();
 
   const handleToggle = () => {
+    if (isInactive && role === 'dealer') {
+      toast.error("Your account is in view-only mode. Please contact the administrator.");
+      return;
+    }
     const basePath = role === 'admin' ? '/super-admin' : '/dealer';
     router.push(`${basePath}/customers/create`);
   };
 
-  const handleMultiDelete = (ids: string[]) => {
-    startTransition(async () => {
-      const result = await deleteCustomers(ids);
-      if (result.status) {
-        toast.success(result.message || `${ids.length} customer(s) deleted successfully`);
-        router.refresh();
-      } else {
-        toast.error(result.message || "Failed to delete customers");
+  const handleMultiDelete = (role === 'admin' || (role === 'dealer' && !isInactive))
+    ? (ids: string[]) => {
+        if (isInactive && role === 'dealer') {
+          toast.error("Your account is in view-only mode.");
+          return;
+        }
+        startTransition(async () => {
+          const result = await deleteCustomers(ids);
+          if (result.status) {
+            toast.success(result.message || `${ids.length} customer(s) deleted successfully`);
+            router.refresh();
+          } else {
+            toast.error(result.message || "Failed to delete customers");
+          }
+        });
       }
-    });
-  };
+    : undefined;
 
   const data: CustomerRow[] = initialCustomers.map((customer) => ({
     ...customer,
@@ -69,6 +80,7 @@ export function CustomerSharedList({
         data={data}
         actionText="Add Customer"
         toggleAction={handleToggle}
+        toggleDisabled={isInactive && role === 'dealer'}
         newItemId={newItemId}
         searchFields={[
           { key: "name", label: "Customer Name" },

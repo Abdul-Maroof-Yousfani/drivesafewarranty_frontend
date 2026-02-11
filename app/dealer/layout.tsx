@@ -17,6 +17,9 @@ import { Search, Sparkles, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useDealerStatus } from "@/lib/hooks/use-dealer-status";
+import { AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function DealerLayout({
   children,
@@ -25,6 +28,7 @@ export default function DealerLayout({
 }) {
   const router = useRouter()
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const { isInactive, hasHrmAccess } = useDealerStatus();
   const switchToHrm = async () => {
     // Switching to ERP Mode - fetch SSO URL and redirect
     try {
@@ -43,14 +47,18 @@ export default function DealerLayout({
     }
   };
 
-
-
   return (
     <SidebarProvider>
       <SessionChecker />
       <PasswordResetPrompt />
       <AppSidebar />
       <SidebarInset>
+        {isInactive && (
+          <div className="bg-destructive/15 border-b border-destructive/20 py-2 px-6 flex items-center justify-center gap-2 text-destructive font-medium animate-in fade-in slide-in-from-top-4 duration-500">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-sm">Read-only Mode. Please contact your administrator for full access.</span>
+          </div>
+        )}
         <header className="flex h-[3.8rem] items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-6 sticky top-0 z-30 w-full justify-between">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
@@ -70,20 +78,26 @@ export default function DealerLayout({
           </Button>
           <div className="flex-1 sm:flex-none" />
           <div className="flex items-center gap-1 sm:gap-2">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                className="relative overflow-hidden"
-                onClick={switchToHrm}
+            {hasHrmAccess && (
+              <motion.div
+                whileHover={!isInactive ? { scale: 1.05 } : {}}
+                whileTap={!isInactive ? { scale: 0.98 } : {}}
               >
-                <Sparkles className="h-4 w-4 mr-2" />
-                Switch to HR Portal
-              </Button>
-            </motion.div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "relative overflow-hidden",
+                    isInactive && "opacity-50 cursor-not-allowed"
+                  )}
+                  onClick={!isInactive ? switchToHrm : undefined}
+                  disabled={isInactive}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Switch to HR Portal
+                </Button>
+              </motion.div>
+            )}
             <ThemeToggle />
             <HeaderNotifications />
             <HeaderUserMenu />

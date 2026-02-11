@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { StatusToggle } from "@/components/ui/status-toggle";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +49,13 @@ import {
   type DealerLoginCredentials,
   verifyDealerCredentials,
 } from "@/lib/actions/dealer";
+import { toggleWarrantyAssignmentStatusAction } from "@/lib/actions/warranty-sales";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
 export default function DealerViewPage() {
@@ -63,6 +72,38 @@ export default function DealerViewPage() {
   const [credentialsHideAt, setCredentialsHideAt] = useState<number | null>(
     null
   );
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
+
+  const handleToggleAssignmentStatus = async (assignmentId: string) => {
+    if (!assignmentId) {
+      toast.error("Assignment ID not found");
+      return;
+    }
+
+    setIsTogglingStatus(true);
+    try {
+      const result = await toggleWarrantyAssignmentStatusAction(assignmentId);
+      if (result.status) {
+        toast.success(result.message || "Status updated");
+        // Update local state
+        if (dealer && dealer.warrantyPackages) {
+          const updatedPackages = dealer.warrantyPackages.map((pkg: any) =>
+            pkg.assignmentId === assignmentId
+              ? { ...pkg, status: result.data?.status || pkg.status }
+              : pkg
+          );
+          setDealer({ ...dealer, warrantyPackages: updatedPackages });
+        }
+      } else {
+        toast.error(result.message || "Failed to update status");
+      }
+    } catch (error) {
+      console.error("Error toggling assignment status:", error);
+      toast.error("Failed to update status");
+    } finally {
+      setIsTogglingStatus(false);
+    }
+  };
 
   useEffect(() => {
     const fetchDealer = async () => {
@@ -290,12 +331,12 @@ export default function DealerViewPage() {
           { label: "Revenue", value: `£${(dealer.amountPaid || 0).toLocaleString()}`, icon: CreditCard, color: "emerald" },
           { label: "Storage", value: `${getStoragePercentage()}%`, icon: FileBadge, color: "amber" },
         ].map((stat, idx) => (
-          <Card key={idx} className="shadow-none border-muted bg-card/50">
-            <CardContent className="p-3 flex flex-col gap-0.5">
+          <Card key={idx} className="shadow-none border-muted p-2 bg-card/50">
+            <CardContent className="p-3 flex flex-col gap-0.5 ">
               <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">{stat.label}</p>
               <div className="flex items-center justify-between">
                 <span className="text-base font-bold">{stat.value}</span>
-                <stat.icon className={cn("h-3.5 w-3.5 opacity-40", `text-${stat.color}-500`)} />
+                <stat.icon className={cn("h-8 w-8 opacity-40", `text-${stat.color}-500`)} />
               </div>
             </CardContent>
           </Card>
@@ -408,14 +449,44 @@ export default function DealerViewPage() {
             </CardHeader>
             <CardContent className="p-0">
               {Array.isArray(dealer.warrantyPackages) && dealer.warrantyPackages.length > 0 ? (
-                dealer.warrantyPackages.slice(0, 5).map((pkg: any) => (
+                dealer.warrantyPackages.slice(0, 10).map((pkg: any) => (
                   <div key={pkg.id} className="p-3 border-b border-muted/50 last:border-0 hover:bg-muted/30 transition-colors space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs">{pkg.name}</span>
-                      {pkg.planLevel && (
-                        <Badge variant="outline" className="text-[10px] h-4 px-1.5 py-0 font-bold uppercase border-primary/30 text-primary bg-primary/5">
-                          {pkg.planLevel}
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs">{pkg.name}</span>
+                        {pkg.planLevel && (
+                          <Badge variant="outline" className="text-[10px] h-4 px-1.5 py-0 font-bold uppercase border-primary/30 text-primary bg-primary/5">
+                            {pkg.planLevel}
+                          </Badge>
+                        )}
+                        <Badge variant={pkg.status === "active" ? "default" : "secondary"} className="text-[9px] h-3.5 px-1 py-0 uppercase">
+                          {pkg.status}
                         </Badge>
+                      </div>
+                      {pkg.assignmentId && (
+                        <div className="flex flex-col items-end gap-1">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center">
+                                  <StatusToggle
+                                    checked={pkg.status === "active"}
+                                    onCheckedChange={() => handleToggleAssignmentStatus(pkg.assignmentId)}
+                                    disabled={isTogglingStatus}
+                                  />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{pkg.status === "active" ? "Inactivate Assignment" : "Activate Assignment"}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          {/* We don't have direct access to package.globalStatus here, 
+                              but the pkg.status in dealer view is synced from current tenant pkg status.
+                              If we wanted to show global vs assignment status we'd need more data.
+                              However, since we cascade the status, pkg.status itself should reflect the inactive state.
+                          */}
+                        </div>
                       )}
                     </div>
                     
@@ -466,7 +537,7 @@ export default function DealerViewPage() {
                 <CardTitle className="text-sm font-bold">Bank Details</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="p-4">
+            <CardContent>
                <div className="space-y-3">
                  <div>
                    <label className="text-[9px] font-bold text-muted-foreground uppercase">Bank Name</label>

@@ -413,3 +413,67 @@ export async function createMasterWarrantySaleAction(payload: {
     return { status: false, message: "Failed to create warranty sale" };
   }
 }
+
+export async function toggleWarrantySaleStatusAction(
+  id: string
+): Promise<{ status: boolean; data?: WarrantySale; message?: string }> {
+  try {
+    const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/warranty-sales/${id}/status`, {
+      method: "PATCH",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error("Failed to toggle warranty sale status:", error);
+    return { status: false, message: "Failed to toggle warranty sale status" };
+  }
+}
+
+export async function toggleWarrantyAssignmentStatusAction(
+  id: string
+): Promise<{ status: boolean; data?: any; message?: string }> {
+  try {
+    const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/warranty-packages/assignments/${id}/status`, {
+      method: "PATCH",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error("Failed to toggle warranty assignment status:", error);
+    return { status: false, message: "Failed to toggle warranty assignment status" };
+  }
+}

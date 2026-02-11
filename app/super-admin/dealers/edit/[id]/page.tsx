@@ -77,8 +77,8 @@ const dealerSchema = z.object({
 
   // Agreement
   dealerAgreementSigned: z.boolean(),
+  hasHrmAccess: z.boolean(),
   onboardingDate: z.date(),
-  status: z.string().min(1),
 });
 
 type DealerFormValues = z.infer<typeof dealerSchema>;
@@ -109,8 +109,8 @@ export default function EditDealerPage() {
       authorizedSignatoryEmail: "",
       authorizedSignatoryPhone: "",
       dealerAgreementSigned: false,
+      hasHrmAccess: false,
       onboardingDate: new Date(),
-      status: "active",
     },
   });
 
@@ -138,9 +138,9 @@ export default function EditDealerPage() {
             authorizedSignatoryTitle: d.authorizedSignatory?.title || "",
             authorizedSignatoryEmail: d.authorizedSignatory?.email || "",
             authorizedSignatoryPhone: d.authorizedSignatory?.phone || "",
-            dealerAgreementSigned: d.dealerAgreementSigned || false,
+            dealerAgreementSigned: !!d.dealerAgreementSigned,
+            hasHrmAccess: !!d.hasHrmAccess,
             onboardingDate: d.onboardingDate ? new Date(d.onboardingDate) : new Date(),
-            status: d.status || "active",
           });
         } else {
           toast.error(result.message || "Failed to fetch dealer details");
@@ -180,8 +180,8 @@ export default function EditDealerPage() {
           phone: data.authorizedSignatoryPhone,
         },
         dealerAgreementSigned: data.dealerAgreementSigned,
+        hasHrmAccess: data.hasHrmAccess,
         onboardingDate: data.onboardingDate,
-        status: data.status,
       };
 
       const result = await updateDealer(params.id as string, updateData);
@@ -297,27 +297,6 @@ export default function EditDealerPage() {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="max-w-[200px]">
-                    <FormLabel>Dealer Status *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 
@@ -558,6 +537,27 @@ export default function EditDealerPage() {
                       <FormLabel>Dealer Agreement Signed</FormLabel>
                       <FormDescription>
                         Confirm if the dealer agreement has been signed
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="hasHrmAccess"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Give HRM Access</FormLabel>
+                      <FormDescription>
+                        Enable this to allow the dealer to access the HR Management module
                       </FormDescription>
                     </div>
                   </FormItem>

@@ -13,8 +13,10 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { KeyRound, Loader2, Eye, EyeOff } from "lucide-react";
+import { useDealerStatus } from "@/lib/hooks/use-dealer-status";
 
 export default function ChangePasswordPage() {
+  const { isInactive } = useDealerStatus();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
@@ -69,8 +71,7 @@ export default function ChangePasswordPage() {
                 type={showCurrentPassword ? "text" : "password"}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="••••••••"
-                className="pr-10"
+                disabled={isInactive}
               />
               <Button
                 type="button"
@@ -98,8 +99,7 @@ export default function ChangePasswordPage() {
                 type={showNewPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="At least 8 characters"
-                className="pr-10"
+                disabled={isInactive}
               />
               <Button
                 type="button"
@@ -118,13 +118,13 @@ export default function ChangePasswordPage() {
             </div>
           </div>
           <div className="flex items-center justify-end">
-            <Button onClick={handleSubmitReal} disabled={saving}>
+            <Button onClick={handleSubmitReal} disabled={saving || isInactive}>
               {saving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <KeyRound className="h-4 w-4 mr-2" />
               )}
-              Change Password
+              {isInactive ? "Change Password (Locked)" : "Change Password"}
             </Button>
           </div>
         </CardContent>

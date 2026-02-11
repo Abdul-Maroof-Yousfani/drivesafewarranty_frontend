@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { StatusToggle } from "@/components/ui/status-toggle";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { EditIcon, EyeIcon } from "lucide-react";
@@ -31,7 +32,8 @@ export type WarrantySaleRow = {
 
 // Factory function to create columns based on role
 export function createWarrantySalesColumns(
-  role: "admin" | "dealer"
+  role: "admin" | "dealer",
+  onToggleStatus?: (id: string) => void
 ): ColumnDef<WarrantySaleRow>[] {
   const basePath = role === "admin" ? "/super-admin" : "/dealer";
 
@@ -174,10 +176,31 @@ export function createWarrantySalesColumns(
     size: 120,
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
+      const id = row.original.id;
+
       return (
-        <Badge variant={status === "active" ? "default" : "secondary"}>
-          {status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={status === "active" ? "default" : "secondary"}>
+            {status}
+          </Badge>
+          {role === "admin" && onToggleStatus && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center">
+                    <StatusToggle
+                      checked={status === "active"}
+                      onCheckedChange={() => onToggleStatus(id)}
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{status === "active" ? "Inactivate" : "Activate"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
       );
     },
   });

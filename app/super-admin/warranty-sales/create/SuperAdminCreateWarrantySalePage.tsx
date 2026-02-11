@@ -269,7 +269,7 @@ export default function CreateWarrantySalePage() {
           await Promise.all([
             getCustomers(),
             getDealers(),
-            getWarrantyPackagesAction(),
+            getWarrantyPackagesAction({ includeInactive: true }),
             getWarrantyItemsAction(),
           ]);
 
@@ -322,6 +322,13 @@ export default function CreateWarrantySalePage() {
 
     if (matchedPackage) {
       if (queryPackageId) handlePackageChange(queryPackageId);
+      if (matchedPackage.status !== "active") {
+        toast.warning(
+          `The pre-selected package "${matchedPackage.name}" is currently inactive and cannot be used for new assignments.`
+        );
+        setSelectedPackage(null);
+        form.setValue("warrantyPackageId", "");
+      }
     }
 
     if (!needsPackage || (packagesLoaded && dealers.length > 0)) {
@@ -701,7 +708,8 @@ export default function CreateWarrantySalePage() {
                       <Autocomplete
                         options={packages.map((p) => ({
                           value: p.id,
-                          label: p.name,
+                          label: p.status === "active" ? p.name : `${p.name} (Inactive)`,
+                          disabled: p.status !== "active",
                         }))}
                         value={field.value}
                         onValueChange={handlePackageChange}

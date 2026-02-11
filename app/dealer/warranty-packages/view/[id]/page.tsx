@@ -127,11 +127,22 @@ export default function DealerViewWarrantyPackagePage({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-md">
-            <Link href={`/dealer/warranty-sales/create?packageId=${pkg.id}`}>
-              Sell This Package
-            </Link>
-          </Button>
+          {pkg.status === "active" ? (
+            <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-md">
+              <Link href={`/dealer/warranty-sales/create?packageId=${pkg.id}`}>
+                Sell This Package
+              </Link>
+            </Button>
+          ) : (
+            <div className="flex flex-col items-end gap-1">
+              <Button disabled size="lg" className="bg-muted text-muted-foreground shadow-none">
+                Sell This Package
+              </Button>
+              <p className="text-[10px] text-destructive font-semibold uppercase tracking-wider">
+                Package Inactive
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

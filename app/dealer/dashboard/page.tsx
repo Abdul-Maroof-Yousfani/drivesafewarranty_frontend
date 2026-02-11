@@ -2,13 +2,15 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, ShieldCheck, DollarSign, Receipt, Car, PlusCircle, ArrowRight } from "lucide-react";
+import { Users, ShieldCheck, DollarSign, Receipt, Car, PlusCircle, ArrowRight, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { getDealerDashboardStatsAction } from "@/lib/actions/dashboard";
 import { getStorageUsageAction } from "@/lib/actions/storage";
 import { StorageUsageCard } from "@/components/dealer/storage-usage-card";
+import { useDealerStatus } from "@/lib/hooks/use-dealer-status";
 
 export default function DealerDashboard() {
+  const { isInactive } = useDealerStatus();
   const [stats, setStats] = useState({
     totalCustomers: 0,
     totalWarranties: 0,
@@ -17,6 +19,7 @@ export default function DealerDashboard() {
     profit: 0,
     pendingInvoices: 0,
     pendingInvoicesAmount: 0,
+    status: "active",
   });
 
   const [storage, setStorage] = useState<{
@@ -46,6 +49,7 @@ export default function DealerDashboard() {
           profit: res.data.profit ?? 0,
           pendingInvoices: res.data.pendingInvoices,
           pendingInvoicesAmount,
+          status: res.data.status || "active",
         });
       }
 
@@ -69,8 +73,11 @@ export default function DealerDashboard() {
     };
   }, []);
 
+  // Read-only Banner removed - now in Global Layout
+  
   return (
     <div className="space-y-6">
+
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
@@ -199,12 +206,20 @@ export default function DealerDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <Button className="w-full justify-start" asChild>
-              <Link href="/dealer/warranty-sales/create">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Warranty Sale
-                <ArrowRight className="ml-auto h-4 w-4" />
-              </Link>
+            <Button className="w-full justify-start" asChild disabled={isInactive}>
+              {isInactive ? (
+                <div className="flex items-center w-full opacity-50 cursor-not-allowed">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  New Warranty Sale
+                  <ArrowRight className="ml-auto h-4 w-4" />
+                </div>
+              ) : (
+                <Link href="/dealer/warranty-sales/create">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  New Warranty Sale
+                  <ArrowRight className="ml-auto h-4 w-4" />
+                </Link>
+              )}
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
               <Link href="/dealer/customers/list">
@@ -220,12 +235,20 @@ export default function DealerDashboard() {
                 <ArrowRight className="ml-auto h-4 w-4" />
               </Link>
             </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/dealer/settings">
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                Settings
-                <ArrowRight className="ml-auto h-4 w-4" />
-              </Link>
+            <Button variant="outline" className="w-full justify-start" asChild disabled={isInactive}>
+              {isInactive ? (
+                <div className="flex items-center w-full opacity-50 cursor-not-allowed">
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Settings
+                  <ArrowRight className="ml-auto h-4 w-4" />
+                </div>
+              ) : (
+                <Link href="/dealer/settings">
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Settings
+                  <ArrowRight className="ml-auto h-4 w-4" />
+                </Link>
+              )}
             </Button>
           </div>
         </CardContent>
@@ -233,4 +256,3 @@ export default function DealerDashboard() {
     </div>
   );
 }
-

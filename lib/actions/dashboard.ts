@@ -58,6 +58,7 @@ export async function getDealerDashboardStatsAction(): Promise<{
     profit?: number;
     pendingInvoices: number;
     pendingInvoicesAmount?: number;
+    status?: string;
   };
   message?: string;
 }> {

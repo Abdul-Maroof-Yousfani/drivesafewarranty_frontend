@@ -135,3 +135,35 @@ export async function getCustomerWarrantySalesAction(): Promise<{
     };
   }
 }
+
+export async function toggleMyWarrantyStatusAction(
+  id: string
+): Promise<{ status: boolean; data?: any; message?: string }> {
+  try {
+    const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/warranty-sales/${id}/status`, {
+      method: "PATCH",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        Host: host,
+        "X-Forwarded-Host": host,
+      },
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        status: false,
+        message: errorData.message || `Error: ${res.status} ${res.statusText}`,
+      };
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error("Failed to toggle warranty status:", error);
+    return { status: false, message: "Failed to toggle warranty status" };
+  }
+}

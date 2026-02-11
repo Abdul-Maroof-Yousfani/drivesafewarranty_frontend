@@ -42,6 +42,7 @@ export type WarrantyPackageRow = {
   price24Months?: number | null;
   price36Months?: number | null;
   deletedAt?: string | null;
+  status: string;
 };
 
 export const getColumns = (
@@ -165,16 +166,38 @@ export const getColumns = (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link
-                    href={`/super-admin/warranty-sales/create?packageId=${pkg.id}`}
+                <div className="inline-block">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    asChild
+                    disabled={pkg.status !== "active" || !!pkg.deletedAt}
+                    className={
+                      pkg.status !== "active" || !!pkg.deletedAt
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }
                   >
-                    <ClipboardPlus className="h-4 w-4" />
-                  </Link>
-                </Button>
+                    {pkg.status === "active" && !pkg.deletedAt ? (
+                      <Link
+                        href={`/super-admin/warranty-sales/create?packageId=${pkg.id}`}
+                      >
+                        <ClipboardPlus className="h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <ClipboardPlus className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Assign to Customer</p>
+                <p>
+                  {pkg.deletedAt
+                    ? "Cannot assign deleted package"
+                    : pkg.status !== "active"
+                    ? "Cannot assign inactive package"
+                    : "Assign to Customer"}
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

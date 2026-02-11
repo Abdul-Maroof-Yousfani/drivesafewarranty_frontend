@@ -17,7 +17,7 @@ export default function DealerWarrantyPackagesListPage() {
   useEffect(() => {
     let isMounted = true;
     (async () => {
-      const result = await getDealerWarrantyPackagesAction();
+      const result = await getDealerWarrantyPackagesAction({ includeInactive: true });
       if (!isMounted) return;
 
       if (result.status && Array.isArray(result.data)) {

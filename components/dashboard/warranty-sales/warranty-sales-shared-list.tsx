@@ -8,8 +8,14 @@ import { ListSkeleton } from "@/components/dashboard/list-skeleton";
 import { createWarrantySalesColumns, WarrantySaleRow } from "./warranty-sales-columns";
 
 // Actions for each portal
-import { getWarrantySalesAction, deleteWarrantySaleAction, WarrantySale } from "@/lib/actions/warranty-sales";
+import { 
+  getWarrantySalesAction, 
+  deleteWarrantySaleAction, 
+  toggleWarrantySaleStatusAction,
+  WarrantySale 
+} from "@/lib/actions/warranty-sales";
 import { getDealerWarrantySalesAction } from "@/lib/actions/dealer-warranty-sales";
+import { useDealerStatus } from "@/lib/hooks/use-dealer-status";
 
 interface WarrantySalesSharedListProps {
   role: "admin" | "dealer";
@@ -22,9 +28,29 @@ export function WarrantySalesSharedList({ role, initialSales }: WarrantySalesSha
   const [isPending, startTransition] = useTransition();
   const [data, setData] = useState<WarrantySaleRow[]>([]);
   const [loading, setLoading] = useState(!initialSales);
+  const { isInactive } = useDealerStatus();
 
   const basePath = role === "admin" ? "/super-admin" : "/dealer";
-  const columns = createWarrantySalesColumns(role);
+
+  const handleToggleSalesStatus = async (id: string) => {
+    startTransition(async () => {
+      const result = await toggleWarrantySaleStatusAction(id);
+      if (result.status) {
+        toast.success(result.message || "Status updated");
+        setData((prev) =>
+          prev.map((item) =>
+            item.id === id
+              ? { ...item, status: result.data?.status || item.status }
+              : item
+          )
+        );
+      } else {
+        toast.error(result.message || "Failed to update status");
+      }
+    });
+  };
+
+  const columns = createWarrantySalesColumns(role, handleToggleSalesStatus);
 
   // Map raw sale data to unified row format
   const mapSaleToRow = (sale: any): WarrantySaleRow => {
@@ -93,11 +119,19 @@ export function WarrantySalesSharedList({ role, initialSales }: WarrantySalesSha
   }, [role, initialSales]);
 
   const handleToggle = () => {
+    if (isInactive && role === "dealer") {
+      toast.error("Your account is in view-only mode. Please contact the administrator.");
+      return;
+    }
     router.push(`${basePath}/warranty-sales/create`);
   };
 
-  const handleMultiDelete = role === "admin" 
+  const handleMultiDelete = (role === "admin" || (role === "dealer" && !isInactive))
     ? (ids: string[]) => {
+        if (isInactive && role === "dealer") {
+          toast.error("Your account is in view-only mode.");
+          return;
+        }
         startTransition(async () => {
           for (const id of ids) {
             const result = await deleteWarrantySaleAction(id);
@@ -123,6 +157,7 @@ export function WarrantySalesSharedList({ role, initialSales }: WarrantySalesSha
         data={data}
         actionText="Add"
         toggleAction={handleToggle}
+        toggleDisabled={isInactive && role === "dealer"}
         onMultiDelete={handleMultiDelete}
         searchFields={[
           { key: "policyNumber", label: "Warranty Number" },

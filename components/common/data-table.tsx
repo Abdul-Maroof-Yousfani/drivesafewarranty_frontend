@@ -152,6 +152,7 @@ type DataTableProps<TData extends DataTableRow> = {
   onBulkEdit?: (items: TData[]) => void;
   searchFields?: { key: string; label: string }[];
   filters?: FilterConfig[];
+  toggleDisabled?: boolean;
 };
 
 export default function DataTable<TData extends DataTableRow>({
@@ -165,6 +166,7 @@ export default function DataTable<TData extends DataTableRow>({
   onBulkEdit,
   searchFields,
   filters,
+  toggleDisabled,
 }: DataTableProps<TData>) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -355,6 +357,7 @@ export default function DataTable<TData extends DataTableRow>({
                       <Button
                         variant="outline"
                         className="!bg-destructive/5 !border-destructive/50 text-destructive"
+                        disabled={toggleDisabled}
                       >
                         <TrashIcon className="-ms-1 opacity-60" size={16} />{" "}
                         Delete
@@ -415,15 +418,15 @@ export default function DataTable<TData extends DataTableRow>({
             </DropdownMenu>
             {/* Add user button */}
             {toggleAction && (
-              <Button onClick={toggleAction}>
+              <Button onClick={toggleAction} disabled={toggleDisabled}>
                 <PlusIcon className="-ms-1 opacity-60" size={16} /> {actionText}
               </Button>
             )}
           </div>
         </div>
 
-        <div className="bg-background overflow-hidden rounded-md border">
-          <Table className="table-fixed">
+        <div className="bg-background overflow-x-auto rounded-md border">
+          <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="hover:bg-transparent">
@@ -523,7 +526,6 @@ export default function DataTable<TData extends DataTableRow>({
                               cell.column.id === "select" && "w-[28px] px-2",
                               !isSpecialColumn && "truncate max-w-[200px]"
                             )}
-                            title={!isSpecialColumn ? String(cell.getValue()) : undefined}
                           >
                             {cell.column.id === "select" ? (
                               <div className="flex items-center justify-center w-full">
@@ -532,28 +534,11 @@ export default function DataTable<TData extends DataTableRow>({
                                   cell.getContext()
                                 )}
                               </div>
-                            ) : isSpecialColumn ? (
+                            ) : (
                               flexRender(
                                 cell.column.columnDef.cell,
-                                  cell.getContext()
-                                )
-                            ) : (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="truncate">
-                                    {flexRender(
-                                      cell.column.columnDef.cell,
-                                      cell.getContext()
-                                    )}
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {flexRender(
-                                    cell.column.columnDef.cell,
-                                    cell.getContext()
-                                  )}
-                                </TooltipContent>
-                              </Tooltip>
+                                cell.getContext()
+                              )
                             )}
                           </TableCell>
                         );

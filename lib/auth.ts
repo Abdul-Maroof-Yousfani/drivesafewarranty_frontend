@@ -431,10 +431,38 @@ export async function checkSession(): Promise<{ valid: boolean }> {
       console.error(`[Auth] Session check failed with status ${res.status}`);
 
       // If server error, assume session is still valid to prevent annoying popups
-      // The next user action will fail if the server is really down, but we shouldn't
-      // forcefully log them out via the background checker.
       if (res.status >= 500) {
         return { valid: true };
+      }
+    } else {
+      // Sync user cookie with latest data from backend
+      try {
+        const resData = await res.json();
+        const userData = resData.data || resData;
+        if (userData && userData.email) {
+          cookieStore.set(
+            "user",
+            JSON.stringify({
+              id: userData.id,
+              email: userData.email,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              role: userData.role?.name || userData.role,
+              permissions: userData.permissions,
+              avatar: userData.avatar,
+              details: userData.details,
+            }),
+            {
+              httpOnly: false,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "lax",
+              maxAge: 7 * 24 * 60 * 60,
+              path: "/",
+            }
+          );
+        }
+      } catch (e) {
+        console.warn("[Auth] Failed to sync user cookie during session check:", e);
       }
     }
 

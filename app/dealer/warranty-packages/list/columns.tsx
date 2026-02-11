@@ -141,14 +141,23 @@ export const dealerColumns: ColumnDef<DealerWarrantyPackageRow>[] = [
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link href={`/dealer/warranty-sales/create?packageId=${pkg.id}`}>
-                    <ClipboardPlus className="h-4 w-4" />
-                  </Link>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  asChild={pkg.status === "active"}
+                  disabled={pkg.status !== "active"}
+                >
+                  {pkg.status === "active" ? (
+                    <Link href={`/dealer/warranty-sales/create?packageId=${pkg.id}`}>
+                      <ClipboardPlus className="h-4 w-4" />
+                    </Link>
+                  ) : (
+                    <ClipboardPlus className="h-4 w-4 opacity-50" />
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Assign to Customer</p>
+                <p>{pkg.status === "active" ? "Assign to Customer" : "Package Inactive - Contact Admin"}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

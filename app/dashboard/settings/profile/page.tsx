@@ -16,9 +16,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Loader2, Upload, X } from "lucide-react";
+import { useDealerStatus } from "@/lib/hooks/use-dealer-status";
 
 export default function ProfileSettingsPage() {
   const { user } = useAuth();
+  const { isInactive } = useDealerStatus();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -180,7 +182,7 @@ export default function ProfileSettingsPage() {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="First name"
-              disabled={loading}
+              disabled={loading || isInactive}
             />
           </div>
           <div className="space-y-2">
@@ -190,7 +192,7 @@ export default function ProfileSettingsPage() {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Last name"
-              disabled={loading}
+              disabled={loading || isInactive}
             />
           </div>
           <div className="space-y-2 md:col-span-2">
@@ -200,7 +202,7 @@ export default function ProfileSettingsPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Optional"
-              disabled={loading}
+              disabled={loading || isInactive}
             />
           </div>
         </CardContent>
@@ -371,7 +373,7 @@ export default function ProfileSettingsPage() {
                 onChange={(e) =>
                   setDetails({ ...details, address: e.target.value })
                 }
-                disabled={loading}
+                disabled={loading || isInactive}
               />
             </div>
             <div className="space-y-2">
@@ -418,7 +420,7 @@ export default function ProfileSettingsPage() {
                 <Button
                   asChild
                   variant="outline"
-                  disabled={uploading || loading}
+                  disabled={uploading || loading || isInactive}
                 >
                   <span>
                     <Upload className="h-4 w-4 mr-2" />
@@ -430,7 +432,7 @@ export default function ProfileSettingsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={handleRemoveLogo}
-                disabled={loading || uploading}
+                disabled={loading || uploading || isInactive}
               >
                 <X className="h-4 w-4 mr-2" />
                 Remove
@@ -441,9 +443,9 @@ export default function ProfileSettingsPage() {
       </Card>
 
       <div className="flex items-center justify-end">
-        <Button onClick={handleSave} disabled={saving || loading}>
+        <Button onClick={handleSave} disabled={saving || loading || isInactive}>
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-          Save Changes
+          {isInactive ? "Save Changes (Locked)" : "Save Changes"}
         </Button>
       </div>
     </div>

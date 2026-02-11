@@ -23,6 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
+import { StatusToggle } from "@/components/ui/status-toggle";
+import {
+  toggleWarrantyAssignmentStatusAction,
+} from "@/lib/actions/warranty-sales";
 import DataTable from "@/components/common/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -75,7 +80,28 @@ function AssignedWarrantiesContent() {
     setLoadingSales(false);
   };
 
-  const columns = useMemo<ColumnDef<any>[]>(() => [
+  const handleToggleAssignmentStatus = async (id: string) => {
+    try {
+      const res = await toggleWarrantyAssignmentStatusAction(id);
+      if (res.status) {
+        toast.success(res.message || "Status updated");
+        setSales((prev) =>
+          prev.map((s) =>
+            s.id === id
+              ? { ...s, status: s.status === "active" ? "inactive" : "active" }
+              : s
+          )
+        );
+      } else {
+        toast.error(res.message || "Failed to update status");
+      }
+    } catch (error) {
+      toast.error("Failed to update status");
+    }
+  };
+
+  const columns = useMemo<ColumnDef<any>[]>(
+    () => [
     {
       accessorKey: "id",
       header: "Assignment ID",
@@ -118,6 +144,28 @@ function AssignedWarrantiesContent() {
       )
     },
     {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const isPackageInactive = row.original.warrantyPackage?.status !== "active";
+        
+        return (
+          <div className="flex flex-col gap-1">
+            <StatusToggle
+              checked={row.original.status === "active"}
+              onCheckedChange={() => handleToggleAssignmentStatus(row.original.id)}
+              disabled={isPackageInactive}
+            />
+            {isPackageInactive && (
+              <span className="text-[9px] text-destructive font-bold uppercase tracking-tighter">
+                Global Package Inactive
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "dealerPrice12Months",
       header: "12m Dealer",
       cell: ({ row }) => formatCurrency(row.original.dealerPrice12Months)
@@ -149,8 +197,10 @@ function AssignedWarrantiesContent() {
             </Button>
         </div>
       )
-    }
-  ], []);
+    },
+  ],
+  [sales]
+);
 
   return (
     <div className="space-y-6">

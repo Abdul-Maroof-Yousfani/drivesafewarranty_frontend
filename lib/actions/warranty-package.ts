@@ -149,9 +149,10 @@ export async function getWarrantyPackagesAction(options?: {
   return json;
 }
 
-export async function getDealerWarrantyPackagesAction(): Promise<
-  ApiResponse<WarrantyPackage[]>
-> {
+export async function getDealerWarrantyPackagesAction(options?: {
+  includeInactive?: boolean;
+  includeDeleted?: boolean;
+}): Promise<ApiResponse<WarrantyPackage[]>> {
   const cookieStore = await cookies();
   const token = cookieStore.get("accessToken")?.value;
 
@@ -163,7 +164,13 @@ export async function getDealerWarrantyPackagesAction(): Promise<
   const headersList = await headers();
   const host = headersList.get("host") || "";
 
-  const res = await fetch(`${API_BASE}/warranty-packages?context=dealer`, {
+  const query = new URLSearchParams();
+  query.append("context", "dealer");
+  if (options?.includeInactive) query.append("includeInactive", "true");
+  if (options?.includeDeleted) query.append("includeDeleted", "true");
+  const queryString = query.toString();
+
+  const res = await fetch(`${API_BASE}/warranty-packages?${queryString}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,

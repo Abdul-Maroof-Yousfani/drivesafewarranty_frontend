@@ -20,6 +20,7 @@ export interface Dealer {
   bankDetails?: { bankName: string; accountNumber: string; accountHolderName: string; routingNumber?: string; } | null;
   authorizedSignatory?: { name: string; title: string; email?: string; phone?: string; } | null;
   dealerAgreementSigned: boolean;
+  hasHrmAccess: boolean;
   onboardingDate?: Date | string | null;
   status: string;
   databaseName?: string | null;
@@ -43,6 +44,20 @@ export interface Dealer {
     usedBytes: string;
     limitBytes: string;
     lastCalculated: Date | string;
+  } | null;
+}
+
+export interface DealerStatusHistory {
+  id: string;
+  dealerId: string;
+  statusFrom: string;
+  statusTo: string;
+  reason?: string | null;
+  createdAt: Date | string;
+  changedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
   } | null;
 }
 
@@ -87,25 +102,14 @@ export async function getDealers(): Promise<{ status: boolean; data?: Dealer[]; 
 
     const result = await res.json();
 
-    // Backend currently returns:
-    // { status: true, data: { dealers: Dealer[], total, page, limit, totalPages } }
-    // Normalize so that frontend always gets Dealer[] in data
     let dealers: Dealer[] = [];
 
-    // Debug logging
-    console.log("getDealers API Response Data Keys:", Object.keys(result?.data || {}));
-
     if (Array.isArray(result?.data)) {
-      console.log("getDealers: result.data is Array");
       dealers = result.data as Dealer[];
     } else if (Array.isArray(result?.data?.data)) {
-      console.log("getDealers: result.data.data is Array (Correct for new Interceptor)");
       dealers = result.data.data as Dealer[];
     } else if (Array.isArray(result?.data?.dealers)) {
-         console.log("getDealers: result.data.dealers is Array (Legacy)");
          dealers = result.data.dealers as Dealer[];
-    } else {
-        console.warn("getDealers: Could not find dealers array in response", result);
     }
 
     return {
@@ -170,7 +174,8 @@ export async function createDealer(data: {
   };
   dealerAgreementSigned: boolean;
   onboardingDate: Date | string;
-  password: string; // Password set by Super Admin
+  password: string; 
+  hasHrmAccess?: boolean;
 }): Promise<{ status: boolean; data?: CreateDealerResponse; message?: string }> {
   try {
     const token = await getAccessToken();
@@ -222,6 +227,8 @@ export async function updateDealer(
     dealerAgreementSigned: boolean;
     onboardingDate: Date | string;
     status: string;
+    hasHrmAccess: boolean;
+    reason?: string;
   }>
 ): Promise<{ status: boolean; data?: Dealer; message?: string }> {
   try {
@@ -310,13 +317,11 @@ export async function downloadDealerCredentials(id: string): Promise<{ status: b
       return { status: false, message: errorData.message || 'Failed to download credentials' };
     }
     
-    // Get filename from Content-Disposition header or use default
     const contentDisposition = res.headers.get('Content-Disposition');
     const filename = contentDisposition
       ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
       : `dealer-credentials-${id}.xlsx`;
     
-    // Create blob and download
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -382,3 +387,30 @@ export async function verifyDealerCredentials(
   }
 }
 
+export async function getDealerStatusHistory(id: string): Promise<{ status: boolean; data?: DealerStatusHistory[]; message?: string }> {
+  try {
+    const token = await getAccessToken();
+    const headersList = await headers();
+    const host = headersList.get("host") || "";
+
+    const res = await fetch(`${API_BASE}/dealers/${id}/status-history`, {
+      cache: "no-store",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Host": host,
+        "X-Forwarded-Host": host
+      },
+    });
+    
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return { status: false, message: errorData.message || `Error: ${res.status} ${res.statusText}` };
+    }
+
+    const result = await res.json();
+    return result;
+  } catch (error) {
+    console.error("Failed to fetch dealer status history:", error);
+    return { status: false, message: error instanceof Error ? error.message : "Failed to fetch dealer status history" };
+  }
+}

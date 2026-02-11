@@ -22,6 +22,7 @@ import {
 export interface AutocompleteOption {
   value: string
   label: string
+  disabled?: boolean
 }
 
 interface AutocompleteProps {
@@ -97,12 +98,13 @@ export function Autocomplete({
                       <CommandItem
                         key={option.value}
                         value={option.label}
+                        disabled={option.disabled}
                         onSelect={(selectedLabel) => {
                           // Find the option that matches the selected label
                           const selectedOption = options.find(
                             (opt) => opt.label === selectedLabel
                           );
-                          if (selectedOption) {
+                          if (selectedOption && !selectedOption.disabled) {
                             const newValue = isSelected ? "" : selectedOption.value;
                             onValueChange?.(newValue);
                             setOpen(false);
@@ -115,7 +117,9 @@ export function Autocomplete({
                             isSelected ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        {option.label}
+                        <span className={cn(option.disabled && "text-muted-foreground")}>
+                          {option.label}
+                        </span>
                       </CommandItem>
                     );
                   })}

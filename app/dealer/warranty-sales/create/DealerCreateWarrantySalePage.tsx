@@ -295,7 +295,7 @@ export default function DealerCreateWarrantySalePage() {
       try {
         const [customersRes, packagesRes] = await Promise.all([
           getDealerCustomersAction(),
-          getDealerWarrantyPackagesAction(),
+          getDealerWarrantyPackagesAction({ includeInactive: true }),
         ]);
 
         if (customersRes.status && customersRes.data) {
@@ -314,37 +314,46 @@ export default function DealerCreateWarrantySalePage() {
           const packageId =
             searchParams.get("packageId") ||
             searchParams.get("warrantyPackageId");
+
           if (packageId) {
             const found = packagesRes.data.find(
               (p: WarrantyPackage) => p.id === packageId
             );
             if (found) {
-              setPkg(found);
+              if (found.status !== "active") {
+                toast.warning(
+                  `The pre-selected package "${found.name}" is currently inactive and cannot be used for new sales.`
+                );
+                setPkg(null);
+                form.setValue("warrantyPackageId", "");
+              } else {
+                setPkg(found);
 
-              // Set package ID and original prices
-              form.setValue("warrantyPackageId", found.id);
-              form.setValue("excess", found.excess || 0);
-              form.setValue("labourRatePerHour", found.labourRatePerHour || 0);
-              form.setValue("fixedClaimLimit", found.fixedClaimLimit || 0);
+                // Set package ID and original prices
+                form.setValue("warrantyPackageId", found.id);
+                form.setValue("excess", found.excess || 0);
+                form.setValue("labourRatePerHour", found.labourRatePerHour || 0);
+                form.setValue("fixedClaimLimit", found.fixedClaimLimit || 0);
 
-              // Store original prices for reference
-              form.setValue("price12Months", found.price12Months || null);
-              form.setValue("price24Months", found.price24Months || null);
-              form.setValue("price36Months", found.price36Months || null);
+                // Store original prices for reference
+                form.setValue("price12Months", found.price12Months || null);
+                form.setValue("price24Months", found.price24Months || null);
+                form.setValue("price36Months", found.price36Months || null);
 
-              // Auto-select duration/price logic
-              if (found.price12Months != null) {
-                form.setValue("duration", 12);
-                form.setValue("price", Number(found.price12Months));
-              } else if (found.price24Months != null) {
-                form.setValue("duration", 24);
-                form.setValue("price", Number(found.price24Months));
-              } else if (found.price36Months != null) {
-                form.setValue("duration", 36);
-                form.setValue("price", Number(found.price36Months));
-              } else if (found.price != null) {
-                form.setValue("price", Number(found.price));
-                form.setValue("duration", found.coverageDuration || 12);
+                // Auto-select duration/price logic
+                if (found.price12Months != null) {
+                  form.setValue("duration", 12);
+                  form.setValue("price", Number(found.price12Months));
+                } else if (found.price24Months != null) {
+                  form.setValue("duration", 24);
+                  form.setValue("price", Number(found.price24Months));
+                } else if (found.price36Months != null) {
+                  form.setValue("duration", 36);
+                  form.setValue("price", Number(found.price36Months));
+                } else if (found.price != null) {
+                  form.setValue("price", Number(found.price));
+                  form.setValue("duration", found.coverageDuration || 12);
+                }
               }
             }
           }
@@ -443,8 +452,12 @@ export default function DealerCreateWarrantySalePage() {
                       </FormControl>
                       <SelectContent>
                         {packages.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.name}
+                          <SelectItem
+                            key={p.id}
+                            value={p.id}
+                            disabled={p.status !== "active"}
+                          >
+                            {p.status === "active" ? p.name : `${p.name} (Inactive)`}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -652,7 +665,7 @@ export default function DealerCreateWarrantySalePage() {
                         </FormControl>
                         <SelectContent>
                           {availableVehicles.length > 0 ? (
-                            availableVehicles.map((v) => (
+                            availableVehicles.map((v: any) => (
                               <SelectItem key={v.id} value={v.id}>
                                 {v.make} {v.model} ({v.year}) -{" "}
                                 {v.registrationNumber || "No Reg"}
