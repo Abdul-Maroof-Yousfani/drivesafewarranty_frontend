@@ -765,6 +765,7 @@ export function DirectPurchaseForm({
                           <FormLabel>VIN *</FormLabel>
                           <FormControl>
                             <Input
+                            
                               placeholder="Vehicle Identification Number"
                               {...field}
                               onChange={(e) =>

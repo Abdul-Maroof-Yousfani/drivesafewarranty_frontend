@@ -25,6 +25,20 @@ const fontMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Drive Safe Warranty",
   description: "Drive Safe Warranty",
+  icons: {
+    icon: [
+      {
+        url: "/Drive Safe-04.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/DriveSafelogowhite-05.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+    shortcut: "/Drive Safe-04.png",
+    apple: "/Drive Safe-04.png",
+  },
 };
 
 export default function RootLayout({

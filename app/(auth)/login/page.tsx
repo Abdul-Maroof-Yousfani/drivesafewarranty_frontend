@@ -80,8 +80,9 @@ export default function LoginPage() {
   return (
     <Card>
       <CardHeader className="space-y-1 text-center">
-        <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-white p-2 shadow-sm border">
-          <img src="/Drive Safe-04.png" alt="DriveSafe" className="h-full w-full object-contain" />
+        <div className="mx-auto mb-4 flex h-34 w-34 items-center justify-center">
+          <img src="/Drive Safe-04.png"  alt="DriveSafe" className="h-full w-full object-contain dark:hidden" />
+          <img src="/DriveSafelogowhite-05.png"  alt="DriveSafe" className="h-full w-full object-contain hidden dark:block" />
         </div>
         <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>
