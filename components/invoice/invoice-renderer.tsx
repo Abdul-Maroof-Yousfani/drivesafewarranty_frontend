@@ -230,13 +230,13 @@ export function InvoiceRenderer({
               }}
             >
               <h1
-                className="text-2xl font-bold tracking-tight leading-tight"
+                className="text-2xl font-bold tracking-tight leading-tight break-words"
                 style={{ color: primaryColor }}
               >
                 {companyName}
               </h1>
               <p
-                className="whitespace-pre-line text-sm max-w-[280px]"
+                className="whitespace-pre-line text-sm max-w-[280px] break-words"
                 style={{ color: slate[500] }}
               >
                 {companyAddress}
@@ -272,7 +272,7 @@ export function InvoiceRenderer({
                 <span className="font-semibold" style={{ color: slate[700] }}>
                   Invoice #:
                 </span>{" "}
-                {invoiceNumber}
+                <span className="break-all">{invoiceNumber}</span>
               </p>
               <p>
                 <span className="font-semibold" style={{ color: slate[700] }}>
@@ -314,19 +314,19 @@ export function InvoiceRenderer({
               >
                 {isSettlement ? "Dealer (Bill To):" : billToTitle}
               </h3>
-              <p className="font-bold text-lg" style={{ color: slate[900] }}>
+              <p className="font-bold text-lg break-words" style={{ color: slate[900] }}>
                 {billToName}
               </p>
               {billToAddress && (
                 <p
-                  className="whitespace-pre-line mt-1"
+                  className="whitespace-pre-line mt-1 break-words"
                   style={{ color: slate[600] }}
                 >
                   {billToAddress}
                 </p>
               )}
               {billToEmail && (
-                <p className="mt-1" style={{ color: slate[600] }}>
+                <p className="mt-1 break-all" style={{ color: slate[600] }}>
                   {billToEmail}
                 </p>
               )}
@@ -384,7 +384,7 @@ export function InvoiceRenderer({
                 <span className="font-medium" style={{ color: slate[500] }}>
                   Vehicle
                 </span>
-                <span className="font-bold" style={{ color: slate[800] }}>
+                <span className="font-bold break-words ml-4 text-right" style={{ color: slate[800] }}>
                   {vehicle.make} {vehicle.model} ({vehicle.year})
                 </span>
               </div>
@@ -396,7 +396,7 @@ export function InvoiceRenderer({
                   <span className="font-medium" style={{ color: slate[500] }}>
                     Registration
                   </span>
-                  <span className="font-bold" style={{ color: slate[800] }}>
+                  <span className="font-bold break-all ml-4 text-right" style={{ color: slate[800] }}>
                     {vehicle.registrationNumber}
                   </span>
                 </div>
@@ -409,7 +409,7 @@ export function InvoiceRenderer({
                   <span className="font-medium" style={{ color: slate[500] }}>
                     VIN
                   </span>
-                  <span className="font-bold" style={{ color: slate[800] }}>
+                  <span className="font-bold break-all ml-4 text-right" style={{ color: slate[800] }}>
                     {vehicle.vin}
                   </span>
                 </div>
@@ -460,7 +460,9 @@ export function InvoiceRenderer({
                     className="py-2 font-medium"
                     style={{ color: slate[800] }}
                   >
-                    {item.description}
+                    <div className="break-words">
+                      {item.description}
+                    </div>
                     {isSettlement && (
                       <div
                         className="text-xs mt-1 italic"
@@ -537,7 +539,7 @@ export function InvoiceRenderer({
                 {notesHeading || "Notes"}
               </h4>
               <p
-                className="text-sm leading-relaxed"
+                className="text-sm leading-relaxed break-words"
                 style={{ color: slate[600] }}
               >
                 {notes}
@@ -564,7 +566,7 @@ export function InvoiceRenderer({
                 {termsHeading || "Terms & Conditions"}
               </h4>
               <p
-                className="text-sm leading-relaxed"
+                className="text-sm leading-relaxed break-words"
                 style={{ color: slate[600] }}
               >
                 {termsText}
@@ -588,7 +590,7 @@ export function InvoiceRenderer({
               onLayoutChange("footerOffsetY", footerOffsetY + info.offset.y);
             }}
           >
-            <p>
+            <p className="break-words">
               {isSettlement
                 ? "Official Drive Safe Settlement Statement"
                 : footerText || "Thank you for your business!"}

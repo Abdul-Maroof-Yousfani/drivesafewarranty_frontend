@@ -75,9 +75,9 @@ type DvlaVehicleEnquiryResponse = {
 
 // Vehicle schema - model removed (DVLA doesn't return it, user won't enter it)
 const vehicleSchema = z.object({
-  registrationNumber: z.string().min(1, "Registration number is required"),
-  vin: z.string().min(1, "VIN is required"),
-  make: z.string().min(1, "Make is required"),
+  registrationNumber: z.string().min(1, "Registration number is required").regex(/^[A-Z0-9\s]{5,8}$/i, "Invalid registration number format").max(8, "Registration number too long"),
+  vin: z.string().min(1, "VIN is required").length(17, "VIN must be exactly 17 characters").max(17, "VIN too long"),
+  make: z.string().min(1, "Make is required").max(30, "Make too long"),
   year: z.coerce
     .number()
     .min(1900, "Year must be 1900 or later")
@@ -88,14 +88,14 @@ const vehicleSchema = z.object({
 
 // Customer schema
 const customerSchema = z.object({
-  firstName: z.string().min(2, "First name is required"),
-  lastName: z.string().min(2, "Last name is required"),
-  email: z.string().email("Valid email is required"),
-  phone: z.string().min(10, "Phone must be at least 10 digits"),
-  address: z.string().min(5, "Address is required"),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zipCode: z.string().optional(),
+  firstName: z.string().min(2, "First name is required").max(60, "First name too long"),
+  lastName: z.string().min(2, "Last name is required").max(60, "Last name too long"),
+  email: z.string().email("Valid email is required").max(100, "Email too long"),
+  phone: z.string().min(1, "Phone is required").regex(/^(?:\+?\d{1,3})?[\d\s\-]{7,15}$/, "Invalid phone number (e.g., 07123456789 or +447123456789)").max(13, "Phone number too long"),
+  address: z.string().min(1, "Address is required").max(200, "Address too long"),
+  city: z.string().max(100, "City too long").optional(),
+  state: z.string().max(100, "State too long").optional(),
+  zipCode: z.string().max(10, "Zip code too long").optional(),
 });
 
 type VehicleFormValues = z.infer<typeof vehicleSchema>;
@@ -240,7 +240,7 @@ function PlanCard({
       <div className="text-center mb-6">
         <h3
           className={cn(
-            "text-xl font-bold mb-2",
+            "text-xl font-bold mb-2 break-words",
             isFeatured ? "text-white" : "text-gray-900"
           )}
         >
@@ -249,7 +249,7 @@ function PlanCard({
         {pkg.description && (
           <p
             className={cn(
-              "text-sm",
+              "text-sm break-words",
               isFeatured ? "text-white/80" : "text-gray-500"
             )}
           >
@@ -765,8 +765,8 @@ export function DirectPurchaseForm({
                           <FormLabel>VIN *</FormLabel>
                           <FormControl>
                             <Input
-                            
                               placeholder="Vehicle Identification Number"
+                              maxLength={17}
                               {...field}
                               onChange={(e) =>
                                 field.onChange(
@@ -789,6 +789,7 @@ export function DirectPurchaseForm({
                           <FormControl>
                             <Input
                               placeholder="ABCD123"
+                              maxLength={8}
                               {...field}
                               onChange={(e) =>
                                 field.onChange(
@@ -1000,7 +1001,7 @@ export function DirectPurchaseForm({
                         <FormItem>
                           <FormLabel>Last Name *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Doe" {...field} />
+                            <Input placeholder="Doe" maxLength={60} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1018,6 +1019,7 @@ export function DirectPurchaseForm({
                           <Input
                             type="email"
                             placeholder="john@example.com"
+                            maxLength={100}
                             {...field}
                           />
                         </FormControl>
@@ -1032,11 +1034,12 @@ export function DirectPurchaseForm({
                         <FormLabel>Phone *</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="1234567890"
+                            placeholder="e.g. 07123456789"
+                            maxLength={13}
                             {...field}
                             onChange={(e) =>
                               field.onChange(
-                                e.target.value.replace(/[^0-9]/g, "")
+                                e.target.value.replace(/[^0-9+]/g, "")
                               )
                             }
                           />
@@ -1051,7 +1054,7 @@ export function DirectPurchaseForm({
                       <FormItem>
                         <FormLabel>Address *</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Full address" {...field} />
+                          <Textarea placeholder="Full address" maxLength={200} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1064,7 +1067,7 @@ export function DirectPurchaseForm({
                         <FormItem>
                           <FormLabel>City</FormLabel>
                           <FormControl>
-                            <Input placeholder="City" {...field} />
+                            <Input placeholder="City" maxLength={100} {...field} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -1075,7 +1078,7 @@ export function DirectPurchaseForm({
                         <FormItem>
                           <FormLabel>State</FormLabel>
                           <FormControl>
-                            <Input placeholder="State" {...field} />
+                            <Input placeholder="State" maxLength={100} {...field} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -1086,7 +1089,7 @@ export function DirectPurchaseForm({
                         <FormItem>
                           <FormLabel>Zip</FormLabel>
                           <FormControl>
-                            <Input placeholder="12345" {...field} />
+                            <Input placeholder="12345" maxLength={10} {...field} />
                           </FormControl>
                         </FormItem>
                       )}

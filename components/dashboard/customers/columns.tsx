@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deleteCustomer } from "@/lib/actions/customer";
 import { useRouter } from "next/navigation";
+import { useDealerStatus } from "@/lib/hooks/use-dealer-status";
+import { cn } from "@/lib/utils";
 
 export type CustomerRow = {
   id: string;
@@ -146,6 +148,10 @@ export const getColumns = (role: 'admin' | 'dealer'): ColumnDef<CustomerRow>[] =
       id: "actions",
       cell: ({ row }) => {
         const customer = row.original;
+        const { isInactive, loading } = useDealerStatus();
+        const isDealer = role === 'dealer';
+        const isActionDisabled = isDealer && (isInactive || loading);
+
         return (
           <div className="flex items-center ">
             <TooltipProvider>
@@ -166,30 +172,50 @@ export const getColumns = (role: 'admin' | 'dealer'): ColumnDef<CustomerRow>[] =
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link href={`${basePath}/customers/edit/${customer.id}`}>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    asChild={!isActionDisabled}
+                    disabled={isActionDisabled}
+                    className={cn(isActionDisabled && "opacity-50 cursor-not-allowed")}
+                  >
+                    {isActionDisabled ? (
                       <Edit className="h-4 w-4" />
-                    </Link>
+                    ) : (
+                      <Link href={`${basePath}/customers/edit/${customer.id}`}>
+                        <Edit className="h-4 w-4" />
+                      </Link>
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Edit Customer</p>
+                  <p>{isActionDisabled ? "Editing disabled (Inactive)" : "Edit Customer"}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link
-                      href={`${basePath}/warranty-sales/create?customerId=${customer.id}`}
-                    >
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    asChild={!isActionDisabled}
+                    disabled={isActionDisabled}
+                    className={cn(isActionDisabled && "opacity-50 cursor-not-allowed")}
+                  >
+                    {isActionDisabled ? (
                       <ClipboardPlus className="h-4 w-4" />
-                    </Link>
+                    ) : (
+                      <Link
+                        href={`${basePath}/warranty-sales/create?customerId=${customer.id}`}
+                      >
+                        <ClipboardPlus className="h-4 w-4" />
+                      </Link>
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Assign Warranty Package</p>
+                  <p>{isActionDisabled ? "Assignment disabled (Inactive)" : "Assign Warranty Package"}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -202,7 +228,11 @@ export const getColumns = (role: 'admin' | 'dealer'): ColumnDef<CustomerRow>[] =
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        disabled={isActionDisabled}
+                        className={cn(
+                          "text-destructive hover:text-destructive hover:bg-destructive/10",
+                          isActionDisabled && "opacity-50 cursor-not-allowed"
+                        )}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

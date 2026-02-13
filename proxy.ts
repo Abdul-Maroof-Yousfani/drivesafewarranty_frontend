@@ -86,13 +86,11 @@ export default function middleware(request: NextRequest): NextResponse {
     pathname.startsWith(route)
   );
 
-  // Redirect authenticated users away from public routes (e.g. /login)
-  if (isAuthenticated && isPublicRoute) {
+  // Redirect authenticated users away from LOGIN page only (allow get-warranty)
+  if (isAuthenticated && pathname === "/login") {
     const target = getDashboardPath(userRole);
-    if (target !== pathname) {
-      console.log(`[Middleware] Redirecting auth user from ${pathname} to ${target}`);
-      return NextResponse.redirect(new URL(target, request.url));
-    }
+    console.log(`[Middleware] Redirecting auth user from ${pathname} to ${target}`);
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
   // Redirect unauthenticated users trying to access protected routes

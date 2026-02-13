@@ -99,7 +99,7 @@ export interface WarrantySale {
   }>;
 }
 
-export async function getWarrantySalesAction(): Promise<{
+export async function getWarrantySalesAction(dealerId?: string): Promise<{
   status: boolean;
   data: WarrantySale[];
   message?: string;
@@ -109,7 +109,10 @@ export async function getWarrantySalesAction(): Promise<{
     const headersList = await headers();
     const host = headersList.get("host") || "";
 
-    const res = await fetch(`${API_BASE}/warranty-sales`, {
+    const queryParams = new URLSearchParams();
+    if (dealerId) queryParams.append("dealerId", dealerId);
+
+    const res = await fetch(`${API_BASE}/warranty-sales?${queryParams.toString()}`, {
       cache: "no-store",
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
@@ -260,14 +263,19 @@ export async function updateWarrantyAssignmentAction(
 
 
 export async function getWarrantySaleByIdAction(
-  id: string
+  id: string,
+  dealerId?: string,
 ): Promise<{ status: boolean; data?: WarrantySale; message?: string }> {
   try {
     const token = await getAccessToken();
     const headersList = await headers();
     const host = headersList.get("host") || "";
 
-    const res = await fetch(`${API_BASE}/warranty-sales/${id}`, {
+    const queryParams = new URLSearchParams();
+    if (dealerId) queryParams.append("dealerId", dealerId);
+    const queryString = queryParams.toString();
+
+    const res = await fetch(`${API_BASE}/warranty-sales/${id}${queryString ? `?${queryString}` : ''}`, {
       cache: "no-store",
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),

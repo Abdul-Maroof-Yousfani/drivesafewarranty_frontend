@@ -8,16 +8,25 @@ export function useDealerStatus() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     async function loadUser() {
-      const user = await getCurrentUser();
-      if (user && user.role === "dealer") {
-        const status = user.details?.status || "active";
-        setIsInactive(status !== "active");
-        setHasHrmAccess(user.details?.hasHrmAccess || false);
+      try {
+        const user = await getCurrentUser();
+        if (!isMounted) return;
+        
+        if (user && user.role === "dealer") {
+          const status = user.details?.status || "active";
+          setIsInactive(status !== "active");
+          setHasHrmAccess(user.details?.hasHrmAccess || false);
+        }
+      } catch (error) {
+        console.error("Failed to load dealer status:", error);
+      } finally {
+        if (isMounted) setLoading(false);
       }
-      setLoading(false);
     }
     loadUser();
+    return () => { isMounted = false; };
   }, []);
 
   return { isInactive, hasHrmAccess, loading };

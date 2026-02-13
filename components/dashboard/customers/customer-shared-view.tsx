@@ -26,6 +26,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentsTab } from "@/app/shared/documents/documents-tab";
+import { useDealerStatus } from "@/lib/hooks/use-dealer-status";
+import { format, isValid } from "date-fns";
 import {
   Accordion,
   AccordionContent,
@@ -40,6 +42,19 @@ interface CustomerSharedViewProps {
 
 export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) {
   const router = useRouter();
+  const { isInactive } = useDealerStatus();
+
+  // Helper to safely format dates
+  const formatDate = (dateString: string | Date | undefined | null) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      if (!isValid(date)) return "N/A";
+      return format(date, "dd/MM/yyyy");
+    } catch (e) {
+      return "N/A";
+    }
+  };
 
   if (!customer) {
     return (
@@ -59,10 +74,10 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
     <div className="space-y-6 max-w-6xl mx-auto p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight break-all">
             {customer.firstName} {customer.lastName}
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-2 break-all">
             Customer ID: {customer.id}
           </p>
         </div>
@@ -75,11 +90,23 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <Button asChild className="flex-1 sm:flex-none">
-            <Link href={editUrl}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Link>
+          <Button 
+            asChild={!isInactive} 
+            className="flex-1 sm:flex-none"
+            disabled={isInactive}
+            variant={isInactive ? "secondary" : "default"}
+          >
+            {isInactive ? (
+              <span className="flex items-center opacity-70">
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </span>
+            ) : (
+              <Link href={editUrl}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Link>
+            )}
           </Button>
         </div>
       </div>
@@ -103,7 +130,7 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                   <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm font-medium">Email</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-all">
                       {customer.email}
                     </p>
                   </div>
@@ -112,7 +139,7 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                   <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm font-medium">Phone</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-all">
                       {customer.phone}
                     </p>
                   </div>
@@ -121,7 +148,7 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                   <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm font-medium">Address</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-all">
                       {customer.address}
                     </p>
                   </div>
@@ -140,7 +167,7 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                 {showAdminFields && customer.dealerName && (
                   <div>
                     <p className="text-sm font-medium">Dealer</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-all">
                       {customer.dealerName}
                     </p>
                   </div>
@@ -168,9 +195,9 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
                             <Car className="h-5 w-5 text-primary" />
-                            <h3 className="text-lg font-semibold">
-                              {vehicle.make} {vehicle.model}
-                              <span className="text-muted-foreground ml-2 text-sm font-normal">
+                            <h3 className="text-lg font-semibold break-all">
+                              <span>{vehicle.make} {vehicle.model}</span>
+                              <span className="text-muted-foreground ml-2 text-sm font-normal shrink-0">
                                 ({vehicle.year})
                               </span>
                             </h3>
@@ -212,7 +239,7 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                               Registration
                             </p>
                             <div className="flex items-center gap-2">
-                              <span className="font-mono bg-muted px-2 py-0.5 rounded text-sm font-medium tracking-wide">
+                              <span className="font-mono bg-muted px-2 py-0.5 rounded text-sm font-medium tracking-wide break-all">
                                 {vehicle.registrationNumber || "N/A"}
                               </span>
                             </div>
@@ -230,7 +257,7 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                               VIN
                             </p>
                             <p
-                              className="text-sm font-mono text-muted-foreground truncate"
+                              className="text-sm font-mono text-muted-foreground break-all"
                               title={vehicle.vin || ""}
                             >
                               {vehicle.vin || "N/A"}
@@ -323,9 +350,7 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                                   </span>
                                   <span className="font-medium">
                                     {vehicle.dvlaDateOfLastV5CIssued
-                                      ? new Date(
-                                          vehicle.dvlaDateOfLastV5CIssued
-                                        ).toLocaleDateString()
+                                      ? formatDate(vehicle.dvlaDateOfLastV5CIssued)
                                       : "N/A"}
                                   </span>
                                 </div>
@@ -349,11 +374,9 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                                   <span className="text-muted-foreground">
                                     Tax Due Date:
                                   </span>
-                                  <span className="font-medium">
+                                  <span className="font-medium" suppressHydrationWarning>
                                     {vehicle.dvlaTaxDueDate
-                                      ? new Date(
-                                          vehicle.dvlaTaxDueDate
-                                        ).toLocaleDateString()
+                                      ? formatDate(vehicle.dvlaTaxDueDate)
                                       : "N/A"}
                                   </span>
                                 </div>
@@ -361,11 +384,9 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                                   <span className="text-muted-foreground">
                                     MOT Expiry:
                                   </span>
-                                  <span className="font-medium">
+                                  <span className="font-medium" suppressHydrationWarning>
                                     {vehicle.dvlaMotExpiryDate
-                                      ? new Date(
-                                          vehicle.dvlaMotExpiryDate
-                                        ).toLocaleDateString()
+                                      ? formatDate(vehicle.dvlaMotExpiryDate)
                                       : "N/A"}
                                   </span>
                                 </div>
@@ -383,16 +404,16 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                             <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
                             <div>
                               <p className="text-sm font-medium">Vehicle</p>
-                              <p className="text-sm text-muted-foreground">
-                                {customer.vehicleMake} {customer.vehicleModel} (
-                                {customer.vehicleYear})
-                              </p>
+                              <p className="text-sm text-muted-foreground break-all">
+                              <span>{customer.vehicleMake} {customer.vehicleModel}</span> (
+                              {customer.vehicleYear})
+                            </p>
                             </div>
                           </div>
                           {customer.vin && (
                             <div>
                               <p className="text-sm font-medium">VIN Number</p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm text-muted-foreground break-all">
                                 {customer.vin}
                               </p>
                             </div>
@@ -402,7 +423,7 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                               <p className="text-sm font-medium">
                                 Registration Number
                               </p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm text-muted-foreground break-all">
                                 {customer.registrationNumber}
                               </p>
                             </div>
@@ -445,7 +466,7 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                     <ShieldCheck className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="text-sm font-medium">Package</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground break-all">
                         {customer.currentWarranty.warrantyPackage.name}
                         {customer.currentWarranty.warrantyPackage.planLevel &&
                           ` (${customer.currentWarranty.warrantyPackage.planLevel})`}
@@ -457,7 +478,7 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                       <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
                       <div>
                         <p className="text-sm font-medium">Covered Vehicle</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground break-all">
                           {customer.currentWarranty.vehicle.make}{" "}
                           {customer.currentWarranty.vehicle.model} (
                           {customer.currentWarranty.vehicle.year})
@@ -467,24 +488,20 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                   )}
                   <div>
                     <p className="text-sm font-medium">Warranty Number</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-all">
                       {customer.currentWarranty.policyNumber}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium">Coverage Start</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(
-                        customer.currentWarranty.coverageStartDate
-                      ).toLocaleDateString()}
+                    <p className="text-sm text-muted-foreground" suppressHydrationWarning>
+                      {formatDate(customer.currentWarranty.coverageStartDate)}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium">Coverage End</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(
-                        customer.currentWarranty.coverageEndDate
-                      ).toLocaleDateString()}
+                    <p className="text-sm text-muted-foreground" suppressHydrationWarning>
+                      {formatDate(customer.currentWarranty.coverageEndDate)}
                     </p>
                   </div>
                   <div>
@@ -529,15 +546,8 @@ export function CustomerSharedView({ customer, role }: CustomerSharedViewProps) 
                   <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm font-medium">Created At</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(customer.createdAt).toLocaleDateString(
-                        "en-US",
-                        {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        }
-                      )}
+                    <p className="text-sm text-muted-foreground" suppressHydrationWarning>
+                      {customer.createdAt ? format(new Date(customer.createdAt), "MMMM d, yyyy") : "N/A"}
                     </p>
                   </div>
                 </div>

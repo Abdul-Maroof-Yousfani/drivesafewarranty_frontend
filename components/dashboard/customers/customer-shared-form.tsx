@@ -61,27 +61,29 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Plus, Trash2, Edit, Car, Eye, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
+import { useDealerStatus } from "@/lib/hooks/use-dealer-status";
+import { cn } from "@/lib/utils";
 
 // --- Schemas ---
 
 const vehicleSchema = z.object({
   id: z.string().optional(),
-  make: z.string().min(1, "Make is required"),
-  model: z.string().min(1, "Model is required"),
+  make: z.string().min(1, "Make is required").max(60, "Make too long"),
+  model: z.string().min(1, "Model is required").max(60, "Model too long"),
   year: z.coerce.number().min(1900).max(new Date().getFullYear() + 1),
-  vin: z.string().min(1, "VIN is required"),
-  registrationNumber: z.string().min(1, "Registration number is required"),
+  vin: z.string().min(1, "VIN is required").min(17, "VIN must be 17 characters").max(17, "VIN must be 17 characters"),
+  registrationNumber: z.string().min(1, "Registration number is required").regex(/^[A-Z0-9\s]{5,8}$/i, "Invalid UK Registration Number format").max(8, "Registration number too long"),
   mileage: z.coerce.number().min(0).default(0),
-  transmission: z.string().optional().or(z.literal("")),
+  transmission: z.string().max(20, "Transmission too long").optional().or(z.literal("")),
 });
 
 const customerSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().min(1, "Phone is required"),
-  address: z.string().min(1, "Address is required"),
-  password: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal("")),
+  firstName: z.string().min(1, "First name is required").max(30, "First name too long"),
+  lastName: z.string().min(1, "Last name is required").max(30, "Last name too long"),
+  email: z.string().email("Invalid email address").max(100, "Email too long"),
+  phone: z.string().min(1, "Phone is required").regex(/^(?:\+?\d{1,3})?[\d\s\-]{7,15}$/, "Invalid phone number (e.g., 07123456789 or +447123456789)").max(13, "Phone number too long"),
+  address: z.string().min(1, "Address is required").max(200, "Address too long"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(50, "Password too long").optional().or(z.literal("")),
   vehicles: z.array(vehicleSchema).optional(),
 });
 
@@ -107,6 +109,9 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
   const isEditMode = !!customer;
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  const { isInactive } = useDealerStatus();
+  const isReadOnly = role === 'dealer' && isInactive;
 
   // --- Form Setup ---
   const form = useForm<CustomerFormValues>({
@@ -300,7 +305,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>First Name</FormLabel>
-                      <FormControl><Input placeholder="John" {...field} /></FormControl>
+                       <FormControl><Input placeholder="John" maxLength={60} {...field} disabled={isReadOnly} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -311,7 +316,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Last Name</FormLabel>
-                      <FormControl><Input placeholder="Doe" {...field} /></FormControl>
+                       <FormControl><Input placeholder="Doe" maxLength={60} {...field} disabled={isReadOnly} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -324,7 +329,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email</FormLabel>
-                    <FormControl><Input type="email" placeholder="john@example.com" {...field} /></FormControl>
+                     <FormControl><Input type="email" placeholder="john@example.com" maxLength={100} {...field} disabled={isReadOnly} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -338,9 +343,11 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
                         <Input
-                            placeholder="1234567890"
+                            placeholder="e.g. 07123456789"
                             value={field.value || ""}
-                            onChange={(e) => field.onChange(e.target.value.replace(/[^0-9]/g, ""))}
+                            maxLength={13}
+                            onChange={(e) => field.onChange(e.target.value.replace(/[^0-9+]/g, ""))}
+                            disabled={isReadOnly}
                         />
                     </FormControl>
                     <FormMessage />
@@ -354,7 +361,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Address</FormLabel>
-                    <FormControl><Textarea placeholder="Enter customer address" {...field} /></FormControl>
+                     <FormControl><Textarea placeholder="Enter customer address" maxLength={200} {...field} disabled={isReadOnly} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -374,7 +381,9 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                                 <Input
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Set initial password"
+                                maxLength={50}
                                 {...field}
+                                disabled={isReadOnly}
                                 />
                                 <button
                                 type="button"
@@ -406,6 +415,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                                 make: "", model: "", year: new Date().getFullYear(),
                                 vin: "", registrationNumber: "", mileage: 0, transmission: ""
                             })}
+                            disabled={isReadOnly}
                         >
                             <Plus className="h-4 w-4 mr-2" />
                             Add Vehicle
@@ -418,7 +428,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                                 <CardContent className="pt-6">
                                      {createVehicles.length > 1 && (
                                         <div className="absolute top-2 right-2">
-                                            <Button type="button" variant="ghost" size="icon" onClick={() => removeVehicle(index)}>
+                                            <Button type="button" variant="ghost" size="icon" onClick={() => removeVehicle(index)} disabled={isReadOnly}>
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
                                         </div>
@@ -427,15 +437,15 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                                    
                                     <div className="grid grid-cols-2 gap-4 mb-4">
                                          <FormField control={form.control as any} name={`vehicles.${index}.vin`} render={({field}) => (
-                                              <FormItem><FormLabel>VIN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                              <FormItem><FormLabel>VIN</FormLabel><FormControl><Input maxLength={17} {...field} disabled={isReadOnly} /></FormControl><FormMessage /></FormItem>
                                          )} />
                                           <FormField control={form.control as any} name={`vehicles.${index}.registrationNumber`} render={({field}) => (
-                                              <FormItem><FormLabel>Registration Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                              <FormItem><FormLabel>Registration Number</FormLabel><FormControl><Input maxLength={8} {...field} disabled={isReadOnly} /></FormControl><FormMessage /></FormItem>
                                          )} />
                                     </div>
                                     <Button
                                          type="button" variant="outline" size="sm" onClick={() => lookupVehicleCreate(index)}
-                                         disabled={dvlaLoadingIndex === index}
+                                         disabled={dvlaLoadingIndex === index || isReadOnly}
                                     >
                                         {dvlaLoadingIndex === index ? "Loading..." : "Get Vehicle Details"}
                                     </Button>
@@ -444,7 +454,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                                     <div className="grid grid-cols-2 gap-4 mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
                                          {/* 1. FETCHED / READ-ONLY DATA SECTION */}
                                          <FormField control={form.control as any} name={`vehicles.${index}.make`} render={({field}) => (
-                                              <FormItem><FormLabel>Make</FormLabel><FormControl><Input {...field} disabled={!!dvlaDataByIndex[index]?.make} /></FormControl><FormMessage /></FormItem>
+                                              <FormItem><FormLabel>Make</FormLabel><FormControl><Input maxLength={60} {...field} disabled={!!dvlaDataByIndex[index]?.make} /></FormControl><FormMessage /></FormItem>
                                          )} />
                                          <FormField control={form.control as any} name={`vehicles.${index}.year`} render={({field}) => (
                                               <FormItem><FormLabel>Year</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value)||0)} disabled={!!dvlaDataByIndex[index]?.yearOfManufacture} /></FormControl><FormMessage /></FormItem>
@@ -472,16 +482,16 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                                        
 
                                          <FormField control={form.control as any} name={`vehicles.${index}.model`} render={({field}) => (
-                                              <FormItem className="col-span-2"><FormLabel>Model</FormLabel><FormControl><Input {...field} placeholder="Enter specific model details..." /></FormControl><FormMessage /></FormItem>
+                                              <FormItem className="col-span-2"><FormLabel>Model</FormLabel><FormControl><Input maxLength={60} {...field} placeholder="Enter specific model details..." disabled={isReadOnly} /></FormControl><FormMessage /></FormItem>
                                          )} />
 
                                           <FormField control={form.control as any} name={`vehicles.${index}.mileage`} render={({field}) => (
-                                              <FormItem><FormLabel>Mileage</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value)||0)} /></FormControl><FormMessage /></FormItem>
+                                              <FormItem><FormLabel>Mileage</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value)||0)} disabled={isReadOnly} /></FormControl><FormMessage /></FormItem>
                                          )} />
                                          
                                          <FormField control={form.control as any} name={`vehicles.${index}.transmission`} render={({field}) => (
                                               <FormItem><FormLabel>Transmission</FormLabel><FormControl>
-                                                 <Select value={field.value} onValueChange={field.onChange}>
+                                                 <Select value={field.value} onValueChange={field.onChange} disabled={isReadOnly}>
                                                     <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="manual">Manual</SelectItem>
@@ -501,7 +511,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
 
               <div className="flex justify-end gap-2">
                  <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
-                 <Button type="submit" disabled={loading}>{loading ? "Saving..." : (isEditMode ? "Save Changes" : "Create Customer")}</Button>
+                 <Button type="submit" disabled={loading || isReadOnly}>{loading ? "Saving..." : (isEditMode ? "Save Changes" : "Create Customer")}</Button>
               </div>
 
             </form>
@@ -517,7 +527,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                     <CardTitle>Vehicles</CardTitle>
                     <CardDescription>Manage customer vehicles</CardDescription>
                 </div>
-                <Button size="sm" onClick={() => { setEditingVehicle(null); setIsVehicleDialogOpen(true); }}>
+                <Button size="sm" onClick={() => { setEditingVehicle(null); setIsVehicleDialogOpen(true); }} disabled={isReadOnly}>
                     <Plus className="h-4 w-4 mr-2" /> Add Vehicle
                 </Button>
             </CardHeader>
@@ -534,6 +544,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                              </div>
                              <div className="flex gap-2">
                                 <Button variant="ghost" size="icon" onClick={() => { 
+                                      if (isReadOnly) return;
                                      setEditingVehicle({
                                          ...vehicle,
                                          make: vehicle.make || "",
@@ -545,8 +556,8 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
                                          transmission: vehicle.transmission || "",
                                      }); 
                                      setIsVehicleDialogOpen(true); 
-                                 }}> <Edit className="h-4 w-4" /> </Button>
-                                 <DeleteVehicleButton vehicleId={vehicle.id} onDelete={handleVehicleDeleted} />
+                                 }} disabled={isReadOnly}> <Edit className="h-4 w-4" /> </Button>
+                                 <DeleteVehicleButton vehicleId={vehicle.id} onDelete={handleVehicleDeleted} disabled={isReadOnly} />
                              </div>
                          </div>
                      ))}
@@ -571,6 +582,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
               initialData={editingVehicle}
               onSuccess={handleVehicleSaved}
               onCancel={() => setIsVehicleDialogOpen(false)}
+              disabled={isReadOnly}
             />
           </DialogContent>
         </Dialog>
@@ -583,7 +595,7 @@ export function CustomerSharedForm({ role, customer }: CustomerSharedFormProps) 
 // --- Sub Components ---
 
 
-function VehicleForm({ customerId, initialData, onSuccess, onCancel }: VehicleFormProps) {
+function VehicleForm({ customerId, initialData, onSuccess, onCancel, disabled }: VehicleFormProps & { disabled?: boolean }) {
     const [loading, setLoading] = useState(false);
     const [dvlaLoading, setDvlaLoading] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
@@ -704,18 +716,18 @@ function VehicleForm({ customerId, initialData, onSuccess, onCancel }: VehicleFo
             <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-4">
                  <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control as any} name="make" render={({field}) => (
-                        <FormItem><FormLabel>Make</FormLabel><FormControl><Input {...field} disabled={!!initialData?.id} /></FormControl><FormMessage /></FormItem>
+                         <FormItem><FormLabel>Make</FormLabel><FormControl><Input maxLength={60} {...field} disabled={!!initialData?.id || disabled} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control as any} name="model" render={({field}) => (
-                        <FormItem><FormLabel>Model</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                         <FormItem><FormLabel>Model</FormLabel><FormControl><Input maxLength={60} {...field} disabled={disabled} /></FormControl><FormMessage /></FormItem>
                     )} />
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control as any} name="vin" render={({field}) => (
-                        <FormItem><FormLabel>VIN</FormLabel><FormControl><Input {...field} onChange={e => field.onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} disabled={!!initialData?.id} /></FormControl><FormMessage /></FormItem>
+                         <FormItem><FormLabel>VIN</FormLabel><FormControl><Input maxLength={17} {...field} onChange={e => field.onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} disabled={!!initialData?.id || disabled} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control as any} name="registrationNumber" render={({field}) => (
-                        <FormItem><FormLabel>Reg Number</FormLabel><FormControl><Input {...field} onChange={e => field.onChange(e.target.value.toUpperCase().replace(/\s+/g, ""))} disabled={!!initialData?.id} /></FormControl><FormMessage /></FormItem>
+                         <FormItem><FormLabel>Reg Number</FormLabel><FormControl><Input maxLength={8} {...field} onChange={e => field.onChange(e.target.value.toUpperCase().replace(/\s+/g, ""))} disabled={!!initialData?.id || disabled} /></FormControl><FormMessage /></FormItem>
                     )} />
                  </div>
 
@@ -740,10 +752,10 @@ function VehicleForm({ customerId, initialData, onSuccess, onCancel }: VehicleFo
 
                         <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                             <FormField control={form.control as any} name="year" render={({field}) => (
-                                <FormItem><FormLabel>Year</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value)||0)} disabled={!!initialData?.id} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Year</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value)||0)} disabled={!!initialData?.id || disabled} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control as any} name="mileage" render={({field}) => (
-                                <FormItem><FormLabel>Mileage</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value)||0)} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Mileage</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value)||0)} disabled={disabled} /></FormControl><FormMessage /></FormItem>
                             )} />
                         </div>
                         <FormField control={form.control as any} name="transmission" render={({field}) => (
@@ -763,7 +775,7 @@ function VehicleForm({ customerId, initialData, onSuccess, onCancel }: VehicleFo
                 {!initialData?.id && (
                     <div className="flex justify-between items-center bg-muted/20 p-2 rounded-lg border border-border/40">
                          <div className="flex gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={lookupVehicle} disabled={dvlaLoading} className="h-8 text-[11px] font-bold uppercase tracking-wider">
+                            <Button type="button" variant="outline" size="sm" onClick={lookupVehicle} disabled={dvlaLoading || disabled} className="h-8 text-[11px] font-bold uppercase tracking-wider">
                                 {dvlaLoading ? "Fetching..." : "Fetch Vehicle Details"}
                             </Button>
                              {(dvlaData) && (
@@ -776,7 +788,7 @@ function VehicleForm({ customerId, initialData, onSuccess, onCancel }: VehicleFo
                 )}
 
                  <DialogFooter>
-                     <Button type="submit" disabled={loading}>Save</Button>
+                     <Button type="submit" disabled={loading || disabled}>Save</Button>
                  </DialogFooter>
             </form>
         </Form>
@@ -784,14 +796,14 @@ function VehicleForm({ customerId, initialData, onSuccess, onCancel }: VehicleFo
 }
 
 
-function DeleteVehicleButton({ vehicleId, onDelete }: { vehicleId: string; onDelete: (id: string) => void }) {
+function DeleteVehicleButton({ vehicleId, onDelete, disabled }: { vehicleId: string; onDelete: (id: string) => void; disabled?: boolean }) {
     const handleDelete = async () => {
          await deleteCustomerVehicleAction(vehicleId);
          onDelete(vehicleId);
     };
     return (
         <AlertDialog>
-           <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
+           <AlertDialogTrigger asChild><Button variant="ghost" size="icon" disabled={disabled}><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
            <AlertDialogContent>
                <AlertDialogHeader><AlertDialogTitle>Delete?</AlertDialogTitle><AlertDialogDescription>Confirm deletion.</AlertDialogDescription></AlertDialogHeader>
                <AlertDialogFooter>

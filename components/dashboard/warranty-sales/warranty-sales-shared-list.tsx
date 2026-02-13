@@ -28,7 +28,7 @@ export function WarrantySalesSharedList({ role, initialSales }: WarrantySalesSha
   const [isPending, startTransition] = useTransition();
   const [data, setData] = useState<WarrantySaleRow[]>([]);
   const [loading, setLoading] = useState(!initialSales);
-  const { isInactive } = useDealerStatus();
+  const { isInactive, loading: statusLoading } = useDealerStatus();
 
   const basePath = role === "admin" ? "/super-admin" : "/dealer";
 
@@ -126,9 +126,11 @@ export function WarrantySalesSharedList({ role, initialSales }: WarrantySalesSha
     router.push(`${basePath}/warranty-sales/create`);
   };
 
-  const handleMultiDelete = (role === "admin" || (role === "dealer" && !isInactive))
+  const isActionDisabled = (isInactive || statusLoading) && role === "dealer";
+
+  const handleMultiDelete = (role === "admin" || (role === "dealer" && !isActionDisabled))
     ? (ids: string[]) => {
-        if (isInactive && role === "dealer") {
+        if (isActionDisabled) {
           toast.error("Your account is in view-only mode.");
           return;
         }
@@ -157,7 +159,7 @@ export function WarrantySalesSharedList({ role, initialSales }: WarrantySalesSha
         data={data}
         actionText="Add"
         toggleAction={handleToggle}
-        toggleDisabled={isInactive && role === "dealer"}
+        toggleDisabled={isActionDisabled}
         onMultiDelete={handleMultiDelete}
         searchFields={[
           { key: "policyNumber", label: "Warranty Number" },

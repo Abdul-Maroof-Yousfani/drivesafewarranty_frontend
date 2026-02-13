@@ -52,14 +52,10 @@ export default function RootLayout({
         className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased overflow-x-hidden`}
         cz-shortcut-listen="true"
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-        >
+        
           {children}
           <Toaster />
-        </ThemeProvider>
+        
       </body>
     </html>
   );

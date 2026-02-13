@@ -24,7 +24,7 @@ export function CustomerSharedList({
 }: CustomerSharedListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const { isInactive } = useDealerStatus();
+  const { isInactive, loading: statusLoading } = useDealerStatus();
 
   const handleToggle = () => {
     if (isInactive && role === 'dealer') {
@@ -35,9 +35,9 @@ export function CustomerSharedList({
     router.push(`${basePath}/customers/create`);
   };
 
-  const handleMultiDelete = (role === 'admin' || (role === 'dealer' && !isInactive))
+  const handleMultiDelete = (role === 'admin' || (role === 'dealer' && !isInactive && !statusLoading))
     ? (ids: string[]) => {
-        if (isInactive && role === 'dealer') {
+        if ((isInactive || statusLoading) && role === 'dealer') {
           toast.error("Your account is in view-only mode.");
           return;
         }
@@ -80,7 +80,7 @@ export function CustomerSharedList({
         data={data}
         actionText="Add Customer"
         toggleAction={handleToggle}
-        toggleDisabled={isInactive && role === 'dealer'}
+        toggleDisabled={(isInactive || statusLoading) && role === 'dealer'}
         newItemId={newItemId}
         searchFields={[
           { key: "name", label: "Customer Name" },

@@ -326,7 +326,6 @@ export const warrantyPortalMenuData: MenuItem[] = [
     icon: UserCheck,
     children: [
       { title: "Customers", href: "/super-admin/customers/list" }, // Combined create/list into list or main view as per request "customer (ispe click krengy to list show hogi...)"
-      { title: "Documents", href: "/super-admin/documents/view" }, // Combined upload/view or mostly view
     ],
   },
   {
@@ -389,6 +388,11 @@ export const warrantyPortalMenuData: MenuItem[] = [
       { title: "Invoice History", href: "/super-admin/invoices" },
       { title: "Invoice Settings", href: "/super-admin/invoices/invoice" },
     ],
+  },
+  {
+    title: "Documents",
+    icon: FileText,
+    href: "/super-admin/documents/view",
   },
   {
     title: "Settings",

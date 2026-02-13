@@ -73,7 +73,7 @@ export interface Customer {
 }
 
 // Customer Actions
-export async function getCustomers(): Promise<{
+export async function getCustomers(dealerId?: string): Promise<{
   status: boolean;
   data: Customer[];
   message?: string;
@@ -83,7 +83,10 @@ export async function getCustomers(): Promise<{
     const headersList = await headers();
     const host = headersList.get("host") || "";
 
-    const res = await fetch(`${API_BASE}/customers`, {
+    const queryParams = new URLSearchParams();
+    if (dealerId) queryParams.append("dealerId", dealerId);
+
+    const res = await fetch(`${API_BASE}/customers?${queryParams.toString()}`, {
       cache: "no-store",
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
@@ -117,14 +120,19 @@ export async function getCustomers(): Promise<{
 }
 
 export async function getCustomerById(
-  id: string
+  id: string,
+  dealerId?: string,
 ): Promise<{ status: boolean; data: Customer | null; message?: string }> {
   try {
     const token = await getAccessToken();
     const headersList = await headers();
     const host = headersList.get("host") || "";
 
-    const res = await fetch(`${API_BASE}/customers/${id}`, {
+    const queryParams = new URLSearchParams();
+    if (dealerId) queryParams.append("dealerId", dealerId);
+    const queryString = queryParams.toString();
+
+    const res = await fetch(`${API_BASE}/customers/${id}${queryString ? `?${queryString}` : ''}`, {
       cache: "no-store",
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),

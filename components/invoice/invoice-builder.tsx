@@ -39,8 +39,8 @@ import { ColorPicker } from "@/components/ui/color-picker";
 
 // Schema for invoice settings
 const invoiceSettingsSchema = z.object({
-  companyName: z.string().trim().min(1, "Company name is required"),
-  companyAddress: z.string().trim().min(1, "Company address is required"),
+  companyName: z.string().trim().min(1, "Company name is required").max(100, "Company name too long"),
+  companyAddress: z.string().trim().min(1, "Company address is required").max(500, "Company address too long"),
   logoUrl: z.string().default(""),
   logoOffsetX: z.number().default(0),
   logoOffsetY: z.number().default(0),
@@ -58,8 +58,8 @@ const invoiceSettingsSchema = z.object({
     .trim()
     .min(1, "Accent color is required")
     .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Invalid hex color"),
-  headerText: z.string().trim().min(1, "Header text is required"),
-  billToTitle: z.string().trim().min(1, "Bill-to title is required"),
+  headerText: z.string().trim().min(1, "Header text is required").max(50, "Header text too long"),
+  billToTitle: z.string().trim().min(1, "Bill-to title is required").max(50, "Bill-to title too long"),
   billToOffsetX: z.number().default(0),
   billToOffsetY: z.number().default(0),
   durationOffsetX: z.number().default(0),
@@ -70,11 +70,11 @@ const invoiceSettingsSchema = z.object({
   termsOffsetY: z.number().default(0),
   footerOffsetX: z.number().default(0),
   footerOffsetY: z.number().default(0),
-  footerText: z.string().trim().min(1, "Footer text is required"),
-  notesHeading: z.string().trim().min(1, "Notes heading is required"),
-  notes: z.string().trim().min(1, "Notes are required"),
-  termsHeading: z.string().trim().min(1, "Terms heading is required"),
-  termsText: z.string().default(""),
+  footerText: z.string().trim().min(1, "Footer text is required").max(200, "Footer text too long"),
+  notesHeading: z.string().trim().min(1, "Notes heading is required").max(50, "Notes heading too long"),
+  notes: z.string().trim().min(1, "Notes are required").max(500, "Notes too long"),
+  termsHeading: z.string().trim().min(1, "Terms heading is required").max(50, "Terms heading too long"),
+  termsText: z.string().max(2000, "Terms text too long").default(""),
   font: z
     .enum([
       "Helvetica",
@@ -505,6 +505,7 @@ export function InvoiceBuilder() {
                           <FormControl>
                             <Input
                               placeholder="Your Business Name"
+                              maxLength={100}
                               {...field}
                             />
                           </FormControl>
@@ -521,6 +522,7 @@ export function InvoiceBuilder() {
                           <FormControl>
                             <Textarea
                               placeholder="123 Street, City, Country"
+                              maxLength={500}
                               {...field}
                             />
                           </FormControl>
@@ -762,7 +764,7 @@ export function InvoiceBuilder() {
                         <FormItem>
                           <FormLabel>Header Label</FormLabel>
                           <FormControl>
-                            <Input placeholder="INVOICE" {...field} />
+                            <Input placeholder="INVOICE" maxLength={50} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -775,7 +777,7 @@ export function InvoiceBuilder() {
                         <FormItem>
                           <FormLabel>Bill To Title</FormLabel>
                           <FormControl>
-                            <Input placeholder="Bill To:" {...field} />
+                            <Input placeholder="Bill To:" maxLength={50} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -788,7 +790,7 @@ export function InvoiceBuilder() {
                         <FormItem>
                           <FormLabel>Notes Heading</FormLabel>
                           <FormControl>
-                            <Input placeholder="Notes" {...field} />
+                            <Input placeholder="Notes" maxLength={50} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -801,7 +803,7 @@ export function InvoiceBuilder() {
                         <FormItem>
                           <FormLabel>Notes Text</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Notes..." {...field} />
+                            <Textarea placeholder="Notes..." maxLength={500} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -816,6 +818,7 @@ export function InvoiceBuilder() {
                           <FormControl>
                             <Input
                               placeholder="Terms & Conditions"
+                              maxLength={50}
                               {...field}
                             />
                           </FormControl>
@@ -832,6 +835,7 @@ export function InvoiceBuilder() {
                           <FormControl>
                             <Textarea
                               placeholder="Terms & Conditions..."
+                              maxLength={2000}
                               {...field}
                             />
                           </FormControl>
@@ -846,7 +850,7 @@ export function InvoiceBuilder() {
                         <FormItem>
                           <FormLabel>Footer Text</FormLabel>
                           <FormControl>
-                            <Input placeholder="Thank you..." {...field} />
+                            <Input placeholder="Thank you..." maxLength={200} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

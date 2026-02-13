@@ -59,6 +59,14 @@ export interface Invoice {
       description?: string | null;
       planLevel?: string | null;
     } | null;
+    dealer?: {
+      id: string;
+      businessNameLegal: string;
+      businessNameTrading?: string | null;
+      email?: string;
+      phone?: string;
+      businessAddress?: string;
+    } | null;
   } | null;
   createdBy?: {
     id: string;
